@@ -32,27 +32,60 @@ const RECOMMENDED = {
   ],
 }
 
-function mockConvert(text) {
+const TONES = ['부드럽게', '솔직하게', '카톡용 짧게', '요청형']
+
+const TONE_RESULTS = {
+  '부드럽게': {
+    phone:   '요즘 같이 있을 때 핸드폰 보는 시간이 많아서 좀 서운했어. 나랑 얘기하는 시간을 조금 더 가지고 싶어.',
+    sorry:   '내가 그때 더 신경 써야 했는데 그러지 못해서 미안해. 다음엔 더 잘할게.',
+    sad:     '그때 좀 서운했어. 이야기하기 어려웠는데 말하고 싶었어. 들어줄 수 있어?',
+    default: '네 마음이 어땠을지 생각해봤어. 우리 오늘 잠깐 이야기 나눠볼 수 있을까?',
+  },
+  '솔직하게': {
+    phone:   '솔직히 요즘 같이 있어도 핸드폰만 보니까 나 혼자 있는 것 같아. 그게 많이 힘들어.',
+    sorry:   '내가 잘못한 거 알아. 변명 없이 그냥 미안하다고 말하고 싶었어.',
+    sad:     '솔직히 그때 많이 서운했어. 그냥 넘기기가 싫어서 말하는 거야.',
+    default: '하고 싶은 말이 있어. 지금 얘기할 수 있어?',
+  },
+  '카톡용 짧게': {
+    phone:   '요즘 같이 있을 때 핸드폰 많이 보는 것 같아서ㅠ 나도 좀 봐줘',
+    sorry:   '아까 미안했어ㅠ 그런 뜻 아니었는데',
+    sad:     '솔직히 그때 좀 서운했어ㅠ 나중에 얘기해도 돼?',
+    default: '나 할 말 있어, 시간 돼?',
+  },
+  '요청형': {
+    phone:   '같이 있을 때 핸드폰 보는 시간을 조금만 줄여줄 수 있어? 나랑 더 얘기하고 싶어.',
+    sorry:   '내가 그때 그렇게 한 거 반성하고 있어. 한 번만 더 믿어줄 수 있어?',
+    sad:     '서운했던 마음, 한번 들어줄 수 있어? 오래 걸리지 않을게.',
+    default: '오늘 잠깐 우리 이야기 나눠볼 수 있을까? 듣고만 있어줘도 돼.',
+  },
+}
+
+function mockConvert(text, tone) {
   if (!text.trim()) return ''
-  if (text.includes('핸드폰') || text.includes('폰') || text.includes('안 들어'))
-    return '요즘 같이 있을 때 핸드폰 보는 시간이 많아서 좀 서운했어. 나랑 얘기하는 시간을 조금 더 가지고 싶어.'
-  if (text.includes('미안') || text.includes('잘못'))
-    return '내가 그때 더 신경 써야 했는데 그러지 못해서 미안해. 다음엔 더 잘할게.'
-  if (text.includes('서운') || text.includes('속상'))
-    return '그때 좀 서운했어. 이야기하기 어려웠는데 말하고 싶었어. 들어줄 수 있어?'
-  return '네 마음이 어땠을지 생각해봤어. 우리 오늘 잠깐 이야기 나눠볼 수 있을까?'
+  const results = TONE_RESULTS[tone] ?? TONE_RESULTS['부드럽게']
+  if (text.includes('핸드폰') || text.includes('폰') || text.includes('안 들어')) return results.phone
+  if (text.includes('미안') || text.includes('잘못')) return results.sorry
+  if (text.includes('서운') || text.includes('속상')) return results.sad
+  return results.default
 }
 
 export default function Translate({ nav, isDark, toggleTheme }) {
   const [inputText,   setInputText]   = useState('')
+  const [tone,        setTone]        = useState('부드럽게')
   const [converted,   setConverted]   = useState('')
   const [showResult,  setShowResult]  = useState(false)
   const [expanded,    setExpanded]    = useState(null)
 
   const handleConvert = () => {
     if (!inputText.trim()) return
-    setConverted(mockConvert(inputText))
+    setConverted(mockConvert(inputText, tone))
     setShowResult(true)
+  }
+
+  const handleToneChange = (t) => {
+    setTone(t)
+    setShowResult(false)
   }
 
   const handlePickPhrase = (phrase) => {
@@ -97,9 +130,36 @@ export default function Translate({ nav, isDark, toggleTheme }) {
         onChange={e => { setInputText(e.target.value); setShowResult(false) }}
       />
 
+      {/* 말투 선택 */}
+      <p style={{ margin: '16px 0 10px', fontSize: 13.5, fontWeight: 600, color: 'var(--ink-soft)' }}>
+        말투 선택
+      </p>
+      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+        {TONES.map(t => (
+          <button
+            key={t}
+            onClick={() => handleToneChange(t)}
+            style={{
+              padding: '9px 16px',
+              borderRadius: 999,
+              fontSize: 14,
+              fontWeight: tone === t ? 600 : 400,
+              fontFamily: 'inherit',
+              cursor: 'pointer',
+              border: tone === t ? '1.5px solid var(--brand)' : '1.5px solid var(--surface-line)',
+              background: tone === t ? 'var(--brand)' : 'var(--surface)',
+              color: tone === t ? '#fff' : 'var(--ink-soft)',
+              transition: 'all .15s',
+            }}
+          >
+            {t}
+          </button>
+        ))}
+      </div>
+
       <button
         className="cta"
-        style={{ marginTop: 14, opacity: inputText.trim() ? 1 : 0.45 }}
+        style={{ marginTop: 16, opacity: inputText.trim() ? 1 : 0.45 }}
         onClick={handleConvert}
       >
         변환하기
@@ -112,6 +172,9 @@ export default function Translate({ nav, isDark, toggleTheme }) {
             변환된 표현
           </p>
           <div className="ba ba--after" style={{ marginBottom: 14 }}>
+            <span className="ba-label" style={{ color: 'var(--brand-soft-text)' }}>
+              <i className="fa-solid fa-wand-magic-sparkles" style={{ marginRight: 5 }}></i>{tone}
+            </span>
             <p style={{ margin: 0, fontSize: 15.5, lineHeight: 1.7, color: 'var(--ink)' }}>
               "{converted}"
             </p>
