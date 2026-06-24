@@ -101,7 +101,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 24px 20px 6px;
+  padding: 24px 20px 16px;
   margin: 0 -20px;
 }
 .eyebrow {
@@ -124,7 +124,7 @@ body {
   display: flex;
   align-items: center;
   gap: 14px;
-  padding: 24px 20px 8px;
+  padding: 24px 20px 16px;
   margin: 0 -20px;
 }
 .backbar i { font-size: 19px; color: var(--ink-soft); cursor: pointer; }
