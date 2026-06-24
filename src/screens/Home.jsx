@@ -19,7 +19,6 @@ export default function Home({ nav, isDark, toggleTheme }) {
           <p className="eyebrow">쀼라인드</p>
           <div className="topbar__icons">
             <ThemeToggle isDark={isDark} toggleTheme={toggleTheme} />
-            <i className="fa-regular fa-calendar"></i>
             <i className="fa-regular fa-bell"></i>
           </div>
         </div>
