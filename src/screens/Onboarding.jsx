@@ -1,6 +1,7 @@
 import { useState } from 'react'
+import ThemeToggle from '../components/ThemeToggle'
 
-export default function Onboarding({ nav }) {
+export default function Onboarding({ nav, isDark, toggleTheme }) {
   const [relation, setRelation] = useState('신혼')
   const [year, setYear] = useState('2년 차')
   const [concerns, setConcerns] = useState(['대화 단절', '서운함'])
@@ -13,7 +14,10 @@ export default function Onboarding({ nav }) {
     <div className="phone-body phone-body--flat">
       <div className="topbar">
         <p className="eyebrow">쀼라인드</p>
-        <div className="topbar__icons"><i className="fa-solid fa-xmark"></i></div>
+        <div className="topbar__icons">
+          <ThemeToggle isDark={isDark} toggleTheme={toggleTheme} />
+          <i className="fa-solid fa-xmark"></i>
+        </div>
       </div>
 
       <div style={{ marginTop: 10 }}>

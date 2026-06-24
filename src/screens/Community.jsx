@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import BottomNav from '../components/BottomNav'
+import ThemeToggle from '../components/ThemeToggle'
 
-export default function Community({ nav }) {
+export default function Community({ nav, isDark, toggleTheme }) {
   const [filter, setFilter] = useState('전체')
 
   return (
@@ -10,6 +11,7 @@ export default function Community({ nav }) {
         <div className="topbar">
           <p className="eyebrow">커뮤니티</p>
           <div className="topbar__icons">
+            <ThemeToggle isDark={isDark} toggleTheme={toggleTheme} />
             <i className="fa-solid fa-magnifying-glass"></i>
             <i className="fa-regular fa-bell"></i>
           </div>

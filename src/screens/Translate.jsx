@@ -1,6 +1,7 @@
 import { useState } from 'react'
+import ThemeToggle from '../components/ThemeToggle'
 
-export default function Translate({ nav }) {
+export default function Translate({ nav, isDark, toggleTheme }) {
   const [intent, setIntent] = useState('서운함 전달')
   const [tone, setTone] = useState('부드럽게')
 
@@ -9,6 +10,9 @@ export default function Translate({ nav }) {
       <div className="backbar">
         <i className="fa-solid fa-chevron-left" onClick={() => nav('analysis')}></i>
         <h2>말투 변환</h2>
+        <div style={{ marginLeft: 'auto' }}>
+          <ThemeToggle isDark={isDark} toggleTheme={toggleTheme} />
+        </div>
       </div>
 
       <p className="page-sub" style={{ margin: '12px 0 0' }}>전하고 싶은 마음을 골라보세요.</p>

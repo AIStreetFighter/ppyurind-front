@@ -1,9 +1,14 @@
-export default function Analysis({ nav }) {
+import ThemeToggle from '../components/ThemeToggle'
+
+export default function Analysis({ nav, isDark, toggleTheme }) {
   return (
     <div className="phone-body phone-body--flat">
       <div className="backbar">
         <i className="fa-solid fa-chevron-left" onClick={() => nav('record')}></i>
         <h2>AI 감정 분석</h2>
+        <div style={{ marginLeft: 'auto' }}>
+          <ThemeToggle isDark={isDark} toggleTheme={toggleTheme} />
+        </div>
       </div>
 
       <div className="header header--full" style={{ marginTop: 10 }}>

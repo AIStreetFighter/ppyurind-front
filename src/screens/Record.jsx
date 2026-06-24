@@ -1,6 +1,7 @@
 import { useState } from 'react'
+import ThemeToggle from '../components/ThemeToggle'
 
-export default function Record({ nav }) {
+export default function Record({ nav, isDark, toggleTheme }) {
   const [tab, setTab] = useState('텍스트')
   const [emotions, setEmotions] = useState(['답답함', '서운함'])
   const [secret, setSecret] = useState(true)
@@ -14,6 +15,9 @@ export default function Record({ nav }) {
       <div className="backbar">
         <i className="fa-solid fa-chevron-left" onClick={() => nav('home')}></i>
         <h2>속마음 기록</h2>
+        <div style={{ marginLeft: 'auto' }}>
+          <ThemeToggle isDark={isDark} toggleTheme={toggleTheme} />
+        </div>
       </div>
 
       <div style={{ marginTop: 14 }} />

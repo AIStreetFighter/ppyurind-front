@@ -1,4 +1,5 @@
 import BottomNav from '../components/BottomNav'
+import ThemeToggle from '../components/ThemeToggle'
 
 const bars = [
   { day: '월', h: 42, color: 'var(--like)' },
@@ -10,13 +11,14 @@ const bars = [
   { day: '일', h: 74, color: 'var(--brand)' },
 ]
 
-export default function Home({ nav }) {
+export default function Home({ nav, isDark, toggleTheme }) {
   return (
     <>
       <div className="phone-body">
         <div className="topbar">
           <p className="eyebrow">쀼라인드</p>
           <div className="topbar__icons">
+            <ThemeToggle isDark={isDark} toggleTheme={toggleTheme} />
             <i className="fa-regular fa-calendar"></i>
             <i className="fa-regular fa-bell"></i>
           </div>

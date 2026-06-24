@@ -1,12 +1,16 @@
 import BottomNav from '../components/BottomNav'
+import ThemeToggle from '../components/ThemeToggle'
 
-export default function MyPage({ nav }) {
+export default function MyPage({ nav, isDark, toggleTheme }) {
   return (
     <>
       <div className="phone-body">
         <div className="topbar">
           <p className="eyebrow">마이</p>
-          <div className="topbar__icons"><i className="fa-solid fa-gear"></i></div>
+          <div className="topbar__icons">
+            <ThemeToggle isDark={isDark} toggleTheme={toggleTheme} />
+            <i className="fa-solid fa-gear"></i>
+          </div>
         </div>
 
         <div className="card" style={{ marginTop: 10, display: 'flex', alignItems: 'center', gap: 15 }}>
@@ -72,6 +76,11 @@ export default function MyPage({ nav }) {
           <div className="menu-item">
             <i className="fa-solid fa-sliders"></i>
             <span className="mlabel">AI 응답 톤 변경</span>
+            <i className="fa-solid fa-chevron-right chev"></i>
+          </div>
+          <div className="menu-item" onClick={toggleTheme} style={{ cursor: 'pointer' }}>
+            <i className={isDark ? 'fa-solid fa-sun' : 'fa-solid fa-moon'}></i>
+            <span className="mlabel">{isDark ? '라이트 모드로 전환' : '다크 모드로 전환'}</span>
             <i className="fa-solid fa-chevron-right chev"></i>
           </div>
           <div className="menu-item">
