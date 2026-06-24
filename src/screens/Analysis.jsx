@@ -1,12 +1,12 @@
 import ThemeToggle from '../components/ThemeToggle'
+import BottomNav from '../components/BottomNav'
 
 export default function Analysis({ nav, isDark, toggleTheme }) {
   return (
-    <div className="phone-body phone-body--flat">
-      <div className="backbar">
-        <i className="fa-solid fa-chevron-left" onClick={() => nav('record')}></i>
-        <h2>AI 감정 분석</h2>
-        <div style={{ marginLeft: 'auto' }}>
+    <div className="phone-body">
+      <div className="topbar">
+        <p className="eyebrow">AI 감정 분석</p>
+        <div className="topbar__icons">
           <ThemeToggle isDark={isDark} toggleTheme={toggleTheme} />
         </div>
       </div>
@@ -53,6 +53,8 @@ export default function Analysis({ nav, isDark, toggleTheme }) {
       <button className="cta" style={{ marginTop: 18 }} onClick={() => nav('translate')}>
         <i className="fa-solid fa-comment-medical" style={{ marginRight: 7 }}></i>이 마음, 말투 바꿔 전하기
       </button>
+
+      <BottomNav active="기록" nav={nav} />
     </div>
   )
 }

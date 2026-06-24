@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import ThemeToggle from '../components/ThemeToggle'
+import BottomNav from '../components/BottomNav'
 
 export default function Record({ nav, isDark, toggleTheme }) {
   const [tab, setTab] = useState('텍스트')
@@ -11,11 +12,10 @@ export default function Record({ nav, isDark, toggleTheme }) {
     setEmotions(prev => prev.includes(v) ? prev.filter(e => e !== v) : [...prev, v])
 
   return (
-    <div className="phone-body phone-body--flat">
-      <div className="backbar">
-        <i className="fa-solid fa-chevron-left" onClick={() => nav('home')}></i>
-        <h2>속마음 기록</h2>
-        <div style={{ marginLeft: 'auto' }}>
+    <div className="phone-body">
+      <div className="topbar">
+        <p className="eyebrow">속마음 기록</p>
+        <div className="topbar__icons">
           <ThemeToggle isDark={isDark} toggleTheme={toggleTheme} />
         </div>
       </div>
@@ -61,6 +61,8 @@ export default function Record({ nav, isDark, toggleTheme }) {
       <button className="cta" style={{ marginTop: 20 }} onClick={() => nav('analysis')}>
         <i className="fa-solid fa-wand-magic-sparkles" style={{ marginRight: 7 }}></i>AI 감정 분석하기
       </button>
+
+      <BottomNav active="기록" nav={nav} />
     </div>
   )
 }
