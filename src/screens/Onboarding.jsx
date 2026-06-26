@@ -26,10 +26,18 @@ export default function Onboarding({ nav, isDark, toggleTheme }) {
     ? ['1년 미만', '1년 차', '2~3년', '3년 이상', '선택안함']
     : ['1년 미만', '2년 차', '3~5년', '5년 이상', '선택안함']
 
+  const CONCERN_OPTIONS = {
+    '연애':    ['대화 단절', '서운함', '성격·가치관 차이', '스킨십·친밀감', '경제·소비 갈등', '신뢰 문제', '미래 계획', '양가 가족 문제', '기타'],
+    '신혼':    ['대화 단절', '서운함', '가사 분담', '아이 계획', '시댁·처가 갈등', '경제·소비 갈등', '스킨십·친밀감', '기타'],
+    '기혼':    ['대화 단절', '서운함', '가사 분담', '아이 계획', '시댁·처가 갈등', '경제·소비 갈등', '스킨십·친밀감', '성격·가치관 차이', '기타'],
+    '자녀 있음': ['육아 분담', '대화 단절', '서운함', '가사 분담', '경제·소비 갈등', '시댁·처가 갈등', '스킨십·친밀감', '성격·가치관 차이', '기타'],
+  }
+  const concernOptions = CONCERN_OPTIONS[relation] || CONCERN_OPTIONS['기혼']
+
   const toggleConcern = (v) =>
     setConcerns(prev => prev.includes(v) ? prev.filter(c => c !== v) : [...prev, v])
 
-  const setRelationAndReset = (v) => { setRelation(v); setYear('') }
+  const setRelationAndReset = (v) => { setRelation(v); setYear(''); setConcerns([]) }
 
   return (
     <div className="phone-body phone-body--flat">
@@ -73,8 +81,8 @@ export default function Onboarding({ nav, isDark, toggleTheme }) {
 
           <div className="section-label">지금 가장 큰 고민 <span className="muted">· 여러 개 선택</span></div>
           <div className="chip-row">
-            {['대화 단절', '서운함', '육아 분담', '시댁·처가', '스킨십', '돈 문제', '기타'].map(v => (
-              <span key={v} className={`chip${concerns.includes(v) ? ' selected' : ''}`} onClick={() => toggleConcern(v)}>{v}</span>
+            {concernOptions.map(v => (
+              <span key={v} className={`chip${v === '기타' ? ' chip--muted' : ''}${concerns.includes(v) ? ' selected' : ''}`} onClick={() => toggleConcern(v)}>{v}</span>
             ))}
           </div>
           {concerns.includes('기타') && (

@@ -62,7 +62,7 @@ export default function KakaoLogin({ nav, isDark, toggleTheme }) {
       </div>
 
       {/* 하단 버튼 */}
-      <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 11 }}>
+      <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 11, marginTop: 32 }}>
         {/* 카카오 */}
         <button onClick={() => nav('onboarding')} style={{
           width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
