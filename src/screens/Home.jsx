@@ -23,8 +23,9 @@ function todayLabel() {
 export default function Home({ nav, isDark, toggleTheme }) {
   const now = new Date()
   const ym = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
+  // 홈 '이번 달 일정'에는 기념일·생일만 노출 (다툰 날 등은 캘린더에서만 확인)
   const monthEvents = EVENTS
-    .filter(e => e.date.startsWith(ym))
+    .filter(e => e.date.startsWith(ym) && (e.type === 'anniv' || e.type === 'birthday'))
     .sort((a, b) => a.date.localeCompare(b.date))
 
   return (
