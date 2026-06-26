@@ -19,7 +19,7 @@ export default function App() {
   const nav = (to) => setScreen(to);
   const toggleTheme = () => setIsDark((prev) => !prev);
 
-  const props = { nav, isDark, toggleTheme, nickname, setNickname };
+  const props = { nav, isDark, toggleTheme, nickname, setNickname, onNicknameSave: setNickname };
 
   const screens = {
     kakaoLogin: <KakaoLogin {...props} />,
