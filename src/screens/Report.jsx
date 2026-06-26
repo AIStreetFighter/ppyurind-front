@@ -16,7 +16,10 @@ export default function Report({ nav, isDark, toggleTheme }) {
     <>
       <div className="phone-body">
         <div className="topbar">
-          <p className="eyebrow">주간 리포트</p>
+          <div className="backbar-inline">
+            <i className="fa-solid fa-arrow-left" onClick={() => nav('mypage')}></i>
+            <p className="eyebrow" style={{ margin: 0 }}>주간 리포트</p>
+          </div>
           <div className="topbar__icons">
             <ThemeToggle isDark={isDark} toggleTheme={toggleTheme} />
             <i className="fa-solid fa-arrow-up-right-from-square"></i>
@@ -60,7 +63,7 @@ export default function Report({ nav, isDark, toggleTheme }) {
         </div>
       </div>
 
-      <BottomNav active="기록" nav={nav} />
+      <BottomNav active="마이" nav={nav} />
     </>
   )
 }

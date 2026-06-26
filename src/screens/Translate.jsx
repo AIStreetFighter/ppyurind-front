@@ -76,11 +76,27 @@ export default function Translate({ nav, isDark, toggleTheme }) {
   const [converted,   setConverted]   = useState('')
   const [showResult,  setShowResult]  = useState(false)
   const [expanded,    setExpanded]    = useState(null)
+  const [copied,      setCopied]      = useState(false)
+  const [copiedPhrase, setCopiedPhrase] = useState(null)
 
   const handleConvert = () => {
     if (!inputText.trim()) return
     setConverted(mockConvert(inputText, tone))
     setShowResult(true)
+    setCopied(false)
+  }
+
+  const handleRegenerate = () => {
+    setConverted(mockConvert(inputText, tone))
+    setCopied(false)
+  }
+
+  const handleCopy = () => {
+    // 따옴표 자동 제거 후 복사
+    const clean = converted.replace(/["“”'']/g, '').trim()
+    navigator.clipboard?.writeText(clean)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 1800)
   }
 
   const handleToneChange = (t) => {
@@ -88,10 +104,11 @@ export default function Translate({ nav, isDark, toggleTheme }) {
     setShowResult(false)
   }
 
-  const handlePickPhrase = (phrase) => {
-    setInputText(phrase)
-    setShowResult(false)
-    setExpanded(null)
+  const handleCopyPhrase = (phrase, e) => {
+    e.stopPropagation()
+    navigator.clipboard?.writeText(phrase.replace(/["“”'']/g, '').trim())
+    setCopiedPhrase(phrase)
+    setTimeout(() => setCopiedPhrase(null), 1600)
   }
 
   const toggleExpand = (key) => {
@@ -102,7 +119,10 @@ export default function Translate({ nav, isDark, toggleTheme }) {
     <div className="phone-body">
       {/* 상단 */}
       <div className="topbar">
-        <div />
+        <div className="backbar-inline">
+          <i className="fa-solid fa-arrow-left" onClick={() => nav('home')}></i>
+          <p className="eyebrow" style={{ margin: 0 }}>대화 어시스턴트</p>
+        </div>
         <div className="topbar__icons">
           <ThemeToggle isDark={isDark} toggleTheme={toggleTheme} />
         </div>
@@ -168,27 +188,28 @@ export default function Translate({ nav, isDark, toggleTheme }) {
       {/* 변환 결과 */}
       {showResult && (
         <div style={{ marginTop: 24 }}>
-          <p style={{ margin: '0 0 10px', fontSize: 13.5, fontWeight: 600, color: 'var(--ink-soft)' }}>
-            변환된 표현
+          <p style={{ margin: '0 0 10px', fontSize: 13.5, fontWeight: 600, color: 'var(--ink-soft)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <span>변환된 표현 <span style={{ color: 'var(--ink-muted)', fontWeight: 400 }}>· 직접 다듬어도 돼요</span></span>
+            {copied && <span style={{ color: 'var(--brand-soft-text)', fontSize: 12.5 }}><i className="fa-solid fa-check" style={{ marginRight: 4 }}></i>복사됨</span>}
           </p>
           <div className="ba ba--after" style={{ marginBottom: 14 }}>
             <span className="ba-label" style={{ color: 'var(--brand-soft-text)' }}>
               <i className="fa-solid fa-wand-magic-sparkles" style={{ marginRight: 5 }}></i>{tone}
             </span>
-            <p style={{ margin: 0, fontSize: 15.5, lineHeight: 1.7, color: 'var(--ink)' }}>
-              "{converted}"
-            </p>
+            <textarea
+              value={converted}
+              onChange={e => setConverted(e.target.value)}
+              style={{ width: '100%', border: 'none', background: 'transparent', resize: 'none',
+                       fontFamily: 'inherit', fontSize: 15.5, lineHeight: 1.7, color: 'var(--ink)',
+                       minHeight: 72, outline: 'none', padding: 0 }}
+            />
           </div>
           <div style={{ display: 'flex', gap: 10 }}>
-            <button
-              className="cta cta--ghost"
-              style={{ flex: 1 }}
-              onClick={() => navigator.clipboard?.writeText(converted)}
-            >
-              복사하기
+            <button className="cta cta--ghost" style={{ flex: 1 }} onClick={handleRegenerate}>
+              <i className="fa-solid fa-rotate" style={{ marginRight: 6 }}></i>다시 변환
             </button>
-            <button className="cta" style={{ flex: 1.6 }}>
-              <i className="fa-solid fa-paper-plane" style={{ marginRight: 6 }}></i>카톡으로 보내기
+            <button className="cta" style={{ flex: 1.4 }} onClick={handleCopy}>
+              <i className="fa-regular fa-copy" style={{ marginRight: 6 }}></i>복사하기
             </button>
           </div>
         </div>
@@ -220,19 +241,20 @@ export default function Translate({ nav, isDark, toggleTheme }) {
               />
             </div>
 
-            {/* 펼쳐진 추천 목록 */}
+            {/* 펼쳐진 추천 목록 — 이미 다듬어진 문장이라 복사만 */}
             {expanded === s.key && (
               <div style={{ background: 'var(--bg-2)', padding: '4px 0 8px' }}>
                 {RECOMMENDED[s.key].map((phrase, i) => (
                   <div
                     key={i}
-                    style={{ padding: '12px 18px 12px 52px', cursor: 'pointer', borderTop: i > 0 ? '1px solid var(--surface-line)' : 'none' }}
-                    onClick={() => handlePickPhrase(phrase)}
+                    style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 18px 12px 52px', borderTop: i > 0 ? '1px solid var(--surface-line)' : 'none' }}
                   >
-                    <p style={{ margin: '0 0 5px', fontSize: 14, lineHeight: 1.6, color: 'var(--ink)' }}>{phrase}</p>
-                    <span style={{ fontSize: 12, color: 'var(--brand)', fontWeight: 600 }}>
-                      입력창으로 가져오기
-                    </span>
+                    <p style={{ margin: 0, flex: 1, fontSize: 14, lineHeight: 1.6, color: 'var(--ink)' }}>{phrase}</p>
+                    <button className="copy-chip" onClick={(e) => handleCopyPhrase(phrase, e)}>
+                      {copiedPhrase === phrase
+                        ? <><i className="fa-solid fa-check"></i> 복사됨</>
+                        : <><i className="fa-regular fa-copy"></i> 복사</>}
+                    </button>
                   </div>
                 ))}
               </div>
@@ -241,7 +263,7 @@ export default function Translate({ nav, isDark, toggleTheme }) {
         ))}
       </div>
 
-      <BottomNav active="필터" nav={nav} />
+      <BottomNav active="홈" nav={nav} />
     </div>
   )
 }

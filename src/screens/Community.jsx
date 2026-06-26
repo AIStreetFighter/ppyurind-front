@@ -1,9 +1,88 @@
 import { useState } from 'react'
 import BottomNav from '../components/BottomNav'
 import ThemeToggle from '../components/ThemeToggle'
+import NotifBell from '../components/NotifBell'
+
+const AVATARS = ['cat_01_t', 'cat_02_t', 'cat_03_t', 'cat_04_t']
+
+const SEED = [
+  ['기념일을 매번 제가 챙겨요', '#대화단절 #서운함', '기념일을 매번 제가 챙기는 것 같아서 서운해요. 그냥 한 번쯤 먼저 물어봐주길 바랐어요. 큰 걸 바라는 것도 아닌데 그게 그렇게 어려운 일일까요…', 106, 32, 14],
+  ['싸우고 나면 며칠씩 말을 안 해요', '#감정표현 #회피', '다투면 대화로 풀고 싶은데 상대는 며칠씩 입을 닫아요. 그 침묵의 시간이 저한테는 벌처럼 느껴져서 너무 외로워요.', 74, 21, 12],
+  ['시댁 얘기만 나오면 싸워요', '#시댁 #갈등', '시댁 얘기만 꺼내면 분위기가 싸늘해져요. 제 편을 들어달라는 게 아니라 그냥 제 마음을 알아줬으면 하는데.', 58, 19, 8],
+  ['육아는 왜 늘 제 몫일까요', '#육아분담 #지침', '둘 다 일하는데 아이 챙기는 건 늘 저예요. 도와준다는 말이 오히려 더 서운하더라고요. 같이 하는 건데.', 92, 41, 23],
+  ['표현을 잘 못 하는 사람이에요', '#스킨십 #거리감', '사랑하는 건 아는데 표현이 없으니 가끔 의심이 들어요. 저만 더 좋아하는 건가 싶어서.', 47, 15, 6],
+  ['돈 얘기만 하면 예민해져요', '#돈문제 #불안', '미래를 위해 얘기하자는 건데 자꾸 잔소리로 받아들여서 대화가 안 돼요.', 63, 18, 9],
+  ['화해는 했는데 마음이 안 풀려요', '#화해 #앙금', '말로는 풀었는데 속은 그대로예요. 이런 제가 속 좁은 걸까요?', 51, 27, 11],
+  ['서로 너무 바빠서 대화가 없어요', '#대화단절 #일상', '하루에 나누는 말이 손에 꼽아요. 같이 사는데 룸메이트 같다는 생각이 들어요.', 80, 22, 15],
+  ['칭찬에 인색한 배우자', '#인정욕구', '잘했다는 말 한마디가 그렇게 어려운가 봐요. 저는 그 한마디면 되는데.', 39, 12, 4],
+  ['연락 텀이 길어지니 불안해요', '#연애 #불안', '예전엔 안 그랬는데 요즘 답장이 늦어지면 별생각이 다 들어요.', 44, 16, 7],
+]
+
+function buildPosts() {
+  const arr = []
+  for (let i = 0; i < 30; i++) {
+    const s = SEED[i % SEED.length]
+    arr.push({
+      id: i + 1,
+      avatar: AVATARS[i % AVATARS.length],
+      name: `익명 · ${s[0]}`,
+      tag: `AI 태그: ${s[1]}`,
+      body: s[2],
+      empathy: s[3] - i, comfort: s[4], comments: s[5],
+      author: `anon${i % 7}`,
+    })
+  }
+  return arr
+}
+
+const ALL_POSTS = buildPosts()
+const REPORT_REASONS = ['스팸 / 홍보', '욕설 / 비방', '음란성 / 부적절', '개인정보 노출', '기타']
 
 export default function Community({ nav, isDark, toggleTheme }) {
   const [filter, setFilter] = useState('전체')
+  const [query, setQuery] = useState('')
+  const [showSearch, setShowSearch] = useState(false)
+  const [liked, setLiked] = useState({})
+  const [comforted, setComforted] = useState({})
+  const [menuOpen, setMenuOpen] = useState(null)
+  const [toast, setToast] = useState('')
+  const [detail, setDetail] = useState(null)
+  const [reportFor, setReportFor] = useState(null)
+  const [hiddenAuthors, setHiddenAuthors] = useState([])
+  const [userPosts, setUserPosts] = useState([])
+  const [writing, setWriting] = useState(false)
+  const [draft, setDraft] = useState('')
+  const [count, setCount] = useState(5) // 처음 5개, '더보기'로 확장
+
+  const flash = (msg) => { setToast(msg); setTimeout(() => setToast(''), 1900) }
+
+  const submitReport = (reason) => {
+    setReportFor(null)
+    flash(`신고가 접수되었습니다 (${reason}). 누적 3회 시 자동 블라인드 처리돼요.`)
+  }
+
+  const hideAuthor = (author) => {
+    setHiddenAuthors(a => [...a, author])
+    setMenuOpen(null)
+    flash('이 회원의 글을 모두 숨겼어요.')
+  }
+
+  const publish = () => {
+    if (!draft.trim()) return
+    setUserPosts(p => [{
+      id: 'u' + Date.now(), avatar: AVATARS[1], name: '익명 · 들풀',
+      tag: 'AI 태그: #방금작성', body: draft.trim(), empathy: 0, comfort: 0, comments: 0, author: 'me',
+    }, ...p])
+    setDraft('')
+    setWriting(false)
+    flash('익명으로 게시됐어요. 개인정보는 자동 제거됐어요.')
+  }
+
+  const feed = [...userPosts, ...ALL_POSTS]
+    .filter(p => !hiddenAuthors.includes(p.author))
+    .filter(p => !query.trim() || p.name.includes(query) || p.body.includes(query) || p.tag.includes(query))
+
+  const shown = feed.slice(0, count)
 
   return (
     <>
@@ -12,66 +91,36 @@ export default function Community({ nav, isDark, toggleTheme }) {
           <p className="eyebrow">커뮤니티</p>
           <div className="topbar__icons">
             <ThemeToggle isDark={isDark} toggleTheme={toggleTheme} />
-            <i className="fa-solid fa-magnifying-glass"></i>
-            <i className="fa-regular fa-bell"></i>
+            <i className="fa-solid fa-magnifying-glass" onClick={() => setShowSearch(s => !s)} style={{ cursor: 'pointer' }}></i>
+            <NotifBell />
           </div>
         </div>
 
         <div className="header">
           <h1 className="page-title">비슷한 마음들</h1>
           <p className="page-sub">결혼 2년 차, 비슷한 고민을 가진 사람들의 이야기</p>
-          <div className="header-art">
-            <img src="/assets/cats/cat_pair.png" alt="" style={{ objectPosition: 'center' }} />
-          </div>
+          <div className="header-art"><img src="/assets/cats/cat_03_t.png" alt="" /></div>
         </div>
 
+        {showSearch && (
+          <input className="field" style={{ width: '100%', marginTop: 16 }}
+            placeholder="고민 키워드로 검색 (예: 서운함, 대화)" value={query}
+            onChange={e => { setQuery(e.target.value); setCount(8) }} autoFocus />
+        )}
+
         <div className="chip-row" style={{ marginTop: 18 }}>
-          {['전체', '신혼 고민', '육아 분담'].map(v => (
+          {['전체', '신혼 고민', '육아 분담', '화해 후기'].map(v => (
             <span key={v} className={`chip${filter === v ? ' selected' : ''}`} onClick={() => setFilter(v)}>{v}</span>
           ))}
           <span className="chip chip--age"><i className="fa-solid fa-lock" style={{ fontSize: 11 }}></i> 19+</span>
         </div>
 
-        <div className="section-label"><i className="fa-solid fa-medal"></i>이번 달 베스트 공감</div>
-        <div className="card">
-          <div className="post-head">
-            <div className="avatar"><img src="/assets/cats/cat_orange.png" alt="" /></div>
-            <div style={{ flex: 1 }}>
-              <p className="post-name">결혼 2년 차 · 자녀 없음</p>
-              <p className="post-tag">AI 태그: #대화단절 #서운함</p>
-            </div>
-            <i className="fa-solid fa-ellipsis-vertical" style={{ color: 'var(--ink-muted)' }}></i>
-          </div>
-          <p className="quote">
-            "남편이 내 말을 끝까지 안 듣고 결론만 내려요. 저는 그냥 들어주길 바랐는데…" <span className="link-more">더보기</span>
-          </p>
-          <div className="reactions">
-            <span className="like"><i className="fa-solid fa-heart"></i> 공감 88</span>
-            <span><i className="fa-regular fa-thumbs-down"></i> 3</span>
-            <span><i className="fa-regular fa-comment"></i> 댓글 24</span>
-          </div>
-        </div>
-
-        <div className="card locked" style={{ marginTop: 14 }}>
-          <div className="blurred">
-            <span className="badge badge--age"><i className="fa-solid fa-lock" style={{ fontSize: 10 }}></i> 19+</span>
-            <p className="quote" style={{ margin: '12px 0 0' }}>친밀감 고민 · 결혼 2년 차의 솔직한 이야기…</p>
-          </div>
-          <div className="locked__overlay">
-            <span className="badge badge--age"><i className="fa-solid fa-lock" style={{ fontSize: 10 }}></i> 19+ 친밀감 고민</span>
-            <div style={{ fontSize: 16, fontWeight: 600, color: 'var(--ink)' }}>성인 인증 후 열람할 수 있어요</div>
-            <button className="btn-pill">성인 인증하기</button>
-          </div>
-          <div className="pair-art"><img src="/assets/cats/cat_pair.png" alt="" /></div>
-        </div>
-
-        <div className="section-label">
-          <i className="fa-solid fa-share-nodes"></i>나와 비슷한 고민 <span className="muted">· 벡터 매칭</span>
-        </div>
+        {/* 나와 비슷한 고민 (AI 추천) */}
+        <div className="section-label"><i className="fa-solid fa-wand-magic-sparkles"></i>나와 비슷한 고민 <span className="muted">· AI 추천</span></div>
         <div className="stack">
-          <div className="card" style={{ padding: 15 }}>
+          <div className="card" style={{ padding: 15, cursor: 'pointer' }} onClick={() => setDetail(ALL_POSTS[0])}>
             <div className="row">
-              <div className="avatar"><img src="/assets/cats/cat_navy.png" alt="" /></div>
+              <div className="avatar"><img src="/assets/cats/cat_04_t.png" alt="" /></div>
               <div style={{ flex: 1 }}>
                 <p className="row__title">"기념일을 매번 제가 챙겨요"</p>
                 <p className="row__sub">유사도 92% · 결혼 3년 차</p>
@@ -79,9 +128,9 @@ export default function Community({ nav, isDark, toggleTheme }) {
               <span className="badge badge--match">매칭</span>
             </div>
           </div>
-          <div className="card" style={{ padding: 15 }}>
+          <div className="card" style={{ padding: 15, cursor: 'pointer' }} onClick={() => setDetail(ALL_POSTS[1])}>
             <div className="row">
-              <div className="avatar"><img src="/assets/cats/cat_orange.png" alt="" /></div>
+              <div className="avatar"><img src="/assets/cats/cat_02_t.png" alt="" /></div>
               <div style={{ flex: 1 }}>
                 <p className="row__title">"싸우고 나면 며칠씩 말을 안 해요"</p>
                 <p className="row__sub">유사도 87% · 연애 4년 차</p>
@@ -89,8 +138,178 @@ export default function Community({ nav, isDark, toggleTheme }) {
               <span className="badge badge--match">매칭</span>
             </div>
           </div>
+          <div className="card match-locked" style={{ padding: 15 }}>
+            <div className="row">
+              <span className="badge badge--age" style={{ flexShrink: 0 }}>19+</span>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <p className="row__title match-blur">친밀감 부족이 너무 힘들어요</p>
+                <p className="row__sub">유사도 81% · 결혼 5년 차</p>
+              </div>
+              <button className="badge badge--age" style={{ border: 'none', cursor: 'pointer' }}
+                onClick={() => flash('성인 인증은 시연용이에요. 실제 연동 예정.')}>인증 필요</button>
+            </div>
+          </div>
         </div>
+
+        <div className="section-label"><i className="fa-solid fa-fire"></i>지금 올라온 고민</div>
+        <div className="stack">
+          {shown.map((p, idx) => {
+            const isLiked = !!liked[p.id], isComf = !!comforted[p.id]
+            const card = (
+              <div key={p.id} className="card" onClick={() => setDetail(p)} style={{ cursor: 'pointer' }}>
+                <div className="post-head">
+                  <div className="avatar"><img src={`/assets/cats/${p.avatar}.png`} alt="" /></div>
+                  <div style={{ flex: 1 }}>
+                    <p className="post-name">{p.name}</p>
+                    <p className="post-tag">{p.tag}</p>
+                  </div>
+                  <div style={{ position: 'relative' }} onClick={e => e.stopPropagation()}>
+                    <i className="fa-solid fa-ellipsis-vertical" style={{ color: 'var(--ink-muted)', cursor: 'pointer', padding: 4 }}
+                       onClick={() => setMenuOpen(menuOpen === p.id ? null : p.id)}></i>
+                    {menuOpen === p.id && (
+                      <div className="kebab-menu">
+                        <div className="kebab-item" onClick={() => { setMenuOpen(null); flash('1:1 대화는 곧 열려요.') }}><i className="fa-solid fa-comment"></i> 대화하기</div>
+                        <div className="kebab-item danger" onClick={() => { setMenuOpen(null); setReportFor(p) }}><i className="fa-solid fa-flag"></i> 게시물 / 회원 신고하기</div>
+                        <div className="kebab-item danger" onClick={() => hideAuthor(p.author)}><i className="fa-solid fa-eye-slash"></i> 이 회원의 글 모두 숨기기</div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+                <p className="quote">"{p.body.length > 64 ? p.body.slice(0, 64) + '…' : p.body}" <span className="link-more">더보기</span></p>
+                <div className="reactions" onClick={e => e.stopPropagation()}>
+                  <span className={isLiked ? 'like' : ''} style={{ cursor: 'pointer' }} onClick={() => setLiked(s => ({ ...s, [p.id]: !s[p.id] }))}>
+                    <i className={`${isLiked ? 'fa-solid' : 'fa-regular'} fa-heart`}></i> 공감 {p.empathy + (isLiked ? 1 : 0)}
+                  </span>
+                  <span style={{ cursor: 'pointer', color: isComf ? 'var(--warm-text)' : '' }} onClick={() => setComforted(s => ({ ...s, [p.id]: !s[p.id] }))}>
+                    <i className={`${isComf ? 'fa-solid' : 'fa-regular'} fa-hand`}></i> 위로 {p.comfort + (isComf ? 1 : 0)}
+                  </span>
+                  <span><i className="fa-regular fa-comment"></i> 댓글 {p.comments}</span>
+                </div>
+              </div>
+            )
+            // 광고를 피드 4번째 위치에 삽입
+            if (idx === 3) {
+              return [
+                card,
+                <a key="ad" className="card ad-card" href="#" onClick={e => { e.preventDefault(); flash('광고 영역 (시연용)') }}>
+                  <span className="ad-badge">AD</span>
+                  <div className="event-emoji" style={{ background: 'color-mix(in srgb, var(--brand) 16%, transparent)' }}>🎁</div>
+                  <div style={{ flex: 1 }}>
+                    <p className="row__title" style={{ marginBottom: 2 }}>다가오는 기념일, 꽃으로 마음 전하기</p>
+                    <p className="row__sub">제휴 · 당일배송 꽃다발 20% 쿠폰</p>
+                  </div>
+                  <i className="fa-solid fa-chevron-right chev" style={{ color: 'var(--ink-muted)' }}></i>
+                </a>,
+              ]
+            }
+            return card
+          })}
+
+          {/* 19+ 잠긴 게시글 */}
+          <div className="card locked">
+            <div className="blurred" aria-hidden="true">
+              <div className="post-head">
+                <div className="avatar"><img src="/assets/cats/cat_04_t.png" alt="" /></div>
+                <div style={{ flex: 1 }}>
+                  <p className="post-name">익명 · 친밀감 고민이 있어요</p>
+                  <p className="post-tag">AI 태그: #19+ #스킨십 #거리감</p>
+                </div>
+                <i className="fa-solid fa-ellipsis-vertical" style={{ color: 'var(--ink-muted)' }}></i>
+              </div>
+              <p className="quote">결혼하고 2년쯤 지나니 스킨십이 확 줄었어요. 먼저 다가가기도 눈치 보이고, 거절당하면 더 위축돼서 요즘은 그냥 각자 잠드는 날이 많아요…</p>
+              <div className="reactions">
+                <span className="like"><i className="fa-solid fa-heart"></i> 공감 41</span>
+                <span><i className="fa-regular fa-hand"></i> 위로 18</span>
+                <span><i className="fa-regular fa-comment"></i> 댓글 9</span>
+              </div>
+            </div>
+            <div className="locked__overlay">
+              <span className="badge badge--age"><i className="fa-solid fa-lock" style={{ fontSize: 10 }}></i> 19+ 친밀감 고민</span>
+              <div style={{ fontSize: 16, fontWeight: 600, color: 'var(--ink)' }}>성인 인증 후 열람할 수 있어요</div>
+              <button className="btn-pill" onClick={() => flash('성인 인증은 시연용이에요. 실제 연동 예정.')}>성인 인증하기</button>
+            </div>
+          </div>
+
+          {count < feed.length
+            ? <button className="cta cta--ghost more-btn" onClick={() => setCount(c => c + 5)}>
+                고민 더보기 <span style={{ color: 'var(--ink-muted)', fontWeight: 400 }}>({feed.length - count}개 더)</span>
+              </button>
+            : <div className="feed-end">모든 고민을 다 봤어요 🌙</div>}
+        </div>
+
+        <div style={{ height: 56 }} />
       </div>
+
+      {toast && <div className="toast">{toast}</div>}
+
+      <div className="fab-wrap">
+        <div className="fab-bubble">익명으로 글 남기기 ✍️</div>
+        <button className="fab-write" aria-label="글쓰기" onClick={() => setWriting(true)}><i className="fa-solid fa-pen"></i></button>
+      </div>
+
+      {/* 글쓰기 모달 */}
+      {writing && (
+        <div className="sheet-backdrop" onClick={() => setWriting(false)}>
+          <div className="sheet" onClick={e => e.stopPropagation()}>
+            <div className="sheet-handle" />
+            <h2 style={{ margin: '0 0 6px', fontSize: 19, color: 'var(--ink)' }}>익명으로 고민 남기기</h2>
+            <p style={{ margin: '0 0 14px', fontSize: 12.5, color: 'var(--ink-muted)' }}><i className="fa-solid fa-shield-halved" style={{ marginRight: 5 }}></i>이름·날짜 등 개인정보는 게시 전 자동으로 제거돼요.</p>
+            <textarea className="field" style={{ width: '100%', minHeight: 130, resize: 'none', fontFamily: 'inherit' }}
+              placeholder="어떤 마음인지 편하게 적어보세요. 비슷한 고민의 사람들이 공감해줄 거예요." value={draft} onChange={e => setDraft(e.target.value)} autoFocus />
+            <div style={{ display: 'flex', gap: 10, marginTop: 14 }}>
+              <button className="cta cta--ghost" style={{ flex: 1 }} onClick={() => setWriting(false)}>취소</button>
+              <button className="cta" style={{ flex: 1.4, opacity: draft.trim() ? 1 : 0.5 }} onClick={publish}>익명으로 게시</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 신고 사유 모달 */}
+      {reportFor && (
+        <div className="sheet-backdrop" onClick={() => setReportFor(null)} style={{ alignItems: 'center', padding: 22 }}>
+          <div className="modal" onClick={e => e.stopPropagation()} style={{ textAlign: 'left' }}>
+            <h3 style={{ margin: '0 0 4px', fontSize: 18, color: 'var(--ink)' }}>신고 사유를 선택해주세요</h3>
+            <p style={{ margin: '0 0 14px', fontSize: 12.5, color: 'var(--ink-muted)' }}>접수된 신고는 운영 정책에 따라 검토돼요.</p>
+            <div className="stack" style={{ gap: 8 }}>
+              {REPORT_REASONS.map(r => (
+                <button key={r} className="report-reason" onClick={() => submitReport(r)}>{r}<i className="fa-solid fa-chevron-right"></i></button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 게시글 상세 */}
+      {detail && (
+        <div className="sheet-backdrop" onClick={() => setDetail(null)}>
+          <div className="sheet" onClick={e => e.stopPropagation()}>
+            <div className="sheet-handle" />
+            <div className="post-head">
+              <div className="avatar"><img src={`/assets/cats/${detail.avatar}.png`} alt="" /></div>
+              <div style={{ flex: 1 }}>
+                <p className="post-name">{detail.name}</p>
+                <p className="post-tag">{detail.tag}</p>
+              </div>
+              <i className="fa-solid fa-xmark" style={{ color: 'var(--ink-muted)', cursor: 'pointer', fontSize: 18 }} onClick={() => setDetail(null)}></i>
+            </div>
+            <p style={{ fontSize: 15, lineHeight: 1.75, color: 'var(--ink)' }}>{detail.body}</p>
+            <div className="reactions" style={{ margin: '6px 0 18px' }}>
+              <span className="like"><i className="fa-solid fa-heart"></i> 공감 {detail.empathy}</span>
+              <span><i className="fa-regular fa-hand"></i> 위로 {detail.comfort}</span>
+              <span><i className="fa-regular fa-comment"></i> 댓글 {detail.comments}</span>
+            </div>
+            <div className="section-label" style={{ marginTop: 4 }}><i className="fa-regular fa-comment"></i>댓글</div>
+            <div className="stack" style={{ gap: 10 }}>
+              <div className="comment"><b>익명1</b> 저도 똑같아요. 먼저 챙기는 사람만 서운하죠…</div>
+              <div className="comment"><b>익명2</b> 한 번 솔직하게 말해보는 건 어때요? 응원할게요 🙏</div>
+            </div>
+            <div className="comment-input">
+              <input className="field" style={{ flex: 1 }} placeholder="따뜻한 댓글을 남겨보세요" />
+              <button className="cta" style={{ width: 'auto', padding: '0 18px' }}>등록</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <BottomNav active="커뮤니티" nav={nav} />
     </>

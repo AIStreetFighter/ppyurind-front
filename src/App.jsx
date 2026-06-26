@@ -4,7 +4,9 @@ import Onboarding from "./screens/Onboarding";
 import Home from "./screens/Home";
 import Record from "./screens/Record";
 import Analysis from "./screens/Analysis";
+import AnalysisResult from "./screens/AnalysisResult";
 import Translate from "./screens/Translate";
+import Calendar from "./screens/Calendar";
 import Report from "./screens/Report";
 import Community from "./screens/Community";
 import MyPage from "./screens/MyPage";
@@ -24,7 +26,9 @@ export default function App() {
     home: <Home {...props} />,
     record: <Record {...props} />,
     analysis: <Analysis {...props} />,
+    analysisResult: <AnalysisResult {...props} />,
     translate: <Translate {...props} />,
+    calendar: <Calendar {...props} />,
     report: <Report {...props} />,
     community: <Community {...props} />,
     mypage: <MyPage {...props} />,

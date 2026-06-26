@@ -1,7 +1,42 @@
+import { useState } from 'react'
 import BottomNav from '../components/BottomNav'
 import ThemeToggle from '../components/ThemeToggle'
+import PinPad from '../components/PinPad'
+
+const DEX = [
+  {
+    key: 'secret', icon: 'fa-wand-magic-sparkles', label: '나만의 비밀 도감', count: 12,
+    body: ['"지우님은 해결보다 공감을 먼저 원해요."', '"칭찬은 사람들 앞에서 들을 때 가장 기뻐요."', '"피곤할 땐 말보다 혼자만의 시간이 필요해요."'],
+  },
+  {
+    key: 'partner', icon: 'fa-heart', label: '배우자 이해 노트',
+    body: ['결론보다 과정을 먼저 들어주면 마음이 풀려요.', '걱정이 많아 보일 땐 "내가 옆에 있어"라는 말이 가장 커요.'],
+  },
+  {
+    key: 'taboo', icon: 'fa-triangle-exclamation', label: '조심해야 할 대화 주제',
+    body: ['외모·체중 관련 농담', '시댁·처가 비교', '예전 연애 이야기'],
+  },
+  {
+    key: 'cheat', icon: 'fa-mug-hot', label: '기분 풀리는 치트키',
+    body: ['마라탕 + 탕후루 세트', '말없이 안아주기', '드라이브하며 좋아하는 노래 틀기'],
+  },
+  {
+    key: 'wish', icon: 'fa-gift', label: '흘려 말한 위시리스트',
+    body: ['무선 이어폰 (분실함)', '주말 호캉스', '향수 — 우디 계열'],
+  },
+]
 
 export default function MyPage({ nav, isDark, toggleTheme }) {
+  const [open, setOpen] = useState(null)
+  const [settings, setSettings] = useState(false)
+  const [tone, setTone] = useState('부드럽게')
+  const [push, setPush] = useState({ empathy: true, comment: true, anniv: true })
+  const [confirm, setConfirm] = useState(null) // 'logout' | 'withdraw'
+  const [pinOpen, setPinOpen] = useState(false)
+  const [pinDone, setPinDone] = useState(false)
+
+  const toggleDex = (k) => setOpen(prev => prev === k ? null : k)
+
   return (
     <>
       <div className="phone-body">
@@ -9,87 +44,149 @@ export default function MyPage({ nav, isDark, toggleTheme }) {
           <p className="eyebrow">마이</p>
           <div className="topbar__icons">
             <ThemeToggle isDark={isDark} toggleTheme={toggleTheme} />
-            <i className="fa-solid fa-gear"></i>
+            <i className="fa-solid fa-gear" style={{ cursor: 'pointer' }} onClick={() => setSettings(true)}></i>
           </div>
         </div>
 
         <div className="card" style={{ marginTop: 10, display: 'flex', alignItems: 'center', gap: 15 }}>
-          <div style={{ display: 'flex' }}>
-            <div className="avatar" style={{ width: 54, height: 54 }}>
-              <img src="/assets/cats/cat_orange.png" alt="" />
-            </div>
-            <div className="avatar" style={{ width: 54, height: 54, marginLeft: -16, border: '2px solid var(--surface)' }}>
-              <img src="/assets/cats/cat_navy.png" alt="" />
-            </div>
+          <div className="avatar" style={{ width: 56, height: 56 }}>
+            <img src="/assets/cats/cat_02_t.png" alt="" />
           </div>
-          <div>
-            <p className="row__title" style={{ fontSize: 17 }}>지우 &amp; 도현</p>
-            <p className="row__sub">신혼 · 결혼 2년 차 · 응답 톤: 부드럽게</p>
+          <div style={{ flex: 1 }}>
+            <p className="row__title" style={{ fontSize: 17 }}>들풀 <span style={{ fontSize: 12, color: 'var(--ink-muted)', fontWeight: 400 }}>#0421</span></p>
+            <p className="row__sub">신혼 · 결혼 2년 차 · 응답 톤: {tone}</p>
           </div>
+          <i className="fa-solid fa-pen" style={{ color: 'var(--ink-muted)', fontSize: 14, cursor: 'pointer' }} onClick={() => setSettings(true)}></i>
         </div>
 
+        {/* 나만의 도감 — 아코디언 */}
         <div className="section-label"><i className="fa-solid fa-book"></i>나만의 도감</div>
-        <div className="card" style={{ padding: '6px 18px' }}>
-          <div className="menu-item">
-            <i className="fa-solid fa-wand-magic-sparkles"></i>
-            <span className="mlabel">나만의 비밀 도감</span>
-            <span className="badge badge--match" style={{ marginLeft: 'auto' }}>12</span>
-          </div>
-          <div className="menu-item">
-            <i className="fa-solid fa-heart"></i>
-            <span className="mlabel">배우자 이해 노트</span>
-            <i className="fa-solid fa-chevron-right chev"></i>
-          </div>
-          <div className="menu-item">
-            <i className="fa-solid fa-triangle-exclamation"></i>
-            <span className="mlabel">건드리면 안 되는 주제</span>
-            <i className="fa-solid fa-chevron-right chev"></i>
-          </div>
-          <div className="menu-item">
-            <i className="fa-solid fa-gift"></i>
-            <span className="mlabel">흘려 말한 위시리스트</span>
-            <i className="fa-solid fa-chevron-right chev"></i>
-          </div>
+        <div className="card" style={{ padding: '4px 0' }}>
+          {DEX.map((d, i) => (
+            <div key={d.key} className={`acc${i > 0 ? ' acc--line' : ''}`}>
+              <div className="acc-head" onClick={() => toggleDex(d.key)}>
+                <i className={`fa-solid ${d.icon} acc-ic`}></i>
+                <span className="mlabel" style={{ flex: 1 }}>{d.label}</span>
+                {d.count != null && <span className="badge badge--match" style={{ marginRight: 8 }}>{d.count}</span>}
+                <i className={`fa-solid fa-chevron-${open === d.key ? 'up' : 'down'} chev`}></i>
+              </div>
+              {open === d.key && (
+                <div className="acc-body">
+                  {d.body.map((line, j) => <p key={j} className="acc-line-item">· {line}</p>)}
+                  <button className="acc-add"><i className="fa-solid fa-plus"></i> 추가하기</button>
+                </div>
+              )}
+            </div>
+          ))}
         </div>
 
+        {/* 배우자 이해 노트 기반 살짝 광고 */}
+        <a className="card mini-ad" href="#" onClick={e => e.preventDefault()}>
+          <span className="ad-badge">AD</span>
+          <div className="event-emoji" style={{ background: 'color-mix(in srgb, var(--like) 16%, transparent)' }}>🎁</div>
+          <div style={{ flex: 1 }}>
+            <p className="row__title" style={{ marginBottom: 2 }}>위시리스트 속 '무선 이어폰', 지금 특가예요</p>
+            <p className="row__sub">도감 기반 추천 · 제휴</p>
+          </div>
+          <i className="fa-solid fa-chevron-right chev" style={{ color: 'var(--ink-muted)' }}></i>
+        </a>
+
+        {/* 기록 & 리포트 (병합) */}
         <div className="section-label"><i className="fa-solid fa-folder-open"></i>기록 &amp; 리포트</div>
         <div className="card" style={{ padding: '6px 18px' }}>
-          <div className="menu-item">
-            <i className="fa-solid fa-pen-nib"></i>
-            <span className="mlabel">내 감정 기록</span>
-            <i className="fa-solid fa-chevron-right chev"></i>
-          </div>
-          <div className="menu-item">
+          <div className="menu-item" onClick={() => nav('report')}>
             <i className="fa-solid fa-chart-pie"></i>
-            <span className="mlabel">주간 · 월간 리포트</span>
+            <span className="mlabel">내 감정 기록 · 주간/월간 리포트</span>
             <i className="fa-solid fa-chevron-right chev"></i>
           </div>
-          <div className="menu-item">
+          <div className="menu-item" onClick={() => nav('analysisResult')}>
             <i className="fa-solid fa-comments"></i>
+            <span className="mlabel">대화 분석 <span style={{ fontSize: 12, color: 'var(--ink-muted)' }}>· 상대와의 대화 기록</span></span>
+            <i className="fa-solid fa-chevron-right chev"></i>
+          </div>
+          <div className="menu-item" onClick={() => nav('community')}>
+            <i className="fa-solid fa-pen-nib"></i>
             <span className="mlabel">내가 쓴 커뮤니티 글</span>
             <i className="fa-solid fa-chevron-right chev"></i>
           </div>
         </div>
+      </div>
 
-        <div className="section-label"><i className="fa-solid fa-shield-halved"></i>설정</div>
-        <div className="card" style={{ padding: '6px 18px' }}>
-          <div className="menu-item">
-            <i className="fa-solid fa-sliders"></i>
-            <span className="mlabel">AI 응답 톤 변경</span>
-            <i className="fa-solid fa-chevron-right chev"></i>
-          </div>
-          <div className="menu-item" onClick={toggleTheme} style={{ cursor: 'pointer' }}>
-            <i className={isDark ? 'fa-solid fa-sun' : 'fa-solid fa-moon'}></i>
-            <span className="mlabel">{isDark ? '라이트 모드로 전환' : '다크 모드로 전환'}</span>
-            <i className="fa-solid fa-chevron-right chev"></i>
-          </div>
-          <div className="menu-item">
-            <i className="fa-solid fa-lock"></i>
-            <span className="mlabel">개인정보 · 공유 설정</span>
-            <i className="fa-solid fa-chevron-right chev"></i>
+      {/* 설정 시트 */}
+      {settings && (
+        <div className="sheet-backdrop" onClick={() => setSettings(false)}>
+          <div className="sheet" onClick={e => e.stopPropagation()}>
+            <div className="sheet-handle" />
+            <h2 style={{ margin: '0 0 18px', fontSize: 19, color: 'var(--ink)' }}>설정</h2>
+
+            <div className="section-label" style={{ marginTop: 0 }}><i className="fa-solid fa-sliders"></i>맞춤정보 설정</div>
+            <p style={{ margin: '0 0 10px', fontSize: 12.5, color: 'var(--ink-muted)' }}>가입 시 입력한 정보를 언제든 수정할 수 있어요.</p>
+            <div className="setrow"><span>관계 상태</span><b>신혼 · 결혼 2년 차</b></div>
+            <div className="setrow"><span>주요 고민</span><b>대화 단절 · 서운함</b></div>
+            <div style={{ margin: '4px 0 6px', fontSize: 13, color: 'var(--ink-soft)' }}>AI 응답 톤</div>
+            <div className="chip-row" style={{ marginBottom: 6 }}>
+              {['부드럽게', '현실적으로', '공감 중심', '해결책 중심'].map(v => (
+                <span key={v} className={`chip chip--sm${tone === v ? ' selected' : ''}`} onClick={() => setTone(v)}>{v}</span>
+              ))}
+            </div>
+
+            <div className="section-label"><i className="fa-regular fa-bell"></i>푸시 알림</div>
+            {[
+              { k: 'empathy', label: '공감 알림' },
+              { k: 'comment', label: '댓글 알림' },
+              { k: 'anniv', label: '기념일 알림 (일주일 전 · 하루 전)' },
+            ].map(p => (
+              <div key={p.k} className="toggle-row" style={{ marginBottom: 9 }}>
+                <div style={{ fontSize: 14, color: 'var(--ink)' }}>{p.label}</div>
+                <div className={`switch${push[p.k] ? '' : ' off'}`} onClick={() => setPush(s => ({ ...s, [p.k]: !s[p.k] }))} />
+              </div>
+            ))}
+
+            <div className="section-label"><i className="fa-solid fa-shield-halved"></i>계정 · 약관</div>
+            <div className="card" style={{ padding: '4px 16px' }}>
+              <div className="menu-item"><i className="fa-solid fa-file-lines"></i><span className="mlabel">개인정보 처리방침</span><i className="fa-solid fa-chevron-right chev"></i></div>
+              <div className="menu-item"><i className="fa-solid fa-file-contract"></i><span className="mlabel">서비스 이용약관</span><i className="fa-solid fa-chevron-right chev"></i></div>
+              <div className="menu-item" onClick={toggleTheme}><i className={isDark ? 'fa-solid fa-sun' : 'fa-solid fa-moon'}></i><span className="mlabel">{isDark ? '라이트 모드로 전환' : '다크 모드로 전환'}</span><i className="fa-solid fa-chevron-right chev"></i></div>
+              <div className="menu-item" onClick={() => setPinOpen(true)}><i className="fa-solid fa-lock"></i><span className="mlabel">앱 잠금 비밀번호 {pinDone ? '변경' : '설정'}</span><i className="fa-solid fa-chevron-right chev"></i></div>
+            </div>
+            <div style={{ display: 'flex', gap: 10, marginTop: 16 }}>
+              <button className="cta cta--ghost" style={{ flex: 1 }} onClick={() => setConfirm('logout')}>로그아웃</button>
+              <button className="cta cta--ghost" style={{ flex: 1, color: 'var(--danger-text)', borderColor: 'var(--danger-line)' }} onClick={() => setConfirm('withdraw')}>회원 탈퇴</button>
+            </div>
           </div>
         </div>
-      </div>
+      )}
+
+      {/* 로그아웃/탈퇴 확인 */}
+      {confirm && (
+        <div className="sheet-backdrop" onClick={() => setConfirm(null)} style={{ alignItems: 'center', padding: 22 }}>
+          <div className="modal" onClick={e => e.stopPropagation()}>
+            <i className={`fa-solid ${confirm === 'withdraw' ? 'fa-heart-crack' : 'fa-right-from-bracket'}`} style={{ fontSize: 24, color: confirm === 'withdraw' ? 'var(--danger-text)' : 'var(--brand)' }}></i>
+            <h3 style={{ margin: '12px 0 6px', fontSize: 18, color: 'var(--ink)' }}>
+              {confirm === 'withdraw' ? '정말 탈퇴하시겠어요?' : '로그아웃 할까요?'}
+            </h3>
+            <p style={{ margin: '0 0 18px', fontSize: 13.5, lineHeight: 1.6, color: 'var(--ink-soft)' }}>
+              {confirm === 'withdraw' ? '모든 기록과 도감이 삭제되며 되돌릴 수 없어요.' : '다시 로그인하면 기록을 이어서 볼 수 있어요.'}
+            </p>
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button className="cta cta--ghost" style={{ flex: 1 }} onClick={() => setConfirm(null)}>취소</button>
+              <button className="cta" style={{ flex: 1, background: confirm === 'withdraw' ? 'var(--like)' : 'var(--brand)' }} onClick={() => { setConfirm(null); setSettings(false); nav('kakaoLogin') }}>
+                {confirm === 'withdraw' ? '탈퇴하기' : '로그아웃'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 앱 잠금 PIN 설정/변경 */}
+      {pinOpen && (
+        <div className="sheet-backdrop" onClick={() => setPinOpen(false)} style={{ alignItems: 'center', padding: 22 }}>
+          <div className="modal" onClick={e => e.stopPropagation()}>
+            <h3 style={{ margin: '0 0 16px', fontSize: 18, color: 'var(--ink)' }}>앱 잠금 비밀번호</h3>
+            <PinPad onDone={() => { setPinDone(true); setPinOpen(false) }} onCancel={() => setPinOpen(false)} />
+          </div>
+        </div>
+      )}
 
       <BottomNav active="마이" nav={nav} />
     </>
