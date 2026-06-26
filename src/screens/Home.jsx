@@ -1,7 +1,20 @@
+import { useState } from 'react'
 import BottomNav from '../components/BottomNav'
 import ThemeToggle from '../components/ThemeToggle'
 import { EVENTS, EVENT_TYPES } from '../data/events'
 import NotifBell from '../components/NotifBell'
+
+// 다가오는 기념일/생일에 맞춘 선물 추천 광고 — 진입 시 랜덤 노출
+const GIFT_ADS = [
+  { for: 'anniv',    emoji: '💍', title: '결혼기념일 선물, 커플 각인 반지 특가', sub: '기념일 추천 · 제휴' },
+  { for: 'anniv',    emoji: '🌷', title: '기념일엔 프리저브드 플라워 한 송이', sub: '기념일 추천 · 제휴' },
+  { for: 'anniv',    emoji: '🏨', title: '둘만의 기념일, 호캉스 1박 할인', sub: '기념일 추천 · 제휴' },
+  { for: 'anniv',    emoji: '🍽️', title: '기념일 디너, 분위기 좋은 레스토랑 예약', sub: '기념일 추천 · 제휴' },
+  { for: 'birthday', emoji: '🎂', title: '생일 선물, 이름 새긴 케이크 주문', sub: '생일 추천 · 제휴' },
+  { for: 'birthday', emoji: '🎁', title: '생일엔 향수, 우디 계열 베스트', sub: '생일 추천 · 제휴' },
+  { for: 'birthday', emoji: '💐', title: '생일 축하 꽃다발 당일 배송', sub: '생일 추천 · 제휴' },
+  { for: 'birthday', emoji: '🧁', title: '생일 디저트 박스, 둘이 나눠 먹기 좋은', sub: '생일 추천 · 제휴' },
+]
 
 const bars = [
   { day: '월', h: 42, color: 'var(--like)' },
@@ -27,6 +40,15 @@ export default function Home({ nav, isDark, toggleTheme }) {
   const monthEvents = EVENTS
     .filter(e => e.date.startsWith(ym) && (e.type === 'anniv' || e.type === 'birthday'))
     .sort((a, b) => a.date.localeCompare(b.date))
+
+  // 이번 달 일정 타입에 맞는 선물 광고를 진입 시 랜덤 노출 (X로 닫기)
+  const [adClosed, setAdClosed] = useState(false)
+  const [gift] = useState(() => {
+    const types = new Set(monthEvents.map(e => e.type))
+    const pool = GIFT_ADS.filter(a => types.has(a.for))
+    const list = pool.length ? pool : GIFT_ADS
+    return list[Math.floor(Math.random() * list.length)]
+  })
 
   return (
     <>
@@ -126,6 +148,22 @@ export default function Home({ nav, isDark, toggleTheme }) {
               </div>
             )
           })}
+          {monthEvents.length > 0 && !adClosed && (
+            <div className="card event-row home-gift-ad">
+              <div className="event-emoji" style={{ background: 'color-mix(in srgb, var(--like) 16%, transparent)' }}>{gift.emoji}</div>
+              <div style={{ flex: 1 }}>
+                <p className="row__title" style={{ marginBottom: 2, display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <span className="ad-tag">AD</span>{gift.title}
+                </p>
+                <p className="row__sub">{gift.sub}</p>
+              </div>
+              <i
+                className="fa-solid fa-xmark"
+                style={{ color: 'var(--ink-muted)', fontSize: 14, cursor: 'pointer', padding: 4 }}
+                onClick={(ev) => { ev.stopPropagation(); setAdClosed(true) }}
+              ></i>
+            </div>
+          )}
         </div>
       </div>
 
