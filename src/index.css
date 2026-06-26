@@ -571,7 +571,7 @@ body {
 }
 
 /* 바텀시트 (상세) */
-.sheet-backdrop { position: absolute; inset: 0; z-index: 60; background: rgba(0,0,0,0.5); display: flex; align-items: flex-end; }
+.sheet-backdrop { position: absolute; inset: 0; z-index: 60; background: rgba(0,0,0,0.5); display: flex; align-items: flex-end; justify-content: center; }
 .sheet {
   width: 100%; max-height: 86%; overflow-y: auto;
   background: var(--bg); border-radius: 22px 22px 0 0; border-top: 1px solid var(--surface-line);
