@@ -26,7 +26,7 @@ const DEX = [
   },
 ]
 
-export default function MyPage({ nav, isDark, toggleTheme }) {
+export default function MyPage({ nav, isDark, toggleTheme, nickname }) {
   const [open, setOpen] = useState(null)
   const [settings, setSettings] = useState(false)
   const [tone, setTone] = useState('부드럽게')
@@ -53,7 +53,7 @@ export default function MyPage({ nav, isDark, toggleTheme }) {
             <img src="/assets/cats/cat_02_t.png" alt="" />
           </div>
           <div style={{ flex: 1 }}>
-            <p className="row__title" style={{ fontSize: 17 }}>들풀 <span style={{ fontSize: 12, color: 'var(--ink-muted)', fontWeight: 400 }}>#0421</span></p>
+            <p className="row__title" style={{ fontSize: 17 }}>{nickname || '들풀'} <span style={{ fontSize: 12, color: 'var(--ink-muted)', fontWeight: 400 }}>#0421</span></p>
             <p className="row__sub">신혼 · 결혼 2년 차 · 응답 톤: {tone}</p>
           </div>
           <i className="fa-solid fa-pen" style={{ color: 'var(--ink-muted)', fontSize: 14, cursor: 'pointer' }} onClick={() => setSettings(true)}></i>

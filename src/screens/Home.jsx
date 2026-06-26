@@ -33,7 +33,7 @@ function todayLabel() {
   return `${d.getMonth() + 1}월 ${d.getDate()}일 ${WEEKDAYS[d.getDay()]}요일`
 }
 
-export default function Home({ nav, isDark, toggleTheme }) {
+export default function Home({ nav, isDark, toggleTheme, nickname }) {
   const now = new Date()
   const ym = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
   // 홈 '이번 달 일정'에는 기념일·생일만 노출 (다툰 날 등은 캘린더에서만 확인)
@@ -62,7 +62,7 @@ export default function Home({ nav, isDark, toggleTheme }) {
         </div>
 
         <div className="header">
-          <h1 className="page-title">오늘 마음은<br />어때요, 지우님?</h1>
+          <h1 className="page-title">오늘 마음은<br />어때요, {nickname || '지우'}님?</h1>
           <p className="page-sub">{todayLabel()}</p>
           <div className="header-art">
             <img src="/assets/cats/cat_01_t.png" alt="" />

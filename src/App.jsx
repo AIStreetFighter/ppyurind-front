@@ -14,11 +14,12 @@ import MyPage from "./screens/MyPage";
 export default function App() {
   const [screen, setScreen] = useState("kakaoLogin");
   const [isDark, setIsDark] = useState(true);
+  const [nickname, setNickname] = useState("지우");
 
   const nav = (to) => setScreen(to);
   const toggleTheme = () => setIsDark((prev) => !prev);
 
-  const props = { nav, isDark, toggleTheme };
+  const props = { nav, isDark, toggleTheme, nickname, onNicknameSave: setNickname };
 
   const screens = {
     kakaoLogin: <KakaoLogin {...props} />,

@@ -2,7 +2,7 @@ import { useState } from 'react'
 import ThemeToggle from '../components/ThemeToggle'
 import PinPad from '../components/PinPad'
 
-export default function Onboarding({ nav, isDark, toggleTheme }) {
+export default function Onboarding({ nav, isDark, toggleTheme, onNicknameSave }) {
   const [step, setStep] = useState(1)
   const [relation, setRelation] = useState('신혼')
   const [year, setYear] = useState('2년 차')
@@ -148,7 +148,7 @@ export default function Onboarding({ nav, isDark, toggleTheme }) {
           <button
             className="cta"
             style={{ marginTop: 26, opacity: nickname.trim() ? 1 : 0.5 }}
-            onClick={() => nickname.trim() && nav('home')}
+            onClick={() => { if (nickname.trim()) { onNicknameSave?.(nickname.trim()); nav('home') } }}
           >
             감정 기록 시작하기
           </button>
