@@ -53,7 +53,6 @@ export default function Community({ nav, isDark, toggleTheme }) {
   const [comforted, setComforted] = useState({})
   const [menuOpen, setMenuOpen] = useState(null)
   const [toast, setToast] = useState('')
-  const [detail, setDetail] = useState(null)
   const [reportFor, setReportFor] = useState(null)
   const [hiddenAuthors, setHiddenAuthors] = useState([])
   const [userPosts, setUserPosts] = useState([])
@@ -143,7 +142,7 @@ export default function Community({ nav, isDark, toggleTheme }) {
         {/* 나와 비슷한 고민 (AI 추천) */}
         <div className="section-label"><i className="fa-solid fa-wand-magic-sparkles"></i>나와 비슷한 고민 <span className="muted">· AI 추천</span></div>
         <div className="stack">
-          <div className="card" style={{ padding: 15, cursor: 'pointer' }} onClick={() => setDetail(ALL_POSTS[0])}>
+          <div className="card" style={{ padding: 15, cursor: 'pointer' }} onClick={() => nav('post', { post: ALL_POSTS[0] })}>
             <div className="row">
               <div className="avatar"><img src="/assets/cats/cat_04_t.png" alt="" /></div>
               <div style={{ flex: 1 }}>
@@ -153,7 +152,7 @@ export default function Community({ nav, isDark, toggleTheme }) {
               <span className="badge badge--match">매칭</span>
             </div>
           </div>
-          <div className="card" style={{ padding: 15, cursor: 'pointer' }} onClick={() => setDetail(ALL_POSTS[1])}>
+          <div className="card" style={{ padding: 15, cursor: 'pointer' }} onClick={() => nav('post', { post: ALL_POSTS[1] })}>
             <div className="row">
               <div className="avatar"><img src="/assets/cats/cat_02_t.png" alt="" /></div>
               <div style={{ flex: 1 }}>
@@ -188,7 +187,7 @@ export default function Community({ nav, isDark, toggleTheme }) {
           {shown.map((p, idx) => {
             const isLiked = !!liked[p.id], isComf = !!comforted[p.id]
             const card = (
-              <div key={p.id} className="card" onClick={() => setDetail(p)} style={{ cursor: 'pointer' }}>
+              <div key={p.id} className="card" onClick={() => nav('post', { post: p })} style={{ cursor: 'pointer' }}>
                 <div className="post-head">
                   <div className="avatar"><img src={`/assets/cats/${p.avatar}.png`} alt="" /></div>
                   <div style={{ flex: 1, minWidth: 0 }}>
@@ -211,7 +210,7 @@ export default function Community({ nav, isDark, toggleTheme }) {
                     )}
                   </div>
                 </div>
-                <p className="quote">"{p.body.length > 64 ? p.body.slice(0, 64) + '…' : p.body}" <span className="link-more">더보기</span></p>
+                <p className="quote">"{p.body.length > 64 ? p.body.slice(0, 64) + '…' : p.body}" <span className="link-more" onClick={(e) => { e.stopPropagation(); nav('post', { post: p }) }}>더보기</span></p>
                 <div className="reactions" onClick={e => e.stopPropagation()}>
                   <span className={isLiked ? 'like' : ''} style={{ cursor: 'pointer' }} onClick={() => setLiked(s => ({ ...s, [p.id]: !s[p.id] }))}>
                     <i className={`${isLiked ? 'fa-solid' : 'fa-regular'} fa-heart`}></i> 공감 {p.empathy + (isLiked ? 1 : 0)}
@@ -219,7 +218,7 @@ export default function Community({ nav, isDark, toggleTheme }) {
                   <span style={{ cursor: 'pointer', color: isComf ? 'var(--warm-text)' : '' }} onClick={() => setComforted(s => ({ ...s, [p.id]: !s[p.id] }))}>
                     <i className={`${isComf ? 'fa-solid' : 'fa-regular'} fa-hand`}></i> 위로 {p.comfort + (isComf ? 1 : 0)}
                   </span>
-                  <span><i className="fa-regular fa-comment"></i> 댓글 {p.comments}</span>
+                  <span style={{ cursor: 'pointer' }} onClick={() => nav('post', { post: p })}><i className="fa-regular fa-comment"></i> 댓글 {p.comments}</span>
                 </div>
               </div>
             )
@@ -330,39 +329,6 @@ export default function Community({ nav, isDark, toggleTheme }) {
               {REPORT_REASONS.map(r => (
                 <button key={r} className="report-reason" onClick={() => submitReport(r)}>{r}<i className="fa-solid fa-chevron-right"></i></button>
               ))}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* 게시글 상세 */}
-      {detail && (
-        <div className="sheet-backdrop" onClick={() => setDetail(null)}>
-          <div className="sheet" onClick={e => e.stopPropagation()}>
-            <div className="sheet-handle" />
-            <div className="post-head">
-              <div className="avatar"><img src={`/assets/cats/${detail.avatar}.png`} alt="" /></div>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <p className="post-name">{detail.nick}</p>
-                <p className="post-title">{detail.title}</p>
-                <p className="post-tag">{detail.tag}</p>
-              </div>
-              <i className="fa-solid fa-xmark" style={{ color: 'var(--ink-muted)', cursor: 'pointer', fontSize: 18 }} onClick={() => setDetail(null)}></i>
-            </div>
-            <p style={{ fontSize: 15, lineHeight: 1.75, color: 'var(--ink)' }}>{detail.body}</p>
-            <div className="reactions" style={{ margin: '6px 0 18px' }}>
-              <span className="like"><i className="fa-solid fa-heart"></i> 공감 {detail.empathy}</span>
-              <span><i className="fa-regular fa-hand"></i> 위로 {detail.comfort}</span>
-              <span><i className="fa-regular fa-comment"></i> 댓글 {detail.comments}</span>
-            </div>
-            <div className="section-label" style={{ marginTop: 4 }}><i className="fa-regular fa-comment"></i>댓글</div>
-            <div className="stack" style={{ gap: 10 }}>
-              <div className="comment"><b>익명1</b> 저도 똑같아요. 먼저 챙기는 사람만 서운하죠…</div>
-              <div className="comment"><b>익명2</b> 한 번 솔직하게 말해보는 건 어때요? 응원할게요 🙏</div>
-            </div>
-            <div className="comment-input">
-              <input className="field" style={{ flex: 1 }} placeholder="따뜻한 댓글을 남겨보세요" />
-              <button className="cta" style={{ width: 'auto', padding: '0 18px' }}>등록</button>
             </div>
           </div>
         </div>

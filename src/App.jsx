@@ -9,6 +9,7 @@ import Translate from "./screens/Translate";
 import Calendar from "./screens/Calendar";
 import MindCheckup from "./screens/MindCheckup";
 import Legal from "./screens/Legal";
+import PostDetail from "./screens/PostDetail";
 import Report from "./screens/Report";
 import Community from "./screens/Community";
 import MyPage from "./screens/MyPage";
@@ -19,10 +20,12 @@ export default function App() {
   const [nickname, setNickname] = useState("지우");
   const [checkupSignal, setCheckupSignal] = useState("");
   const [legal, setLegal] = useState({ doc: "privacy", from: "kakaoLogin" });
+  const [activePost, setActivePost] = useState(null);
 
   const nav = (to, payload) => {
     if (to === "checkup") setCheckupSignal(payload?.signal || "");
     if (to === "legal") setLegal({ doc: payload?.doc || "privacy", from: payload?.from || "kakaoLogin" });
+    if (to === "post" && payload?.post) setActivePost(payload.post);
     setScreen(to);
   };
   const toggleTheme = () => setIsDark((prev) => !prev);
@@ -40,6 +43,7 @@ export default function App() {
     calendar: <Calendar {...props} />,
     checkup: <MindCheckup {...props} signal={checkupSignal} />,
     legal: <Legal {...props} doc={legal.doc} from={legal.from} />,
+    post: <PostDetail {...props} post={activePost} />,
     report: <Report {...props} />,
     community: <Community {...props} />,
     mypage: <MyPage {...props} />,
