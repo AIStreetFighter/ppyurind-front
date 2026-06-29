@@ -55,7 +55,10 @@ export default function PostDetail({ nav, post }) {
 
   const addComment = () => {
     if (!draft.trim()) return
-    setComments(c => [...c, { id: Date.now(), nick: '나', body: draft.trim(), mine: true }])
+    setComments(c => [...c, {
+      id: Date.now(), nick: '나', body: draft.trim(),
+      time: '방금', likes: 0, liked: false, replies: [], mine: true,
+    }])
     setDraft('')
   }
 

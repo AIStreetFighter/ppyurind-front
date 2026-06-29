@@ -34,40 +34,106 @@ const RECOMMENDED = {
 
 const TONES = ['부드럽게', '솔직하게', '카톡용 짧게', '요청형']
 
+// 각 톤·상황마다 여러 변형을 두고, '다시 변환' 시 순환하며 다른 표현을 보여준다.
 const TONE_RESULTS = {
   '부드럽게': {
-    phone:   '요즘 같이 있을 때 핸드폰 보는 시간이 많아서 좀 서운했어. 나랑 얘기하는 시간을 조금 더 가지고 싶어.',
-    sorry:   '내가 그때 더 신경 써야 했는데 그러지 못해서 미안해. 다음엔 더 잘할게.',
-    sad:     '그때 좀 서운했어. 이야기하기 어려웠는데 말하고 싶었어. 들어줄 수 있어?',
-    default: '네 마음이 어땠을지 생각해봤어. 우리 오늘 잠깐 이야기 나눠볼 수 있을까?',
+    phone: [
+      '요즘 같이 있을 때 핸드폰 보는 시간이 많아서 좀 서운했어. 나랑 얘기하는 시간을 조금 더 가지고 싶어.',
+      '같이 있어도 핸드폰만 보면 나 혼자인 것 같아 조금 쓸쓸해. 우리 대화 시간을 조금만 늘려볼까?',
+      '네가 핸드폰에 집중할 때 가끔 거리감이 느껴져. 잠깐이라도 눈 마주치고 얘기하고 싶어.',
+    ],
+    sorry: [
+      '내가 그때 더 신경 써야 했는데 그러지 못해서 미안해. 다음엔 더 잘할게.',
+      '그때 일은 내가 더 챙겼어야 했어. 미안한 마음이야. 앞으로 더 신경 쓸게.',
+      '내 말이 너를 속상하게 했구나. 정말 미안해, 그럴 의도는 아니었어.',
+    ],
+    sad: [
+      '그때 좀 서운했어. 이야기하기 어려웠는데 말하고 싶었어. 들어줄 수 있어?',
+      '그날은 마음이 좀 무거웠어. 말 꺼내기 어려웠지만 너랑 나누고 싶었어.',
+      '솔직히 마음 한켠이 서운했어. 네가 알아줬으면 해서 용기 내봤어.',
+    ],
+    default: [
+      '네 마음이 어땠을지 생각해봤어. 우리 오늘 잠깐 이야기 나눠볼 수 있을까?',
+      '네 마음을 더 알고 싶어. 시간 될 때 잠깐 이야기 나눌 수 있을까?',
+      '요즘 네 생각을 많이 했어. 편할 때 잠깐 얘기해줄 수 있어?',
+    ],
   },
   '솔직하게': {
-    phone:   '솔직히 요즘 같이 있어도 핸드폰만 보니까 나 혼자 있는 것 같아. 그게 많이 힘들어.',
-    sorry:   '내가 잘못한 거 알아. 변명 없이 그냥 미안하다고 말하고 싶었어.',
-    sad:     '솔직히 그때 많이 서운했어. 그냥 넘기기가 싫어서 말하는 거야.',
-    default: '하고 싶은 말이 있어. 지금 얘기할 수 있어?',
+    phone: [
+      '솔직히 요즘 같이 있어도 핸드폰만 보니까 나 혼자 있는 것 같아. 그게 많이 힘들어.',
+      '솔직히 같이 있는데 핸드폰만 보면 좀 서운해. 나한테도 시간 좀 내줘.',
+      '같이 있을 때 폰만 보면 내가 뒷전인 것 같아. 솔직히 그게 속상해.',
+    ],
+    sorry: [
+      '내가 잘못한 거 알아. 변명 없이 그냥 미안하다고 말하고 싶었어.',
+      '핑계 대고 싶지 않아. 내가 잘못했고, 그래서 미안해.',
+      '돌이켜보니 내 잘못이 맞아. 솔직하게 사과할게, 미안해.',
+    ],
+    sad: [
+      '솔직히 그때 많이 서운했어. 그냥 넘기기가 싫어서 말하는 거야.',
+      '그때 진짜 서운했어. 그냥 넘어가기엔 마음에 남아서 말하는 거야.',
+      '솔직히 아직도 그때 생각하면 좀 서운해. 그래서 얘기 꺼내봐.',
+    ],
+    default: [
+      '하고 싶은 말이 있어. 지금 얘기할 수 있어?',
+      '할 말이 있어서 그래. 잠깐 시간 내줄 수 있어?',
+      '솔직하게 털어놓고 싶은 게 있어. 들어줄 수 있어?',
+    ],
   },
   '카톡용 짧게': {
-    phone:   '요즘 같이 있을 때 핸드폰 많이 보는 것 같아서ㅠ 나도 좀 봐줘',
-    sorry:   '아까 미안했어ㅠ 그런 뜻 아니었는데',
-    sad:     '솔직히 그때 좀 서운했어ㅠ 나중에 얘기해도 돼?',
-    default: '나 할 말 있어, 시간 돼?',
+    phone: [
+      '요즘 같이 있을 때 핸드폰 많이 보는 것 같아서ㅠ 나도 좀 봐줘',
+      '같이 있을 때 폰 그만 보고 나도 봐줘ㅎㅎ',
+      '폰만 보지 말구ㅠ 나랑도 좀 놀자',
+    ],
+    sorry: [
+      '아까 미안했어ㅠ 그런 뜻 아니었는데',
+      '아까는 미안ㅠ 진심 그런 뜻 아니었어',
+      '미안해ㅠㅠ 내가 좀 심했어',
+    ],
+    sad: [
+      '솔직히 그때 좀 서운했어ㅠ 나중에 얘기해도 돼?',
+      '그때 좀 서운했어ㅠ 담에 얘기하자',
+      '사실 좀 서운했어ㅠ 시간 날 때 얘기하자',
+    ],
+    default: [
+      '나 할 말 있어, 시간 돼?',
+      '할 말 있는뎅 시간 돼?',
+      '잠깐 얘기 좀 할 수 있어?',
+    ],
   },
   '요청형': {
-    phone:   '같이 있을 때 핸드폰 보는 시간을 조금만 줄여줄 수 있어? 나랑 더 얘기하고 싶어.',
-    sorry:   '내가 그때 그렇게 한 거 반성하고 있어. 한 번만 더 믿어줄 수 있어?',
-    sad:     '서운했던 마음, 한번 들어줄 수 있어? 오래 걸리지 않을게.',
-    default: '오늘 잠깐 우리 이야기 나눠볼 수 있을까? 듣고만 있어줘도 돼.',
+    phone: [
+      '같이 있을 때 핸드폰 보는 시간을 조금만 줄여줄 수 있어? 나랑 더 얘기하고 싶어.',
+      '같이 있을 땐 폰 잠깐 내려놓고 나랑 얘기해줄 수 있을까?',
+      '우리 같이 있을 땐 핸드폰 잠깐만 멀리해줄 수 있어? 그 시간이 소중해서.',
+    ],
+    sorry: [
+      '내가 그때 그렇게 한 거 반성하고 있어. 한 번만 더 믿어줄 수 있어?',
+      '내가 반성하고 있어. 한 번만 기회를 더 줄 수 있을까?',
+      '진심으로 뉘우치고 있어. 다시 한번 믿어줄 수 있을까?',
+    ],
+    sad: [
+      '서운했던 마음, 한번 들어줄 수 있어? 오래 걸리지 않을게.',
+      '서운했던 얘기 잠깐 들어줄 수 있어? 금방 끝나.',
+      '마음에 남은 게 있는데 잠깐 들어줄 수 있을까?',
+    ],
+    default: [
+      '오늘 잠깐 우리 이야기 나눠볼 수 있을까? 듣고만 있어줘도 돼.',
+      '우리 잠깐 얘기 나눠볼 수 있을까? 들어주기만 해도 좋아.',
+      '시간 될 때 잠깐만 이야기 나눠줄 수 있어? 부담 갖지 말고.',
+    ],
   },
 }
 
-function mockConvert(text, tone) {
+function mockConvert(text, tone, variant = 0) {
   if (!text.trim()) return ''
   const results = TONE_RESULTS[tone] ?? TONE_RESULTS['부드럽게']
-  if (text.includes('핸드폰') || text.includes('폰') || text.includes('안 들어')) return results.phone
-  if (text.includes('미안') || text.includes('잘못')) return results.sorry
-  if (text.includes('서운') || text.includes('속상')) return results.sad
-  return results.default
+  let arr = results.default
+  if (text.includes('핸드폰') || text.includes('폰') || text.includes('안 들어')) arr = results.phone
+  else if (text.includes('미안') || text.includes('잘못')) arr = results.sorry
+  else if (text.includes('서운') || text.includes('속상')) arr = results.sad
+  return arr[((variant % arr.length) + arr.length) % arr.length]
 }
 
 export default function Translate({ nav, isDark, toggleTheme }) {
@@ -78,16 +144,20 @@ export default function Translate({ nav, isDark, toggleTheme }) {
   const [expanded,    setExpanded]    = useState(null)
   const [copied,      setCopied]      = useState(false)
   const [copiedPhrase, setCopiedPhrase] = useState(null)
+  const [variant,     setVariant]     = useState(0)
 
   const handleConvert = () => {
     if (!inputText.trim()) return
-    setConverted(mockConvert(inputText, tone))
+    setVariant(0)
+    setConverted(mockConvert(inputText, tone, 0))
     setShowResult(true)
     setCopied(false)
   }
 
   const handleRegenerate = () => {
-    setConverted(mockConvert(inputText, tone))
+    const next = variant + 1
+    setVariant(next)
+    setConverted(mockConvert(inputText, tone, next))
     setCopied(false)
   }
 

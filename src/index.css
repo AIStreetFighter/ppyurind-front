@@ -67,6 +67,19 @@ body {
   .phone { border: none; }
 }
 
+/* 데스크탑/태블릿(웹): 화면 가운데 떠 있는 폰 목업 — 그림자·라운드 */
+@media (min-width: 461px) {
+  body { align-items: center; padding: 22px 0; }
+  .phone {
+    min-height: 0;
+    height: min(880px, calc(100vh - 44px));
+    border-radius: 34px;
+    box-shadow: 0 24px 70px rgba(0, 0, 0, 0.5);
+    overflow: hidden;
+  }
+  #root { display: flex; align-items: center; }
+}
+
 /* PDF 내보내기(인쇄): 리포트만 남기고 색/그라데이션 그대로 인쇄 */
 @media print {
   @page { margin: 12mm; }
