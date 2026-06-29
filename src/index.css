@@ -386,6 +386,18 @@ body {
 .safety-links i { font-size: 12px; }
 .safety-links__dot { color: var(--ink-muted); font-size: 11px; }
 
+/* 쉼터·상담기관 (균등 2열) + 자가점검 (풀너비 강조) */
+.safety__actions { display: flex; gap: 8px; margin-top: 8px; }
+.safety-btn {
+  flex: 1; display: inline-flex; align-items: center; justify-content: center;
+  font-size: 13px; font-weight: 600; padding: 10px 12px; border-radius: 11px;
+  background: transparent; border: 1px solid var(--danger-line); color: var(--danger-text); cursor: pointer;
+}
+.safety-checkup {
+  width: 100%; margin-top: 11px; padding: 12px; border-radius: 12px; cursor: pointer;
+  background: var(--brand); border: none; color: #fff; font: 600 14px 'Pretendard';
+}
+
 /* Insight */
 .insight { background: var(--brand-soft-bg); border-radius: 14px; padding: 15px 17px; }
 .insight .il { font-size: 12px; font-weight: 600; color: var(--brand-soft-text); display: flex; align-items: center; gap: 6px; margin-bottom: 7px; }

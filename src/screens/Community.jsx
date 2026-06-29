@@ -60,6 +60,14 @@ function buildPosts() {
 const ALL_POSTS = buildPosts()
 const REPORT_REASONS = ['스팸 / 홍보', '욕설 / 비방', '음란성 / 부적절', '개인정보 노출', '기타']
 
+// 피드 사이에 5개마다 노출되는 광고 (순환)
+const FEED_ADS = [
+  { emoji: '🎁', title: '다가오는 기념일, 꽃으로 마음 전하기', sub: '제휴 · 당일배송 꽃다발 20% 쿠폰' },
+  { emoji: '🏨', title: '둘만의 기념일, 호캉스 1박 특가', sub: '제휴 · 주말 객실 할인' },
+  { emoji: '✉️', title: '마음 전하는 손편지 세트', sub: '제휴 · 감성 편지지 기획전' },
+  { emoji: '🍽️', title: '기념일 디너, 분위기 좋은 레스토랑', sub: '제휴 · 코스 메뉴 예약 할인' },
+]
+
 export default function Community({ nav, isDark, toggleTheme, concerns = [] }) {
   const [filter, setFilter] = useState('전체')
   const [query, setQuery] = useState('')
@@ -242,16 +250,17 @@ export default function Community({ nav, isDark, toggleTheme, concerns = [] }) {
                 </div>
               </div>
             )
-            // 광고를 피드 4번째 위치에 삽입
-            if (idx === 3) {
+            // 게시글 5개마다 광고 1개 삽입 (광고는 순환)
+            if ((idx + 1) % 5 === 0) {
+              const ad = FEED_ADS[Math.floor(idx / 5) % FEED_ADS.length]
               return [
                 card,
-                <a key="ad" className="card ad-card" href="#" onClick={e => { e.preventDefault(); flash('광고 영역 (시연용)') }}>
+                <a key={`ad-${idx}`} className="card ad-card" href="#" onClick={e => { e.preventDefault(); flash('광고 영역 (시연용)') }}>
                   <span className="ad-badge">AD</span>
-                  <div className="event-emoji" style={{ background: 'color-mix(in srgb, var(--brand) 16%, transparent)' }}>🎁</div>
+                  <div className="event-emoji" style={{ background: 'color-mix(in srgb, var(--brand) 16%, transparent)' }}>{ad.emoji}</div>
                   <div style={{ flex: 1 }}>
-                    <p className="row__title" style={{ marginBottom: 2 }}>다가오는 기념일, 꽃으로 마음 전하기</p>
-                    <p className="row__sub">제휴 · 당일배송 꽃다발 20% 쿠폰</p>
+                    <p className="row__title" style={{ marginBottom: 2 }}>{ad.title}</p>
+                    <p className="row__sub">{ad.sub}</p>
                   </div>
                   <i className="fa-solid fa-chevron-right chev" style={{ color: 'var(--ink-muted)' }}></i>
                 </a>,

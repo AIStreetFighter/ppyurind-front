@@ -20,35 +20,30 @@ export default function SafetyCard({ collapsible = false, nav, signal = '' }) {
         </div>
         {open && (
           <div className="safety__body">
-            <p>아래 번호는 24시간 · 비밀보장으로 연결돼요.</p>
+            <p>24시간 · 비밀보장으로 연결돼요.</p>
 
-            {/* 메인: 24시간 정신건강 위기상담 */}
-            <a href="tel:1577-0199" className="safety-main">
-              <i className="fa-solid fa-phone-volume"></i> 24시간 도움 요청
+            {/* 긴급 전화 (풀너비 행, 양끝 전화 아이콘) */}
+            <a href="tel:1366" className="tel-btn">
+              <span><i className="fa-solid fa-phone"></i> 여성긴급전화 1366</span>
+              <i className="fa-solid fa-phone tel-btn__end"></i>
+            </a>
+            <a href="tel:109" className="tel-btn">
+              <span><i className="fa-solid fa-phone"></i> 자살예방상담 109</span>
+              <i className="fa-solid fa-phone tel-btn__end"></i>
             </a>
 
-            {/* 개별 긴급 번호 */}
-            <a href="tel:1366" className="safety-tel">
-              <span className="safety-tel__l"><span className="safety-tel__ic"><i className="fa-solid fa-phone"></i></span>여성긴급전화 1366</span>
-              <i className="fa-solid fa-chevron-right safety-tel__r"></i>
-            </a>
-            <a href="tel:109" className="safety-tel">
-              <span className="safety-tel__l"><span className="safety-tel__ic"><i className="fa-solid fa-phone"></i></span>자살예방상담 109</span>
-              <i className="fa-solid fa-chevron-right safety-tel__r"></i>
-            </a>
-
-            {/* 보조 링크 */}
-            <div className="safety-links">
-              <a href="https://www.women1366.kr" target="_blank" rel="noreferrer"><i className="fa-solid fa-house"></i>쉼터 연결</a>
-              <span className="safety-links__dot">·</span>
-              <a href="https://www.mentalhealth.go.kr" target="_blank" rel="noreferrer"><i className="fa-solid fa-building-columns"></i>상담기관 연결</a>
-              {nav && (
-                <>
-                  <span className="safety-links__dot">·</span>
-                  <button type="button" onClick={() => nav('checkup', { signal })}><i className="fa-solid fa-clipboard-check"></i>마음건강 자가점검</button>
-                </>
-              )}
+            {/* 쉼터 / 상담기관 (균등 2열) */}
+            <div className="safety__actions">
+              <button className="safety-btn"><i className="fa-solid fa-comments" style={{ marginRight: 5 }}></i>쉼터 연결</button>
+              <button className="safety-btn">상담기관 연결 <i className="fa-solid fa-arrow-up-right-from-square" style={{ fontSize: 10, marginLeft: 3 }}></i></button>
             </div>
+
+            {/* 마음건강 자가점검 (풀너비 강조 버튼) */}
+            {nav && (
+              <button className="safety-checkup" onClick={() => nav('checkup', { signal })}>
+                <i className="fa-solid fa-clipboard-check" style={{ marginRight: 6 }}></i>마음건강 자가점검 해보기
+              </button>
+            )}
           </div>
         )}
       </div>
