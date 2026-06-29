@@ -8,6 +8,7 @@ import AnalysisResult from "./screens/AnalysisResult";
 import Translate from "./screens/Translate";
 import Calendar from "./screens/Calendar";
 import MindCheckup from "./screens/MindCheckup";
+import Legal from "./screens/Legal";
 import Report from "./screens/Report";
 import Community from "./screens/Community";
 import MyPage from "./screens/MyPage";
@@ -17,9 +18,11 @@ export default function App() {
   const [isDark, setIsDark] = useState(true);
   const [nickname, setNickname] = useState("지우");
   const [checkupSignal, setCheckupSignal] = useState("");
+  const [legal, setLegal] = useState({ doc: "privacy", from: "kakaoLogin" });
 
   const nav = (to, payload) => {
     if (to === "checkup") setCheckupSignal(payload?.signal || "");
+    if (to === "legal") setLegal({ doc: payload?.doc || "privacy", from: payload?.from || "kakaoLogin" });
     setScreen(to);
   };
   const toggleTheme = () => setIsDark((prev) => !prev);
@@ -36,6 +39,7 @@ export default function App() {
     translate: <Translate {...props} />,
     calendar: <Calendar {...props} />,
     checkup: <MindCheckup {...props} signal={checkupSignal} />,
+    legal: <Legal {...props} doc={legal.doc} from={legal.from} />,
     report: <Report {...props} />,
     community: <Community {...props} />,
     mypage: <MyPage {...props} />,

@@ -117,8 +117,10 @@ export default function KakaoLogin({ nav, isDark, toggleTheme }) {
         </button>
 
         <p style={{ margin: '4px 0 0', textAlign: 'center', fontSize: 12, color: 'var(--ink-muted)', lineHeight: 1.6 }}>
-          로그인 시 <span style={{ color: 'var(--brand)', fontWeight: 500 }}>개인정보 처리방침</span> 및{' '}
-          <span style={{ color: 'var(--brand)', fontWeight: 500 }}>서비스 이용약관</span>에 동의하게 됩니다
+          로그인 시 <span style={{ color: 'var(--brand)', fontWeight: 500, cursor: 'pointer', textDecoration: 'underline' }}
+            onClick={() => nav('legal', { doc: 'privacy', from: 'kakaoLogin' })}>개인정보 처리방침</span> 및{' '}
+          <span style={{ color: 'var(--brand)', fontWeight: 500, cursor: 'pointer', textDecoration: 'underline' }}
+            onClick={() => nav('legal', { doc: 'terms', from: 'kakaoLogin' })}>서비스 이용약관</span>에 동의하게 됩니다
         </p>
       </div>
     </div>

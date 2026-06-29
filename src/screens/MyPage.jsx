@@ -155,8 +155,8 @@ export default function MyPage({ nav, isDark, toggleTheme, nickname }) {
 
             <div className="section-label"><i className="fa-solid fa-shield-halved"></i>계정 · 약관</div>
             <div className="card" style={{ padding: '4px 16px' }}>
-              <div className="menu-item"><i className="fa-solid fa-file-lines"></i><span className="mlabel">개인정보 처리방침</span><i className="fa-solid fa-chevron-right chev"></i></div>
-              <div className="menu-item"><i className="fa-solid fa-file-contract"></i><span className="mlabel">서비스 이용약관</span><i className="fa-solid fa-chevron-right chev"></i></div>
+              <div className="menu-item" onClick={() => nav('legal', { doc: 'privacy', from: 'mypage' })}><i className="fa-solid fa-file-lines"></i><span className="mlabel">개인정보 처리방침</span><i className="fa-solid fa-chevron-right chev"></i></div>
+              <div className="menu-item" onClick={() => nav('legal', { doc: 'terms', from: 'mypage' })}><i className="fa-solid fa-file-contract"></i><span className="mlabel">서비스 이용약관</span><i className="fa-solid fa-chevron-right chev"></i></div>
               <div className="menu-item" onClick={toggleTheme}><i className={isDark ? 'fa-solid fa-sun' : 'fa-solid fa-moon'}></i><span className="mlabel">{isDark ? '라이트 모드로 전환' : '다크 모드로 전환'}</span><i className="fa-solid fa-chevron-right chev"></i></div>
               <div className="menu-item" onClick={() => setPinOpen(true)}><i className="fa-solid fa-lock"></i><span className="mlabel">앱 잠금 비밀번호 {pinDone ? '변경' : '설정'}</span><i className="fa-solid fa-chevron-right chev"></i></div>
             </div>
