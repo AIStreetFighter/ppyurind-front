@@ -46,11 +46,13 @@ function AppContent() {
   const [checkupSignal, setCheckupSignal] = useState("");
   const [legal, setLegal] = useState({ doc: "privacy", from: "kakaoLogin" });
   const [activePost, setActivePost] = useState(null);
+  const [analysisResult, setAnalysisResult] = useState(null);
 
   const nav = (to, payload) => {
     if (to === "checkup") setCheckupSignal(payload?.signal || "");
     if (to === "legal") setLegal({ doc: payload?.doc || "privacy", from: payload?.from || "kakaoLogin" });
     if (to === "post" && payload?.post) setActivePost(payload.post);
+    if (to === "analysisResult") setAnalysisResult(payload?.result || null);
     navigate(SCREEN_PATHS[to] || "/");
   };
   const toggleTheme = () => setIsDark((prev) => !prev);
@@ -63,7 +65,7 @@ function AppContent() {
     home: <Home {...props} />,
     record: <Record {...props} />,
     analysis: <Analysis {...props} />,
-    analysisResult: <AnalysisResult {...props} />,
+    analysisResult: <AnalysisResult {...props} result={analysisResult} />,
     translate: <Translate {...props} />,
     calendar: <Calendar {...props} />,
     checkup: <MindCheckup {...props} signal={checkupSignal} />,

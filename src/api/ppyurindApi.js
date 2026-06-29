@@ -41,6 +41,14 @@ export function listEmotions({ offset = 0, limit = 20 } = {}) {
   return api.get(`/emotions?offset=${offset}&limit=${limit}`)
 }
 
+// 기록 텍스트를 AI로 분석 (DB 저장·인증 없이 결과만 반환)
+export function analyzeEmotion({ rawContent, inputType = 'text' }) {
+  return api.post('/emotions/analyze', {
+    raw_content: rawContent,
+    input_type: inputType,
+  })
+}
+
 export function convertText({ originalText, filterMode = 'soft', situationTag }) {
   return api.post('/filter', {
     original_text: originalText,

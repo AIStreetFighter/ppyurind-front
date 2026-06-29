@@ -2,16 +2,29 @@ import { useState } from 'react'
 import ThemeToggle from '../components/ThemeToggle'
 import BottomNav from '../components/BottomNav'
 import SafetyCard from '../components/SafetyCard'
+import { analyzeEmotion } from '../api/ppyurindApi'
 
 export default function Record({ nav, isDark, toggleTheme }) {
   const [tab, setTab] = useState('텍스트')
   const [text, setText] = useState('')
   const [recording, setRecording] = useState(false)
   const [sharePopup, setSharePopup] = useState(false)
+  const [analyzing, setAnalyzing] = useState(false)
+  const [error, setError] = useState('')
 
-  const goAnalyze = (share) => {
+  const goAnalyze = async (share) => {
     setSharePopup(false)
-    nav('analysisResult')
+    if (!text.trim()) { nav('analysisResult'); return }
+    setAnalyzing(true)
+    setError('')
+    try {
+      const result = await analyzeEmotion({ rawContent: text.trim() })
+      nav('analysisResult', { result, shared: share })
+    } catch (e) {
+      // 백엔드 미연결 등 — 더미 결과 화면으로 폴백
+      setError('분석 서버에 연결하지 못했어요. 예시 결과를 보여드릴게요.')
+      setTimeout(() => { setAnalyzing(false); nav('analysisResult') }, 1200)
+    }
   }
 
   return (
@@ -106,6 +119,19 @@ export default function Record({ nav, isDark, toggleTheme }) {
               <button className="cta cta--ghost" style={{ flex: 1 }} onClick={() => goAnalyze(false)}>나만 보기</button>
               <button className="cta" style={{ flex: 1 }} onClick={() => goAnalyze(true)}>익명 공유</button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* 분석 중 로딩 */}
+      {analyzing && (
+        <div className="sheet-backdrop" style={{ alignItems: 'center', justifyContent: 'center', padding: 22 }}>
+          <div className="modal" style={{ textAlign: 'center' }}>
+            <i className="fa-solid fa-wand-magic-sparkles" style={{ fontSize: 28, color: 'var(--brand)' }}></i>
+            <h3 style={{ margin: '12px 0 6px', fontSize: 18, color: 'var(--ink)' }}>마음을 들여다보는 중…</h3>
+            <p style={{ margin: 0, fontSize: 13.5, lineHeight: 1.6, color: 'var(--ink-soft)' }}>
+              {error || 'AI가 기록 속 감정을 분석하고 있어요'}
+            </p>
           </div>
         </div>
       )}

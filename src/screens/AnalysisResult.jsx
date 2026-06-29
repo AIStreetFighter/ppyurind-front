@@ -4,9 +4,10 @@ import BottomNav from '../components/BottomNav'
 import SafetyCard from '../components/SafetyCard'
 import { exportReportPdf } from '../utils/exportPdf'
 
-export default function AnalysisResult({ nav, isDark, toggleTheme, nickname }) {
+export default function AnalysisResult({ nav, isDark, toggleTheme, nickname, result }) {
   const [menuOpen, setMenuOpen] = useState(false)
   const who = nickname || '지우'
+  const r = result // 실제 AI 분석 결과 (없으면 예시)
   return (
     <div className="phone-body report-print">
       <div className="topbar">
@@ -31,32 +32,51 @@ export default function AnalysisResult({ nav, isDark, toggleTheme, nickname }) {
 
       <div className="header header--full" style={{ marginTop: 10 }}>
         <h1 className="page-title" style={{ fontSize: 23 }}>마음을 들여다봤어요</h1>
-        <p className="page-sub">방금 기록한 감정을 바탕으로 분석했어요.</p>
+        <p className="page-sub">{r ? 'AI가 방금 기록한 감정을 분석했어요.' : '방금 기록한 감정을 바탕으로 분석했어요.'}</p>
       </div>
+
+      {/* 감지된 감정 (실제 분석 결과일 때) */}
+      {r && (r.primary_emotion || r.secondary_emotion) && (
+        <>
+          <div className="section-label"><i className="fa-solid fa-heart"></i>지금 느끼는 감정</div>
+          <div className="card" style={{ padding: 17, display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+            {r.primary_emotion && <span className="badge badge--match">{r.primary_emotion}</span>}
+            {r.secondary_emotion && <span className="badge badge--warm">{r.secondary_emotion}</span>}
+          </div>
+        </>
+      )}
 
       <div className="section-label"><i className="fa-solid fa-circle-dot"></i>갈등의 원인</div>
       <div className="card" style={{ padding: 17 }}>
         <p style={{ margin: 0, fontSize: 15, lineHeight: 1.65, color: 'var(--ink)' }}>
-          대화의 <b>방식 차이</b>예요. {who}님은 공감을, 배우자는 해결을 먼저 떠올리는 경향이 보여요.
+          {r?.conflict_cause
+            ? <><b>{r.conflict_cause}</b>에서 비롯된 마음으로 보여요. 충분히 그럴 만한 상황이에요.</>
+            : <>대화의 <b>방식 차이</b>예요. {who}님은 공감을, 배우자는 해결을 먼저 떠올리는 경향이 보여요.</>}
         </p>
       </div>
 
       <div className="section-label"><i className="fa-solid fa-lightbulb"></i>숨은 욕구</div>
       <div className="card" style={{ padding: 17 }}>
         <p style={{ margin: 0, fontSize: 15, lineHeight: 1.65, color: 'var(--ink)' }}>
-          "내 감정을 <b>있는 그대로 인정받고 싶다</b>"는 마음이 가장 컸어요.
+          {r?.hidden_need
+            ? <>"<b>{r.hidden_need}</b>"는 마음이 가장 컸어요.</>
+            : <>"내 감정을 <b>있는 그대로 인정받고 싶다</b>"는 마음이 가장 컸어요.</>}
         </p>
       </div>
 
-      <div className="section-label"><i className="fa-solid fa-rotate"></i>반복되는 서운함</div>
-      <div className="card" style={{ padding: 17, display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-        <span className="badge badge--warm">말을 끊김 · 4회</span>
-        <span className="badge badge--warm">결론부터 · 3회</span>
-      </div>
+      {/* 추천 행동 (실제 분석 결과일 때) */}
+      {r?.recommended_action && (
+        <>
+          <div className="section-label"><i className="fa-solid fa-comment-dots"></i>이렇게 전해보면 어때요</div>
+          <div className="card" style={{ padding: 17 }}>
+            <p style={{ margin: 0, fontSize: 15, lineHeight: 1.65, color: 'var(--ink)' }}>{r.recommended_action}</p>
+          </div>
+        </>
+      )}
 
       <div className="insight" style={{ marginTop: 16 }}>
         <div className="il"><i className="fa-solid fa-bookmark"></i>핵심 인사이트가 도감에 저장됐어요</div>
-        <p>"{who}님은 해결보다 공감을 먼저 원해요."</p>
+        <p>"{r?.new_self_insight || `${who}님은 해결보다 공감을 먼저 원해요.`}"</p>
       </div>
 
       <div style={{ marginTop: 16 }}><SafetyCard nav={nav} signal="우울 무기력" /></div>
