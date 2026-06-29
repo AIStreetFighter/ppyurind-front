@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { BrowserRouter, useLocation, useNavigate } from "react-router-dom";
 import KakaoLogin from "./screens/KakaoLogin";
 import Onboarding from "./screens/Onboarding";
 import Home from "./screens/Home";
@@ -14,8 +15,31 @@ import Report from "./screens/Report";
 import Community from "./screens/Community";
 import MyPage from "./screens/MyPage";
 
-export default function App() {
-  const [screen, setScreen] = useState("kakaoLogin");
+const SCREEN_PATHS = {
+  kakaoLogin: "/",
+  onboarding: "/onboarding",
+  home: "/home",
+  record: "/record",
+  analysis: "/analysis",
+  analysisResult: "/analysis/result",
+  translate: "/translate",
+  calendar: "/calendar",
+  checkup: "/mind-checkup",
+  legal: "/legal",
+  post: "/community/post",
+  report: "/report",
+  community: "/community",
+  mypage: "/mypage",
+};
+
+const PATH_SCREENS = Object.fromEntries(
+  Object.entries(SCREEN_PATHS).map(([screen, path]) => [path, screen])
+);
+
+function AppContent() {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const screen = PATH_SCREENS[location.pathname] || "kakaoLogin";
   const [isDark, setIsDark] = useState(true);
   const [nickname, setNickname] = useState("지우");
   const [concerns, setConcerns] = useState(["대화 단절", "서운함"]);
@@ -27,7 +51,7 @@ export default function App() {
     if (to === "checkup") setCheckupSignal(payload?.signal || "");
     if (to === "legal") setLegal({ doc: payload?.doc || "privacy", from: payload?.from || "kakaoLogin" });
     if (to === "post" && payload?.post) setActivePost(payload.post);
-    setScreen(to);
+    navigate(SCREEN_PATHS[to] || "/");
   };
   const toggleTheme = () => setIsDark((prev) => !prev);
 
@@ -52,5 +76,13 @@ export default function App() {
 
   return (
     <div className={`phone${isDark ? "" : " is-light"}`}>{screens[screen]}</div>
+  );
+}
+
+export default function App() {
+  return (
+    <BrowserRouter>
+      <AppContent />
+    </BrowserRouter>
   );
 }
