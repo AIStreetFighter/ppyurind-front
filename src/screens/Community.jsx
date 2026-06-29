@@ -2,6 +2,8 @@ import { useState } from 'react'
 import BottomNav from '../components/BottomNav'
 import ThemeToggle from '../components/ThemeToggle'
 import NotifBell from '../components/NotifBell'
+import { nickFromId, randomNick } from '../data/nicknames'
+import { maskPIIWithAI } from '../utils/maskPII'
 
 const AVATARS = ['cat_01_t', 'cat_02_t', 'cat_03_t', 'cat_04_t']
 
@@ -22,14 +24,19 @@ function buildPosts() {
   const arr = []
   for (let i = 0; i < 30; i++) {
     const s = SEED[i % SEED.length]
+    const id = i + 1
+    // 시연용 작성 시점: id 기반으로 0~70일 분산 (공감순 최근 30일 필터 검증용)
+    const daysAgo = (id * 7) % 70
     arr.push({
-      id: i + 1,
+      id,
       avatar: AVATARS[i % AVATARS.length],
-      name: `익명 · ${s[0]}`,
+      nick: nickFromId(id),
+      title: s[0],
       tag: `AI 태그: ${s[1]}`,
       body: s[2],
       empathy: s[3] - i, comfort: s[4], comments: s[5],
       author: `anon${i % 7}`,
+      daysAgo,
     })
   }
   return arr
@@ -52,7 +59,9 @@ export default function Community({ nav, isDark, toggleTheme }) {
   const [userPosts, setUserPosts] = useState([])
   const [writing, setWriting] = useState(false)
   const [draft, setDraft] = useState('')
+  const [maskPreview, setMaskPreview] = useState(null) // { text, hits } 게시 전 마스킹 미리보기
   const [count, setCount] = useState(5) // 처음 5개, '더보기'로 확장
+  const [sort, setSort] = useState('latest') // 'latest' | 'empathy'
 
   const flash = (msg) => { setToast(msg); setTimeout(() => setToast(''), 1900) }
 
@@ -67,20 +76,36 @@ export default function Community({ nav, isDark, toggleTheme }) {
     flash('이 회원의 글을 모두 숨겼어요.')
   }
 
-  const publish = () => {
+  // 게시 요청 → 개인정보 마스킹 후, 가려진 항목이 있으면 미리보기 확인 / 없으면 바로 게시
+  const requestPublish = async () => {
     if (!draft.trim()) return
+    const masked = await maskPIIWithAI(draft.trim())
+    if (masked.hits.length > 0) {
+      setMaskPreview(masked) // 사용자가 확인 후 게시
+    } else {
+      doPublish(masked.text)
+    }
+  }
+
+  const doPublish = (finalText) => {
     setUserPosts(p => [{
-      id: 'u' + Date.now(), avatar: AVATARS[1], name: '익명 · 들풀',
-      tag: 'AI 태그: #방금작성', body: draft.trim(), empathy: 0, comfort: 0, comments: 0, author: 'me',
+      id: 'u' + Date.now(), avatar: AVATARS[1], nick: randomNick(), title: '방금 남긴 고민',
+      tag: 'AI 태그: #방금작성', body: finalText, empathy: 0, comfort: 0, comments: 0, author: 'me', daysAgo: 0,
     }, ...p])
     setDraft('')
     setWriting(false)
-    flash('익명으로 게시됐어요. 개인정보는 자동 제거됐어요.')
+    setMaskPreview(null)
+    flash('익명으로 게시됐어요. 개인정보는 자동으로 가려졌어요.')
   }
 
-  const feed = [...userPosts, ...ALL_POSTS]
+  const base = [...userPosts, ...ALL_POSTS]
     .filter(p => !hiddenAuthors.includes(p.author))
-    .filter(p => !query.trim() || p.name.includes(query) || p.body.includes(query) || p.tag.includes(query))
+    .filter(p => !query.trim() || p.nick.includes(query) || p.title.includes(query) || p.body.includes(query) || p.tag.includes(query))
+
+  // 정렬: 최신순(작성 시점) / 공감순(최근 30일 내 공감 많은 순)
+  const feed = sort === 'empathy'
+    ? base.filter(p => p.daysAgo <= 30).sort((a, b) => b.empathy - a.empathy)
+    : [...base].sort((a, b) => a.daysAgo - b.daysAgo)
 
   const shown = feed.slice(0, count)
 
@@ -151,7 +176,14 @@ export default function Community({ nav, isDark, toggleTheme }) {
           </div>
         </div>
 
-        <div className="section-label"><i className="fa-solid fa-fire"></i>지금 올라온 고민</div>
+        <div className="section-label" style={{ justifyContent: 'space-between' }}>
+          <span><i className="fa-solid fa-comments"></i>고민 이야기</span>
+          <div className="sort-tabs">
+            <button className={`sort-tab${sort === 'latest' ? ' active' : ''}`} onClick={() => { setSort('latest'); setCount(5) }}>최신순</button>
+            <button className={`sort-tab${sort === 'empathy' ? ' active' : ''}`} onClick={() => { setSort('empathy'); setCount(5) }}>공감순</button>
+          </div>
+        </div>
+        {sort === 'empathy' && <p className="sort-hint">최근 30일 동안 공감을 많이 받은 고민이에요.</p>}
         <div className="stack">
           {shown.map((p, idx) => {
             const isLiked = !!liked[p.id], isComf = !!comforted[p.id]
@@ -159,8 +191,12 @@ export default function Community({ nav, isDark, toggleTheme }) {
               <div key={p.id} className="card" onClick={() => setDetail(p)} style={{ cursor: 'pointer' }}>
                 <div className="post-head">
                   <div className="avatar"><img src={`/assets/cats/${p.avatar}.png`} alt="" /></div>
-                  <div style={{ flex: 1 }}>
-                    <p className="post-name">{p.name}</p>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <p className="post-name">
+                      {p.nick}
+                      {sort === 'empathy' && p.empathy >= 60 && <span className="hot-badge"><i className="fa-solid fa-fire"></i> HOT</span>}
+                    </p>
+                    <p className="post-title">{p.title}</p>
                     <p className="post-tag">{p.tag}</p>
                   </div>
                   <div style={{ position: 'relative' }} onClick={e => e.stopPropagation()}>
@@ -258,7 +294,27 @@ export default function Community({ nav, isDark, toggleTheme }) {
               placeholder="어떤 마음인지 편하게 적어보세요. 비슷한 고민의 사람들이 공감해줄 거예요." value={draft} onChange={e => setDraft(e.target.value)} autoFocus />
             <div style={{ display: 'flex', gap: 10, marginTop: 14 }}>
               <button className="cta cta--ghost" style={{ flex: 1 }} onClick={() => setWriting(false)}>취소</button>
-              <button className="cta" style={{ flex: 1.4, opacity: draft.trim() ? 1 : 0.5 }} onClick={publish}>익명으로 게시</button>
+              <button className="cta" style={{ flex: 1.4, opacity: draft.trim() ? 1 : 0.5 }} onClick={requestPublish}>익명으로 게시</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 개인정보 마스킹 미리보기 */}
+      {maskPreview && (
+        <div className="sheet-backdrop" onClick={() => setMaskPreview(null)} style={{ alignItems: 'center', padding: 22 }}>
+          <div className="modal" onClick={e => e.stopPropagation()} style={{ textAlign: 'left' }}>
+            <h3 style={{ margin: '0 0 4px', fontSize: 18, color: 'var(--ink)' }}><i className="fa-solid fa-shield-halved" style={{ marginRight: 6, color: 'var(--brand)' }}></i>개인정보를 가렸어요</h3>
+            <p style={{ margin: '0 0 12px', fontSize: 12.5, color: 'var(--ink-muted)' }}>
+              감지된 정보: {maskPreview.hits.map(h => <span key={h} className="mask-chip">{h}</span>)}
+            </p>
+            <div className="mask-preview">{maskPreview.text}</div>
+            <p style={{ margin: '10px 0 16px', fontSize: 11.5, color: 'var(--ink-muted)', lineHeight: 1.6 }}>
+              <i className="fa-solid fa-circle-info" style={{ marginRight: 4 }}></i>실명·자녀 이름 등 문맥 정보는 AI가 추가로 가립니다 <span style={{ opacity: 0.7 }}>(연동 예정)</span>.
+            </p>
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button className="cta cta--ghost" style={{ flex: 1 }} onClick={() => setMaskPreview(null)}>다시 쓰기</button>
+              <button className="cta" style={{ flex: 1.4 }} onClick={() => doPublish(maskPreview.text)}>이대로 게시</button>
             </div>
           </div>
         </div>
@@ -286,8 +342,9 @@ export default function Community({ nav, isDark, toggleTheme }) {
             <div className="sheet-handle" />
             <div className="post-head">
               <div className="avatar"><img src={`/assets/cats/${detail.avatar}.png`} alt="" /></div>
-              <div style={{ flex: 1 }}>
-                <p className="post-name">{detail.name}</p>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <p className="post-name">{detail.nick}</p>
+                <p className="post-title">{detail.title}</p>
                 <p className="post-tag">{detail.tag}</p>
               </div>
               <i className="fa-solid fa-xmark" style={{ color: 'var(--ink-muted)', cursor: 'pointer', fontSize: 18 }} onClick={() => setDetail(null)}></i>
