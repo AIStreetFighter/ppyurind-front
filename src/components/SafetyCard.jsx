@@ -2,7 +2,7 @@ import { useState } from 'react'
 
 // 어디서나 동일하게 쓰는 안전(상담 연결) 카드.
 // collapsible=true 면 기록 탭처럼 눌러서 펼치는 토글형, 아니면 항상 펼친 형태.
-export default function SafetyCard({ collapsible = false }) {
+export default function SafetyCard({ collapsible = false, nav, signal = '' }) {
   const [open, setOpen] = useState(!collapsible)
 
   return (
@@ -28,6 +28,11 @@ export default function SafetyCard({ collapsible = false }) {
               <button className="safety-btn"><i className="fa-solid fa-comments" style={{ marginRight: 5 }}></i>쉼터 연결</button>
               <button className="safety-btn">상담기관 연결 <i className="fa-solid fa-arrow-up-right-from-square" style={{ fontSize: 10, marginLeft: 3 }}></i></button>
             </div>
+            {nav && (
+              <button className="safety-checkup" onClick={() => nav('checkup', { signal })}>
+                <i className="fa-solid fa-clipboard-check" style={{ marginRight: 6 }}></i>마음건강 자가점검 해보기
+              </button>
+            )}
           </div>
         )}
       </div>

@@ -45,7 +45,7 @@ export default function AnalysisResult({ nav, isDark, toggleTheme }) {
         <p>"지우님은 해결보다 공감을 먼저 원해요."</p>
       </div>
 
-      <div style={{ marginTop: 16 }}><SafetyCard /></div>
+      <div style={{ marginTop: 16 }}><SafetyCard nav={nav} signal="우울 무기력" /></div>
 
       <button className="cta" style={{ marginTop: 18 }} onClick={() => nav('translate')}>
         <i className="fa-solid fa-comment-medical" style={{ marginRight: 7 }}></i>이 마음, 말투 바꿔 전하기

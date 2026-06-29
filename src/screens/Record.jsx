@@ -87,7 +87,7 @@ export default function Record({ nav, isDark, toggleTheme }) {
       </div>
 
       {/* 상담기관 연결 (토글형) */}
-      <div style={{ marginTop: 22 }}><SafetyCard collapsible /></div>
+      <div style={{ marginTop: 22 }}><SafetyCard collapsible nav={nav} /></div>
 
       <button className="cta" style={{ marginTop: 20 }} onClick={() => setSharePopup(true)}>
         <i className="fa-solid fa-wand-magic-sparkles" style={{ marginRight: 7 }}></i>AI 감정 분석하기

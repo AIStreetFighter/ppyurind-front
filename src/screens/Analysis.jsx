@@ -230,7 +230,7 @@ export default function Analysis({ nav, isDark, toggleTheme }) {
       </div>
 
       {/* ⑦ 상담기관 연결 */}
-      <div style={{ marginTop: 16 }}><SafetyCard /></div>
+      <div style={{ marginTop: 16 }}><SafetyCard nav={nav} signal="우울 무기력 서운함" /></div>
 
       <BottomNav active="분석" nav={nav} />
     </div>

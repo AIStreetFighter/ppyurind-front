@@ -80,6 +80,17 @@ export default function MyPage({ nav, isDark, toggleTheme, nickname }) {
           ))}
         </div>
 
+        {/* 마음건강 검사 */}
+        <div className="section-label"><i className="fa-solid fa-heart-pulse"></i>마음 건강</div>
+        <div className="card chk-item" onClick={() => nav('checkup')} style={{ cursor: 'pointer' }}>
+          <div className="chk-ic"><i className="fa-solid fa-clipboard-check"></i></div>
+          <div style={{ flex: 1 }}>
+            <p className="row__title">마음건강 자가점검</p>
+            <p className="row__sub">우울·불안 등 검증된 검사 · 상담·지원사업 안내</p>
+          </div>
+          <i className="fa-solid fa-chevron-right chev" style={{ color: 'var(--ink-muted)' }}></i>
+        </div>
+
         {/* 배우자 이해 노트 기반 살짝 광고 */}
         <a className="card mini-ad" href="#" onClick={e => e.preventDefault()}>
           <span className="ad-badge">AD</span>
