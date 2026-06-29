@@ -70,7 +70,7 @@ const MOOD_COLOR = {
   pos: 'var(--brand)',
 }
 
-export default function Analysis({ nav, isDark, toggleTheme }) {
+export default function Analysis({ nav, isDark, toggleTheme, nickname }) {
   const [period, setPeriod] = useState('월간')
   const r = REPORTS[period]
   const maxCount = Math.max(...r.phrases.map(p => p.count))
@@ -90,7 +90,7 @@ export default function Analysis({ nav, isDark, toggleTheme }) {
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, marginTop: 6 }}>
         <div>
           <h1 className="page-title" style={{ fontSize: 23, margin: '0 0 5px' }}>관계 마음 리포트</h1>
-          <p className="page-sub" style={{ fontSize: 13.5 }}>{r.range} · 닉네임 '들풀'</p>
+          <p className="page-sub" style={{ fontSize: 13.5 }}>{r.range} · 닉네임 '{nickname || '들풀'}'</p>
         </div>
         <span className="rp-lock"><i className="fa-solid fa-lock"></i> 나만 보는 리포트</span>
       </div>
