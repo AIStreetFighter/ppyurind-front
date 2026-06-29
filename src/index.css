@@ -315,9 +315,10 @@ body {
 .safety h4 { margin: 0; font-size: 14.5px; font-weight: 600; color: var(--ink); }
 .safety__body { margin-top: 9px; }
 .safety p { margin: 0 0 11px; font-size: 13px; line-height: 1.55; color: var(--ink-soft); }
-.safety__actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 11px; }
+.safety__actions { display: flex; gap: 8px; margin-top: 8px; }
 .safety-btn {
-  font-size: 13px; font-weight: 600; padding: 8px 14px; border-radius: 99px;
+  flex: 1; display: inline-flex; align-items: center; justify-content: center;
+  font-size: 13px; font-weight: 600; padding: 10px 12px; border-radius: 11px;
   background: transparent; border: 1px solid var(--danger-line); color: var(--danger-text); cursor: pointer;
 }
 .safety-checkup {
@@ -534,11 +535,13 @@ body {
 /* 전화 연결 버튼 */
 .tel-row { display: flex; flex-direction: column; gap: 8px; }
 .tel-btn {
-  display: inline-flex; align-items: center; gap: 8px; text-decoration: none;
-  font-size: 13.5px; font-weight: 600; padding: 10px 14px; border-radius: 11px;
+  display: flex; align-items: center; justify-content: space-between; gap: 8px; text-decoration: none;
+  font-size: 13.5px; font-weight: 600; padding: 11px 15px; border-radius: 11px;
   background: var(--danger-bg); border: 1px solid var(--danger-line); color: var(--danger-text);
 }
+.tel-btn span { display: inline-flex; align-items: center; gap: 8px; }
 .tel-btn i { font-size: 12px; }
+.tel-btn__end { opacity: 0.55; }
 
 /* 모달 */
 .modal {

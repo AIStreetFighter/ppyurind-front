@@ -21,8 +21,14 @@ export default function SafetyCard({ collapsible = false, nav, signal = '' }) {
           <div className="safety__body">
             <p>아래 번호는 24시간 · 비밀보장으로 연결돼요.</p>
             <div className="tel-row">
-              <a href="tel:1366" className="tel-btn"><i className="fa-solid fa-phone"></i> 여성긴급전화 1366</a>
-              <a href="tel:109" className="tel-btn"><i className="fa-solid fa-phone"></i> 자살예방상담 109</a>
+              <a href="tel:1366" className="tel-btn">
+                <span><i className="fa-solid fa-phone"></i> 여성긴급전화 1366</span>
+                <i className="fa-solid fa-phone tel-btn__end"></i>
+              </a>
+              <a href="tel:109" className="tel-btn">
+                <span><i className="fa-solid fa-phone"></i> 자살예방상담 109</span>
+                <i className="fa-solid fa-phone tel-btn__end"></i>
+              </a>
             </div>
             <div className="safety__actions">
               <button className="safety-btn"><i className="fa-solid fa-comments" style={{ marginRight: 5 }}></i>쉼터 연결</button>
