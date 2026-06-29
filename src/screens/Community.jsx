@@ -151,7 +151,7 @@ export default function Community({ nav, isDark, toggleTheme, concerns = [] }) {
           {(() => {
             const extra = ['시댁·처가', '경제·소비', '스킨십·친밀감'] // 공통 인기 카테고리
             const mine = concerns.filter(c => c !== '기타').map(c => c.replace(/ 갈등$/, '')).slice(0, 2)
-            const tags = [...new Set(['전체', ...mine, ...extra, '화해 후기'])]
+            const tags = [...new Set(['전체', ...mine, ...extra])]
             return tags.map(v => (
               <span key={v} className={`chip${filter === v ? ' selected' : ''}`} onClick={() => setFilter(v)}>{v}</span>
             ))
