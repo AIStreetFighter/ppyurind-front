@@ -1,10 +1,14 @@
+import { useState } from 'react'
 import ThemeToggle from '../components/ThemeToggle'
 import BottomNav from '../components/BottomNav'
 import SafetyCard from '../components/SafetyCard'
+import { exportReportPdf } from '../utils/exportPdf'
 
-export default function AnalysisResult({ nav, isDark, toggleTheme }) {
+export default function AnalysisResult({ nav, isDark, toggleTheme, nickname }) {
+  const [menuOpen, setMenuOpen] = useState(false)
+  const who = nickname || '지우'
   return (
-    <div className="phone-body">
+    <div className="phone-body report-print">
       <div className="topbar">
         <div className="backbar-inline">
           <i className="fa-solid fa-arrow-left" onClick={() => nav('record')}></i>
@@ -12,6 +16,16 @@ export default function AnalysisResult({ nav, isDark, toggleTheme }) {
         </div>
         <div className="topbar__icons">
           <ThemeToggle isDark={isDark} toggleTheme={toggleTheme} />
+          <div style={{ position: 'relative' }}>
+            <i className="fa-solid fa-ellipsis" style={{ cursor: 'pointer' }} onClick={() => setMenuOpen(o => !o)}></i>
+            {menuOpen && (
+              <div className="kebab-menu">
+                <div className="kebab-item" onClick={() => { setMenuOpen(false); exportReportPdf() }}>
+                  <i className="fa-solid fa-file-arrow-down"></i> PDF로 내보내기
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
@@ -23,7 +37,7 @@ export default function AnalysisResult({ nav, isDark, toggleTheme }) {
       <div className="section-label"><i className="fa-solid fa-circle-dot"></i>갈등의 원인</div>
       <div className="card" style={{ padding: 17 }}>
         <p style={{ margin: 0, fontSize: 15, lineHeight: 1.65, color: 'var(--ink)' }}>
-          대화의 <b>방식 차이</b>예요. 지우님은 공감을, 배우자는 해결을 먼저 떠올리는 경향이 보여요.
+          대화의 <b>방식 차이</b>예요. {who}님은 공감을, 배우자는 해결을 먼저 떠올리는 경향이 보여요.
         </p>
       </div>
 
@@ -42,10 +56,10 @@ export default function AnalysisResult({ nav, isDark, toggleTheme }) {
 
       <div className="insight" style={{ marginTop: 16 }}>
         <div className="il"><i className="fa-solid fa-bookmark"></i>핵심 인사이트가 도감에 저장됐어요</div>
-        <p>"지우님은 해결보다 공감을 먼저 원해요."</p>
+        <p>"{who}님은 해결보다 공감을 먼저 원해요."</p>
       </div>
 
-      <div style={{ marginTop: 16 }}><SafetyCard /></div>
+      <div style={{ marginTop: 16 }}><SafetyCard nav={nav} signal="우울 무기력" /></div>
 
       <button className="cta" style={{ marginTop: 18 }} onClick={() => nav('translate')}>
         <i className="fa-solid fa-comment-medical" style={{ marginRight: 7 }}></i>이 마음, 말투 바꿔 전하기

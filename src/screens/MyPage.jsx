@@ -80,7 +80,7 @@ export default function MyPage({ nav, isDark, toggleTheme, nickname }) {
           ))}
         </div>
 
-        {/* 배우자 이해 노트 기반 살짝 광고 */}
+        {/* 배우자 이해 노트(도감) 기반 살짝 광고 */}
         <a className="card mini-ad" href="#" onClick={e => e.preventDefault()}>
           <span className="ad-badge">AD</span>
           <div className="event-emoji" style={{ background: 'color-mix(in srgb, var(--like) 16%, transparent)' }}>🎁</div>
@@ -90,6 +90,17 @@ export default function MyPage({ nav, isDark, toggleTheme, nickname }) {
           </div>
           <i className="fa-solid fa-chevron-right chev" style={{ color: 'var(--ink-muted)' }}></i>
         </a>
+
+        {/* 마음건강 검사 */}
+        <div className="section-label"><i className="fa-solid fa-heart-pulse"></i>마음 건강</div>
+        <div className="card chk-item" onClick={() => nav('checkup')} style={{ cursor: 'pointer' }}>
+          <div className="chk-ic"><i className="fa-solid fa-clipboard-check"></i></div>
+          <div style={{ flex: 1 }}>
+            <p className="row__title">마음건강 자가점검</p>
+            <p className="row__sub">우울·불안 등 검증된 검사 · 상담·지원사업 안내</p>
+          </div>
+          <i className="fa-solid fa-chevron-right chev" style={{ color: 'var(--ink-muted)' }}></i>
+        </div>
 
         {/* 기록 & 리포트 (병합) */}
         <div className="section-label"><i className="fa-solid fa-folder-open"></i>기록 &amp; 리포트</div>
@@ -144,8 +155,8 @@ export default function MyPage({ nav, isDark, toggleTheme, nickname }) {
 
             <div className="section-label"><i className="fa-solid fa-shield-halved"></i>계정 · 약관</div>
             <div className="card" style={{ padding: '4px 16px' }}>
-              <div className="menu-item"><i className="fa-solid fa-file-lines"></i><span className="mlabel">개인정보 처리방침</span><i className="fa-solid fa-chevron-right chev"></i></div>
-              <div className="menu-item"><i className="fa-solid fa-file-contract"></i><span className="mlabel">서비스 이용약관</span><i className="fa-solid fa-chevron-right chev"></i></div>
+              <div className="menu-item" onClick={() => nav('legal', { doc: 'privacy', from: 'mypage' })}><i className="fa-solid fa-file-lines"></i><span className="mlabel">개인정보 처리방침</span><i className="fa-solid fa-chevron-right chev"></i></div>
+              <div className="menu-item" onClick={() => nav('legal', { doc: 'terms', from: 'mypage' })}><i className="fa-solid fa-file-contract"></i><span className="mlabel">서비스 이용약관</span><i className="fa-solid fa-chevron-right chev"></i></div>
               <div className="menu-item" onClick={toggleTheme}><i className={isDark ? 'fa-solid fa-sun' : 'fa-solid fa-moon'}></i><span className="mlabel">{isDark ? '라이트 모드로 전환' : '다크 모드로 전환'}</span><i className="fa-solid fa-chevron-right chev"></i></div>
               <div className="menu-item" onClick={() => setPinOpen(true)}><i className="fa-solid fa-lock"></i><span className="mlabel">앱 잠금 비밀번호 {pinDone ? '변경' : '설정'}</span><i className="fa-solid fa-chevron-right chev"></i></div>
             </div>

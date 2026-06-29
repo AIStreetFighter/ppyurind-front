@@ -2,6 +2,8 @@ import { useState } from 'react'
 import BottomNav from '../components/BottomNav'
 import ThemeToggle from '../components/ThemeToggle'
 import NotifBell from '../components/NotifBell'
+import { nickFromId, randomNick } from '../data/nicknames'
+import { maskPIIWithAI } from '../utils/maskPII'
 
 const AVATARS = ['cat_01_t', 'cat_02_t', 'cat_03_t', 'cat_04_t']
 
@@ -11,25 +13,45 @@ const SEED = [
   ['시댁 얘기만 나오면 싸워요', '#시댁 #갈등', '시댁 얘기만 꺼내면 분위기가 싸늘해져요. 제 편을 들어달라는 게 아니라 그냥 제 마음을 알아줬으면 하는데.', 58, 19, 8],
   ['육아는 왜 늘 제 몫일까요', '#육아분담 #지침', '둘 다 일하는데 아이 챙기는 건 늘 저예요. 도와준다는 말이 오히려 더 서운하더라고요. 같이 하는 건데.', 92, 41, 23],
   ['표현을 잘 못 하는 사람이에요', '#스킨십 #거리감', '사랑하는 건 아는데 표현이 없으니 가끔 의심이 들어요. 저만 더 좋아하는 건가 싶어서.', 47, 15, 6],
-  ['돈 얘기만 하면 예민해져요', '#돈문제 #불안', '미래를 위해 얘기하자는 건데 자꾸 잔소리로 받아들여서 대화가 안 돼요.', 63, 18, 9],
+  ['돈 얘기만 하면 예민해져요', '#경제 #불안', '미래를 위해 얘기하자는 건데 자꾸 잔소리로 받아들여서 대화가 안 돼요.', 63, 18, 9],
   ['화해는 했는데 마음이 안 풀려요', '#화해 #앙금', '말로는 풀었는데 속은 그대로예요. 이런 제가 속 좁은 걸까요?', 51, 27, 11],
   ['서로 너무 바빠서 대화가 없어요', '#대화단절 #일상', '하루에 나누는 말이 손에 꼽아요. 같이 사는데 룸메이트 같다는 생각이 들어요.', 80, 22, 15],
   ['칭찬에 인색한 배우자', '#인정욕구', '잘했다는 말 한마디가 그렇게 어려운가 봐요. 저는 그 한마디면 되는데.', 39, 12, 4],
   ['연락 텀이 길어지니 불안해요', '#연애 #불안', '예전엔 안 그랬는데 요즘 답장이 늦어지면 별생각이 다 들어요.', 44, 16, 7],
+  ['명절만 다가오면 신경전이에요', '#시댁 #스트레스', '명절 얘기만 나오면 둘 다 예민해져요. 누구 집 먼저 갈지부터 싸움이 시작돼요.', 67, 20, 13],
+  ['데이트 코스는 늘 제가 정해요', '#연애 #서운함', '뭐 먹을지, 어디 갈지 매번 제가 정해요. 가끔은 깜짝 데이트도 받아보고 싶은데.', 41, 14, 5],
+  ['고맙다는 말을 안 해요', '#인정욕구 #서운함', '집안일도 챙기고 다 하는데 당연하게 여겨지는 것 같아 서운해요.', 55, 24, 10],
+  ['게임만 하는 배우자, 지쳐요', '#대화단절 #서운함', '퇴근하면 게임, 주말에도 게임. 같이 있어도 혼자 있는 기분이에요.', 71, 19, 16],
+  ['친구 모임을 더 좋아하는 것 같아요', '#서운함 #불안', '저보다 친구들이랑 있을 때 더 즐거워 보여서 가끔 외로워요.', 48, 17, 8],
+  ['미래 계획이 너무 안 맞아요', '#가치관 #불안', '결혼, 이사, 돈 모으는 방향이 다 달라서 얘기할 때마다 막막해요.', 62, 23, 12],
+  ['청소 기준이 너무 달라요', '#가사분담 #답답', '저는 바로 치우는데 상대는 쌓아두는 편이라 매번 제가 먼저 손대게 돼요.', 37, 11, 6],
+  ['화나면 방으로 들어가 버려요', '#회피 #답답', '대화로 풀고 싶은데 문 닫고 들어가면 더 답답하고 막막해져요.', 59, 26, 14],
+  ['스킨십이 줄어 거리감이 느껴져요', '#스킨십 #거리감', '예전 같지 않은 게 느껴져서 먼저 다가가기도 눈치 보이고 위축돼요.', 53, 21, 9],
+  ['지적이 칭찬보다 먼저예요', '#인정욕구 #상처', '잘한 건 그냥 지나가고 부족한 것만 콕 집어 말해서 자꾸 위축돼요.', 45, 18, 7],
+  ['약속을 자꾸 미뤄요', '#약속 #실망', '같이 하기로 한 걸 매번 다음에 하자고 미뤄서 기대를 안 하게 됐어요.', 50, 15, 8],
+  ['돈 쓰는 스타일이 정반대예요', '#경제 #갈등', '저는 아끼는 편인데 상대는 쓰는 편이라 통장 얘기만 하면 부딪혀요.', 56, 17, 11],
+  ['생활 리듬이 너무 달라요', '#생활패턴 #답답', '저는 일찍 자는데 상대는 새벽형이라 같이 보내는 시간이 점점 줄어요.', 34, 10, 5],
+  ['사소한 걸로 자꾸 다퉈요', '#반복다툼 #지침', '큰일도 아닌데 말투 하나에 욱하게 되고, 같은 패턴으로 반복돼서 지쳐요.', 64, 25, 13],
+  ['먼저 연락하는 건 늘 저예요', '#연애 #서운함', '안부도, 화해도 늘 제가 먼저예요. 한 번쯤 먼저 다가와 주면 좋겠어요.', 49, 20, 9],
 ]
 
 function buildPosts() {
   const arr = []
-  for (let i = 0; i < 30; i++) {
-    const s = SEED[i % SEED.length]
+  for (let i = 0; i < SEED.length; i++) {
+    const s = SEED[i]
+    const id = i + 1
+    // 시연용 작성 시점: id 기반으로 0~70일 분산 (공감순 최근 30일 필터 검증용)
+    const daysAgo = (id * 11) % 70
     arr.push({
-      id: i + 1,
+      id,
       avatar: AVATARS[i % AVATARS.length],
-      name: `익명 · ${s[0]}`,
+      nick: nickFromId(id),
+      title: s[0],
       tag: `AI 태그: ${s[1]}`,
       body: s[2],
-      empathy: s[3] - i, comfort: s[4], comments: s[5],
-      author: `anon${i % 7}`,
+      empathy: s[3], comfort: s[4], comments: s[5],
+      author: `anon${i % 12}`,
+      daysAgo,
     })
   }
   return arr
@@ -38,7 +60,7 @@ function buildPosts() {
 const ALL_POSTS = buildPosts()
 const REPORT_REASONS = ['스팸 / 홍보', '욕설 / 비방', '음란성 / 부적절', '개인정보 노출', '기타']
 
-export default function Community({ nav, isDark, toggleTheme }) {
+export default function Community({ nav, isDark, toggleTheme, concerns = [] }) {
   const [filter, setFilter] = useState('전체')
   const [query, setQuery] = useState('')
   const [showSearch, setShowSearch] = useState(false)
@@ -46,13 +68,14 @@ export default function Community({ nav, isDark, toggleTheme }) {
   const [comforted, setComforted] = useState({})
   const [menuOpen, setMenuOpen] = useState(null)
   const [toast, setToast] = useState('')
-  const [detail, setDetail] = useState(null)
   const [reportFor, setReportFor] = useState(null)
   const [hiddenAuthors, setHiddenAuthors] = useState([])
   const [userPosts, setUserPosts] = useState([])
   const [writing, setWriting] = useState(false)
   const [draft, setDraft] = useState('')
+  const [maskPreview, setMaskPreview] = useState(null) // { text, hits } 게시 전 마스킹 미리보기
   const [count, setCount] = useState(5) // 처음 5개, '더보기'로 확장
+  const [sort, setSort] = useState('latest') // 'latest' | 'empathy'
 
   const flash = (msg) => { setToast(msg); setTimeout(() => setToast(''), 1900) }
 
@@ -67,20 +90,36 @@ export default function Community({ nav, isDark, toggleTheme }) {
     flash('이 회원의 글을 모두 숨겼어요.')
   }
 
-  const publish = () => {
+  // 게시 요청 → 개인정보 마스킹 후, 가려진 항목이 있으면 미리보기 확인 / 없으면 바로 게시
+  const requestPublish = async () => {
     if (!draft.trim()) return
+    const masked = await maskPIIWithAI(draft.trim())
+    if (masked.hits.length > 0) {
+      setMaskPreview(masked) // 사용자가 확인 후 게시
+    } else {
+      doPublish(masked.text)
+    }
+  }
+
+  const doPublish = (finalText) => {
     setUserPosts(p => [{
-      id: 'u' + Date.now(), avatar: AVATARS[1], name: '익명 · 들풀',
-      tag: 'AI 태그: #방금작성', body: draft.trim(), empathy: 0, comfort: 0, comments: 0, author: 'me',
+      id: 'u' + Date.now(), avatar: AVATARS[1], nick: randomNick(), title: '방금 남긴 고민',
+      tag: 'AI 태그: #방금작성', body: finalText, empathy: 0, comfort: 0, comments: 0, author: 'me', daysAgo: 0,
     }, ...p])
     setDraft('')
     setWriting(false)
-    flash('익명으로 게시됐어요. 개인정보는 자동 제거됐어요.')
+    setMaskPreview(null)
+    flash('익명으로 게시됐어요. 개인정보는 자동으로 가려졌어요.')
   }
 
-  const feed = [...userPosts, ...ALL_POSTS]
+  const base = [...userPosts, ...ALL_POSTS]
     .filter(p => !hiddenAuthors.includes(p.author))
-    .filter(p => !query.trim() || p.name.includes(query) || p.body.includes(query) || p.tag.includes(query))
+    .filter(p => !query.trim() || p.nick.includes(query) || p.title.includes(query) || p.body.includes(query) || p.tag.includes(query))
+
+  // 정렬: 최신순(작성 시점) / 공감순(최근 30일 내 공감 많은 순)
+  const feed = sort === 'empathy'
+    ? base.filter(p => p.daysAgo <= 30).sort((a, b) => b.empathy - a.empathy)
+    : [...base].sort((a, b) => a.daysAgo - b.daysAgo)
 
   const shown = feed.slice(0, count)
 
@@ -109,16 +148,21 @@ export default function Community({ nav, isDark, toggleTheme }) {
         )}
 
         <div className="chip-row" style={{ marginTop: 18 }}>
-          {['전체', '신혼 고민', '육아 분담', '화해 후기'].map(v => (
-            <span key={v} className={`chip${filter === v ? ' selected' : ''}`} onClick={() => setFilter(v)}>{v}</span>
-          ))}
+          {(() => {
+            const extra = ['시댁·처가', '경제·소비', '스킨십·친밀감'] // 공통 인기 카테고리
+            const mine = concerns.filter(c => c !== '기타').map(c => c.replace(/ 갈등$/, '')).slice(0, 2)
+            const tags = [...new Set(['전체', ...mine, ...extra])]
+            return tags.map(v => (
+              <span key={v} className={`chip${filter === v ? ' selected' : ''}`} onClick={() => setFilter(v)}>{v}</span>
+            ))
+          })()}
           <span className="chip chip--age"><i className="fa-solid fa-lock" style={{ fontSize: 11 }}></i> 19+</span>
         </div>
 
         {/* 나와 비슷한 고민 (AI 추천) */}
         <div className="section-label"><i className="fa-solid fa-wand-magic-sparkles"></i>나와 비슷한 고민 <span className="muted">· AI 추천</span></div>
         <div className="stack">
-          <div className="card" style={{ padding: 15, cursor: 'pointer' }} onClick={() => setDetail(ALL_POSTS[0])}>
+          <div className="card" style={{ padding: 15, cursor: 'pointer' }} onClick={() => nav('post', { post: ALL_POSTS[0] })}>
             <div className="row">
               <div className="avatar"><img src="/assets/cats/cat_04_t.png" alt="" /></div>
               <div style={{ flex: 1 }}>
@@ -128,7 +172,7 @@ export default function Community({ nav, isDark, toggleTheme }) {
               <span className="badge badge--match">매칭</span>
             </div>
           </div>
-          <div className="card" style={{ padding: 15, cursor: 'pointer' }} onClick={() => setDetail(ALL_POSTS[1])}>
+          <div className="card" style={{ padding: 15, cursor: 'pointer' }} onClick={() => nav('post', { post: ALL_POSTS[1] })}>
             <div className="row">
               <div className="avatar"><img src="/assets/cats/cat_02_t.png" alt="" /></div>
               <div style={{ flex: 1 }}>
@@ -151,16 +195,27 @@ export default function Community({ nav, isDark, toggleTheme }) {
           </div>
         </div>
 
-        <div className="section-label"><i className="fa-solid fa-fire"></i>지금 올라온 고민</div>
+        <div className="section-label" style={{ justifyContent: 'space-between' }}>
+          <span><i className="fa-solid fa-comments"></i>고민 이야기</span>
+          <div className="sort-tabs">
+            <button className={`sort-tab${sort === 'latest' ? ' active' : ''}`} onClick={() => { setSort('latest'); setCount(5) }}>최신순</button>
+            <button className={`sort-tab${sort === 'empathy' ? ' active' : ''}`} onClick={() => { setSort('empathy'); setCount(5) }}>공감순</button>
+          </div>
+        </div>
+        {sort === 'empathy' && <p className="sort-hint">최근 30일 동안 공감을 많이 받은 고민이에요.</p>}
         <div className="stack">
           {shown.map((p, idx) => {
             const isLiked = !!liked[p.id], isComf = !!comforted[p.id]
             const card = (
-              <div key={p.id} className="card" onClick={() => setDetail(p)} style={{ cursor: 'pointer' }}>
+              <div key={p.id} className="card" onClick={() => nav('post', { post: p })} style={{ cursor: 'pointer' }}>
                 <div className="post-head">
                   <div className="avatar"><img src={`/assets/cats/${p.avatar}.png`} alt="" /></div>
-                  <div style={{ flex: 1 }}>
-                    <p className="post-name">{p.name}</p>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <p className="post-name">
+                      {p.nick}
+                      {sort === 'empathy' && p.empathy >= 60 && <span className="hot-badge"><i className="fa-solid fa-fire"></i> HOT</span>}
+                    </p>
+                    <p className="post-title">{p.title}</p>
                     <p className="post-tag">{p.tag}</p>
                   </div>
                   <div style={{ position: 'relative' }} onClick={e => e.stopPropagation()}>
@@ -175,7 +230,7 @@ export default function Community({ nav, isDark, toggleTheme }) {
                     )}
                   </div>
                 </div>
-                <p className="quote">"{p.body.length > 64 ? p.body.slice(0, 64) + '…' : p.body}" <span className="link-more">더보기</span></p>
+                <p className="quote">"{p.body.length > 64 ? p.body.slice(0, 64) + '…' : p.body}" <span className="link-more" onClick={(e) => { e.stopPropagation(); nav('post', { post: p }) }}>더보기</span></p>
                 <div className="reactions" onClick={e => e.stopPropagation()}>
                   <span className={isLiked ? 'like' : ''} style={{ cursor: 'pointer' }} onClick={() => setLiked(s => ({ ...s, [p.id]: !s[p.id] }))}>
                     <i className={`${isLiked ? 'fa-solid' : 'fa-regular'} fa-heart`}></i> 공감 {p.empathy + (isLiked ? 1 : 0)}
@@ -183,7 +238,7 @@ export default function Community({ nav, isDark, toggleTheme }) {
                   <span style={{ cursor: 'pointer', color: isComf ? 'var(--warm-text)' : '' }} onClick={() => setComforted(s => ({ ...s, [p.id]: !s[p.id] }))}>
                     <i className={`${isComf ? 'fa-solid' : 'fa-regular'} fa-hand`}></i> 위로 {p.comfort + (isComf ? 1 : 0)}
                   </span>
-                  <span><i className="fa-regular fa-comment"></i> 댓글 {p.comments}</span>
+                  <span style={{ cursor: 'pointer' }} onClick={() => nav('post', { post: p })}><i className="fa-regular fa-comment"></i> 댓글 {p.comments}</span>
                 </div>
               </div>
             )
@@ -258,7 +313,27 @@ export default function Community({ nav, isDark, toggleTheme }) {
               placeholder="어떤 마음인지 편하게 적어보세요. 비슷한 고민의 사람들이 공감해줄 거예요." value={draft} onChange={e => setDraft(e.target.value)} autoFocus />
             <div style={{ display: 'flex', gap: 10, marginTop: 14 }}>
               <button className="cta cta--ghost" style={{ flex: 1 }} onClick={() => setWriting(false)}>취소</button>
-              <button className="cta" style={{ flex: 1.4, opacity: draft.trim() ? 1 : 0.5 }} onClick={publish}>익명으로 게시</button>
+              <button className="cta" style={{ flex: 1.4, opacity: draft.trim() ? 1 : 0.5 }} onClick={requestPublish}>익명으로 게시</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 개인정보 마스킹 미리보기 */}
+      {maskPreview && (
+        <div className="sheet-backdrop" onClick={() => setMaskPreview(null)} style={{ alignItems: 'center', padding: 22 }}>
+          <div className="modal" onClick={e => e.stopPropagation()} style={{ textAlign: 'left' }}>
+            <h3 style={{ margin: '0 0 4px', fontSize: 18, color: 'var(--ink)' }}><i className="fa-solid fa-shield-halved" style={{ marginRight: 6, color: 'var(--brand)' }}></i>개인정보를 가렸어요</h3>
+            <p style={{ margin: '0 0 12px', fontSize: 12.5, color: 'var(--ink-muted)' }}>
+              감지된 정보: {maskPreview.hits.map(h => <span key={h} className="mask-chip">{h}</span>)}
+            </p>
+            <div className="mask-preview">{maskPreview.text}</div>
+            <p style={{ margin: '10px 0 16px', fontSize: 11.5, color: 'var(--ink-muted)', lineHeight: 1.6 }}>
+              <i className="fa-solid fa-circle-info" style={{ marginRight: 4 }}></i>실명·자녀 이름 등 문맥 정보는 AI가 추가로 가립니다 <span style={{ opacity: 0.7 }}>(연동 예정)</span>.
+            </p>
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button className="cta cta--ghost" style={{ flex: 1 }} onClick={() => setMaskPreview(null)}>다시 쓰기</button>
+              <button className="cta" style={{ flex: 1.4 }} onClick={() => doPublish(maskPreview.text)}>이대로 게시</button>
             </div>
           </div>
         </div>
@@ -274,38 +349,6 @@ export default function Community({ nav, isDark, toggleTheme }) {
               {REPORT_REASONS.map(r => (
                 <button key={r} className="report-reason" onClick={() => submitReport(r)}>{r}<i className="fa-solid fa-chevron-right"></i></button>
               ))}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* 게시글 상세 */}
-      {detail && (
-        <div className="sheet-backdrop" onClick={() => setDetail(null)}>
-          <div className="sheet" onClick={e => e.stopPropagation()}>
-            <div className="sheet-handle" />
-            <div className="post-head">
-              <div className="avatar"><img src={`/assets/cats/${detail.avatar}.png`} alt="" /></div>
-              <div style={{ flex: 1 }}>
-                <p className="post-name">{detail.name}</p>
-                <p className="post-tag">{detail.tag}</p>
-              </div>
-              <i className="fa-solid fa-xmark" style={{ color: 'var(--ink-muted)', cursor: 'pointer', fontSize: 18 }} onClick={() => setDetail(null)}></i>
-            </div>
-            <p style={{ fontSize: 15, lineHeight: 1.75, color: 'var(--ink)' }}>{detail.body}</p>
-            <div className="reactions" style={{ margin: '6px 0 18px' }}>
-              <span className="like"><i className="fa-solid fa-heart"></i> 공감 {detail.empathy}</span>
-              <span><i className="fa-regular fa-hand"></i> 위로 {detail.comfort}</span>
-              <span><i className="fa-regular fa-comment"></i> 댓글 {detail.comments}</span>
-            </div>
-            <div className="section-label" style={{ marginTop: 4 }}><i className="fa-regular fa-comment"></i>댓글</div>
-            <div className="stack" style={{ gap: 10 }}>
-              <div className="comment"><b>익명1</b> 저도 똑같아요. 먼저 챙기는 사람만 서운하죠…</div>
-              <div className="comment"><b>익명2</b> 한 번 솔직하게 말해보는 건 어때요? 응원할게요 🙏</div>
-            </div>
-            <div className="comment-input">
-              <input className="field" style={{ flex: 1 }} placeholder="따뜻한 댓글을 남겨보세요" />
-              <button className="cta" style={{ width: 'auto', padding: '0 18px' }}>등록</button>
             </div>
           </div>
         </div>
