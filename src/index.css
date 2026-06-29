@@ -332,17 +332,41 @@ body {
 .safety__chev { color: var(--danger-text); font-size: 13px; }
 .safety h4 { margin: 0; font-size: 14.5px; font-weight: 600; color: var(--ink); }
 .safety__body { margin-top: 9px; }
-.safety p { margin: 0 0 11px; font-size: 13px; line-height: 1.55; color: var(--ink-soft); }
-.safety__actions { display: flex; gap: 8px; margin-top: 8px; }
-.safety-btn {
-  flex: 1; display: inline-flex; align-items: center; justify-content: center;
-  font-size: 13px; font-weight: 600; padding: 10px 12px; border-radius: 11px;
-  background: transparent; border: 1px solid var(--danger-line); color: var(--danger-text); cursor: pointer;
+.safety p { margin: 0 0 12px; font-size: 13px; line-height: 1.55; color: var(--ink-soft); }
+
+/* 메인 24시간 도움 버튼 */
+.safety-main {
+  display: flex; align-items: center; justify-content: center; gap: 9px;
+  width: 100%; padding: 15px; border-radius: 13px; margin-bottom: 10px;
+  background: var(--brand); color: #fff; text-decoration: none;
+  font-size: 16px; font-weight: 700; letter-spacing: -0.01em;
 }
-.safety-checkup {
-  width: 100%; margin-top: 11px; padding: 11px; border-radius: 12px; cursor: pointer;
-  background: var(--brand); border: none; color: #fff; font: 600 13.5px 'Pretendard';
+.safety-main i { font-size: 15px; }
+
+/* 개별 긴급 전화 행 */
+.safety-tel {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 11px 13px; border-radius: 12px; text-decoration: none; margin-bottom: 8px;
+  background: color-mix(in srgb, var(--danger-bg) 60%, transparent);
+  border: 1px solid var(--danger-line);
 }
+.safety-tel__l { display: flex; align-items: center; gap: 11px; font-size: 14.5px; font-weight: 600; color: var(--ink); }
+.safety-tel__ic {
+  width: 34px; height: 34px; flex-shrink: 0; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  background: color-mix(in srgb, var(--danger-text) 22%, transparent); color: var(--danger-text); font-size: 13px;
+}
+.safety-tel__r { color: var(--ink-muted); font-size: 13px; }
+
+/* 보조 링크 (쉼터·상담기관·자가점검) */
+.safety-links { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.safety-links a, .safety-links button {
+  display: inline-flex; align-items: center; gap: 6px; padding: 0;
+  background: none; border: none; cursor: pointer; text-decoration: none;
+  font-size: 12.5px; font-weight: 600; color: var(--brand-soft-text); font-family: inherit;
+}
+.safety-links i { font-size: 12px; }
+.safety-links__dot { color: var(--ink-muted); font-size: 11px; }
 
 /* Insight */
 .insight { background: var(--brand-soft-bg); border-radius: 14px; padding: 15px 17px; }
