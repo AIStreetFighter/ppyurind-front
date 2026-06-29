@@ -80,6 +80,17 @@ export default function MyPage({ nav, isDark, toggleTheme, nickname }) {
           ))}
         </div>
 
+        {/* 배우자 이해 노트(도감) 기반 살짝 광고 */}
+        <a className="card mini-ad" href="#" onClick={e => e.preventDefault()}>
+          <span className="ad-badge">AD</span>
+          <div className="event-emoji" style={{ background: 'color-mix(in srgb, var(--like) 16%, transparent)' }}>🎁</div>
+          <div style={{ flex: 1 }}>
+            <p className="row__title" style={{ marginBottom: 2 }}>위시리스트 속 '무선 이어폰', 지금 특가예요</p>
+            <p className="row__sub">도감 기반 추천 · 제휴</p>
+          </div>
+          <i className="fa-solid fa-chevron-right chev" style={{ color: 'var(--ink-muted)' }}></i>
+        </a>
+
         {/* 마음건강 검사 */}
         <div className="section-label"><i className="fa-solid fa-heart-pulse"></i>마음 건강</div>
         <div className="card chk-item" onClick={() => nav('checkup')} style={{ cursor: 'pointer' }}>
@@ -90,17 +101,6 @@ export default function MyPage({ nav, isDark, toggleTheme, nickname }) {
           </div>
           <i className="fa-solid fa-chevron-right chev" style={{ color: 'var(--ink-muted)' }}></i>
         </div>
-
-        {/* 배우자 이해 노트 기반 살짝 광고 */}
-        <a className="card mini-ad" href="#" onClick={e => e.preventDefault()}>
-          <span className="ad-badge">AD</span>
-          <div className="event-emoji" style={{ background: 'color-mix(in srgb, var(--like) 16%, transparent)' }}>🎁</div>
-          <div style={{ flex: 1 }}>
-            <p className="row__title" style={{ marginBottom: 2 }}>위시리스트 속 '무선 이어폰', 지금 특가예요</p>
-            <p className="row__sub">도감 기반 추천 · 제휴</p>
-          </div>
-          <i className="fa-solid fa-chevron-right chev" style={{ color: 'var(--ink-muted)' }}></i>
-        </a>
 
         {/* 기록 & 리포트 (병합) */}
         <div className="section-label"><i className="fa-solid fa-folder-open"></i>기록 &amp; 리포트</div>
