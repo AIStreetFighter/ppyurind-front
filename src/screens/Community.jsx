@@ -148,9 +148,14 @@ export default function Community({ nav, isDark, toggleTheme, concerns = [] }) {
         )}
 
         <div className="chip-row" style={{ marginTop: 18 }}>
-          {['전체', ...concerns.filter(c => c !== '기타').slice(0, 3), '화해 후기'].map(v => (
-            <span key={v} className={`chip${filter === v ? ' selected' : ''}`} onClick={() => setFilter(v)}>{v}</span>
-          ))}
+          {(() => {
+            const extra = ['시댁·처가', '경제·소비', '스킨십·친밀감'] // 공통 인기 카테고리
+            const mine = concerns.filter(c => c !== '기타').map(c => c.replace(/ 갈등$/, '')).slice(0, 2)
+            const tags = [...new Set(['전체', ...mine, ...extra, '화해 후기'])]
+            return tags.map(v => (
+              <span key={v} className={`chip${filter === v ? ' selected' : ''}`} onClick={() => setFilter(v)}>{v}</span>
+            ))
+          })()}
           <span className="chip chip--age"><i className="fa-solid fa-lock" style={{ fontSize: 11 }}></i> 19+</span>
         </div>
 
