@@ -9,6 +9,10 @@ export default function Calendar({ nav, isDark, toggleTheme }) {
   const [view, setView] = useState(new Date(2026, 5, 1)) // 2026-06
   const [selected, setSelected] = useState('2026-06-25')
   const [adding, setAdding] = useState(false)
+  const [events, setEvents] = useState(EVENTS) // 추가 가능하도록 로컬 상태로
+  const [newTitle, setNewTitle] = useState('')
+  const [newDate, setNewDate] = useState('')
+  const [newType, setNewType] = useState('anniv')
 
   const year = view.getFullYear()
   const month = view.getMonth()
@@ -16,10 +20,20 @@ export default function Calendar({ nav, isDark, toggleTheme }) {
   const daysIn = new Date(year, month + 1, 0).getDate()
   const todayStr = ymd(new Date())
 
-  const eventsOf = (dateStr) => EVENTS.filter(e => e.date === dateStr)
-  const monthEvents = EVENTS
+  const eventsOf = (dateStr) => events.filter(e => e.date === dateStr)
+  const monthEvents = events
     .filter(e => e.date.startsWith(`${year}-${String(month + 1).padStart(2, '0')}`))
     .sort((a, b) => a.date.localeCompare(b.date))
+
+  const openAdd = () => { setNewTitle(''); setNewDate(selected || todayStr); setNewType('anniv'); setAdding(true) }
+
+  const submitEvent = () => {
+    if (!newTitle.trim() || !newDate) return
+    setEvents(prev => [...prev, { date: newDate, type: newType, title: newTitle.trim() }])
+    setView(new Date(Number(newDate.slice(0, 4)), Number(newDate.slice(5, 7)) - 1, 1))
+    setSelected(newDate)
+    setAdding(false)
+  }
 
   const shift = (delta) => { setView(new Date(year, month + delta, 1)); setSelected('') }
 
@@ -97,7 +111,7 @@ export default function Calendar({ nav, isDark, toggleTheme }) {
         )}
       </div>
 
-      <button className="cta" style={{ marginTop: 18 }} onClick={() => setAdding(true)}>
+      <button className="cta" style={{ marginTop: 18 }} onClick={openAdd}>
         <i className="fa-solid fa-plus" style={{ marginRight: 7 }}></i>일정 · 기념일 추가
       </button>
 
@@ -105,16 +119,18 @@ export default function Calendar({ nav, isDark, toggleTheme }) {
         <div className="sheet-backdrop" onClick={() => setAdding(false)} style={{ alignItems: 'center', padding: 22 }}>
           <div className="modal" onClick={e => e.stopPropagation()} style={{ textAlign: 'left' }}>
             <h3 style={{ margin: '0 0 16px', fontSize: 18, color: 'var(--ink)' }}>일정 추가</h3>
-            <input className="field" style={{ width: '100%', marginBottom: 10 }} placeholder="일정 이름 (예: 결혼기념일)" />
-            <input className="field" type="date" defaultValue={selected} style={{ width: '100%', marginBottom: 10 }} />
+            <input className="field" style={{ width: '100%', marginBottom: 10 }} placeholder="일정 이름 (예: 결혼기념일)"
+              value={newTitle} onChange={e => setNewTitle(e.target.value)} autoFocus />
+            <input className="field" type="date" style={{ width: '100%', marginBottom: 10 }}
+              value={newDate} onChange={e => setNewDate(e.target.value)} />
             <div className="chip-row" style={{ marginBottom: 16 }}>
               {Object.entries(EVENT_TYPES).map(([k, t]) => (
-                <span key={k} className="chip chip--sm">{t.emoji} {t.label}</span>
+                <span key={k} className={`chip chip--sm${newType === k ? ' selected' : ''}`} onClick={() => setNewType(k)}>{t.emoji} {t.label}</span>
               ))}
             </div>
             <div style={{ display: 'flex', gap: 10 }}>
               <button className="cta cta--ghost" style={{ flex: 1 }} onClick={() => setAdding(false)}>취소</button>
-              <button className="cta" style={{ flex: 1 }} onClick={() => setAdding(false)}>추가하기</button>
+              <button className="cta" style={{ flex: 1, opacity: newTitle.trim() && newDate ? 1 : 0.5 }} onClick={submitEvent}>추가하기</button>
             </div>
           </div>
         </div>

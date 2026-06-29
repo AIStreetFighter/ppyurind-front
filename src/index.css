@@ -122,7 +122,12 @@ body {
   flex: 1;
   padding: 0 20px 96px;
   overflow-y: auto;
+  scrollbar-width: none;        /* Firefox: 스크롤바 숨김 */
+  -ms-overflow-style: none;     /* IE/Edge */
 }
+.phone-body::-webkit-scrollbar { width: 0; height: 0; }  /* Chrome/Safari */
+.sheet { scrollbar-width: none; }
+.sheet::-webkit-scrollbar { width: 0; height: 0; }
 
 .phone-body--flat {
   padding-bottom: 96px;
