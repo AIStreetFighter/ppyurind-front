@@ -2,6 +2,7 @@ import { useState } from 'react'
 import ThemeToggle from '../components/ThemeToggle'
 import BottomNav from '../components/BottomNav'
 import SafetyCard from '../components/SafetyCard'
+import { exportReportPdf } from '../utils/exportPdf'
 
 // 주간 / 월간 리포트 데이터 (실제 서비스에서는 사용자 기록 기반으로 채워짐)
 const REPORTS = {
@@ -72,17 +73,27 @@ const MOOD_COLOR = {
 
 export default function Analysis({ nav, isDark, toggleTheme, nickname }) {
   const [period, setPeriod] = useState('월간')
+  const [menuOpen, setMenuOpen] = useState(false)
   const r = REPORTS[period]
   const maxCount = Math.max(...r.phrases.map(p => p.count))
   const gaugePct = Math.min(100, (r.gaslight.score / 20) * 100)
 
   return (
-    <div className="phone-body">
+    <div className="phone-body report-print">
       <div className="topbar">
         <p className="eyebrow">관계 마음 리포트</p>
         <div className="topbar__icons">
           <ThemeToggle isDark={isDark} toggleTheme={toggleTheme} />
-          <i className="fa-solid fa-ellipsis"></i>
+          <div style={{ position: 'relative' }}>
+            <i className="fa-solid fa-ellipsis" style={{ cursor: 'pointer' }} onClick={() => setMenuOpen(o => !o)}></i>
+            {menuOpen && (
+              <div className="kebab-menu">
+                <div className="kebab-item" onClick={() => { setMenuOpen(false); exportReportPdf() }}>
+                  <i className="fa-solid fa-file-arrow-down"></i> PDF로 내보내기
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 

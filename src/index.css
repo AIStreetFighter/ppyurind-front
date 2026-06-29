@@ -67,6 +67,17 @@ body {
   .phone { border: none; }
 }
 
+/* PDF 내보내기(인쇄): 리포트만 남기고 색/그라데이션 그대로 인쇄 */
+@media print {
+  @page { margin: 12mm; }
+  body * { visibility: hidden; }
+  .report-print, .report-print * { visibility: visible; }
+  .report-print { position: absolute; left: 0; top: 0; width: 100%; padding: 0; overflow: visible; }
+  .no-print, .bottom-nav, .topbar__icons, .safety, .backbar-inline i { display: none !important; }
+  .card, .rp-card, .bars, .donut, .gauge, .insight { break-inside: avoid; page-break-inside: avoid; }
+  * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+}
+
 .phone.is-light {
   --bg: #FFFFFF;
   --bg-2: #F7F6F2;
