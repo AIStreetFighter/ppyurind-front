@@ -57,6 +57,7 @@ body {
   flex-direction: column;
   font-family: 'Pretendard', -apple-system, 'Apple SD Gothic Neo', sans-serif;
   border: 1px solid rgba(150,165,210,0.12);
+  word-break: keep-all; /* 한글 단어가 중간에 끊겨 '요'만 떨어지는 현상 방지 */
 }
 
 .phone.is-light {
