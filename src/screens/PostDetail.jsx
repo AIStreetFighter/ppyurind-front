@@ -1,6 +1,9 @@
 import { useState } from 'react'
 import { nickFromId } from '../data/nicknames'
 
+const AVS = ['cat_01_t', 'cat_02_t', 'cat_03_t', 'cat_04_t']
+const avatarFor = (id) => AVS[Math.abs(String(id).split('').reduce((a, c) => a + c.charCodeAt(0), 0)) % AVS.length]
+
 // 커뮤니티 게시글 상세 — 전체 화면(블라인드 스타일)
 // post: 선택된 게시글 객체, nav('community')로 목록 복귀
 export default function PostDetail({ nav, post }) {
@@ -111,29 +114,33 @@ export default function PostDetail({ nav, post }) {
         <div className="pd-comments">
           {comments.map(c => (
             <div key={c.id} className="pd-comment">
-              <p className={`pd-c-nick${c.mine ? ' mine' : ''}`}>{c.nick}</p>
-              <p className="pd-c-body">{c.body}</p>
-              <div className="pd-c-meta">
-                <span>{c.time}</span>
-                <span className={c.liked ? 'on' : ''} onClick={() => toggleLike(c.id)}>
-                  <i className={`${c.liked ? 'fa-solid' : 'fa-regular'} fa-heart`}></i> 좋아요{c.likes ? ` ${c.likes}` : ''}
-                </span>
-                <span onClick={() => setReplyTo(replyTo === c.id ? null : c.id)}>
-                  <i className="fa-regular fa-comment"></i> 대댓글{c.replies.length ? ` ${c.replies.length}` : ''}
-                </span>
+              <div className="pd-c-row">
+                <div className="avatar avatar--sm"><img src={`/assets/cats/${avatarFor(c.id)}.png`} alt="" /></div>
+                <div className="pd-c-main">
+                  <p className={`pd-c-nick${c.mine ? ' mine' : ''}`}>{c.nick}</p>
+                  <p className="pd-c-body">{c.body}</p>
+                  <div className="pd-c-meta">
+                    <span>{c.time}</span>
+                    {c.likes > 0 && <span className="static">좋아요 {c.likes}</span>}
+                    <span onClick={() => setReplyTo(replyTo === c.id ? null : c.id)}>답글</span>
+                  </div>
+                </div>
+                <i className={`${c.liked ? 'fa-solid' : 'fa-regular'} fa-heart pd-c-heart${c.liked ? ' on' : ''}`} onClick={() => toggleLike(c.id)}></i>
               </div>
 
-              {/* 대댓글 */}
+              {/* 대댓글 (선 없이 들여쓰기) */}
               {c.replies.map(r => (
-                <div key={r.id} className="pd-reply">
-                  <p className={`pd-c-nick${r.mine ? ' mine' : ''}`}>{r.nick}</p>
-                  <p className="pd-c-body">{r.body}</p>
-                  <div className="pd-c-meta">
-                    <span>{r.time}</span>
-                    <span className={r.liked ? 'on' : ''} onClick={() => toggleLike(c.id, r.id)}>
-                      <i className={`${r.liked ? 'fa-solid' : 'fa-regular'} fa-heart`}></i> 좋아요{r.likes ? ` ${r.likes}` : ''}
-                    </span>
+                <div key={r.id} className="pd-c-row pd-reply">
+                  <div className="avatar avatar--sm"><img src={`/assets/cats/${avatarFor(r.id)}.png`} alt="" /></div>
+                  <div className="pd-c-main">
+                    <p className={`pd-c-nick${r.mine ? ' mine' : ''}`}>{r.nick}</p>
+                    <p className="pd-c-body">{r.body}</p>
+                    <div className="pd-c-meta">
+                      <span>{r.time}</span>
+                      {r.likes > 0 && <span className="static">좋아요 {r.likes}</span>}
+                    </div>
                   </div>
+                  <i className={`${r.liked ? 'fa-solid' : 'fa-regular'} fa-heart pd-c-heart${r.liked ? ' on' : ''}`} onClick={() => toggleLike(c.id, r.id)}></i>
                 </div>
               ))}
 
