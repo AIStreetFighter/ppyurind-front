@@ -45,7 +45,7 @@ function buildPosts() {
 const ALL_POSTS = buildPosts()
 const REPORT_REASONS = ['스팸 / 홍보', '욕설 / 비방', '음란성 / 부적절', '개인정보 노출', '기타']
 
-export default function Community({ nav, isDark, toggleTheme }) {
+export default function Community({ nav, isDark, toggleTheme, concerns = [] }) {
   const [filter, setFilter] = useState('전체')
   const [query, setQuery] = useState('')
   const [showSearch, setShowSearch] = useState(false)
@@ -133,7 +133,7 @@ export default function Community({ nav, isDark, toggleTheme }) {
         )}
 
         <div className="chip-row" style={{ marginTop: 18 }}>
-          {['전체', '신혼 고민', '육아 분담', '화해 후기'].map(v => (
+          {['전체', ...concerns.filter(c => c !== '기타').slice(0, 3), '화해 후기'].map(v => (
             <span key={v} className={`chip${filter === v ? ' selected' : ''}`} onClick={() => setFilter(v)}>{v}</span>
           ))}
           <span className="chip chip--age"><i className="fa-solid fa-lock" style={{ fontSize: 11 }}></i> 19+</span>

@@ -18,6 +18,7 @@ export default function App() {
   const [screen, setScreen] = useState("kakaoLogin");
   const [isDark, setIsDark] = useState(true);
   const [nickname, setNickname] = useState("지우");
+  const [concerns, setConcerns] = useState(["대화 단절", "서운함"]);
   const [checkupSignal, setCheckupSignal] = useState("");
   const [legal, setLegal] = useState({ doc: "privacy", from: "kakaoLogin" });
   const [activePost, setActivePost] = useState(null);
@@ -30,7 +31,7 @@ export default function App() {
   };
   const toggleTheme = () => setIsDark((prev) => !prev);
 
-  const props = { nav, isDark, toggleTheme, nickname, onNicknameSave: setNickname };
+  const props = { nav, isDark, toggleTheme, nickname, onNicknameSave: setNickname, concerns, onConcernsSave: setConcerns };
 
   const screens = {
     kakaoLogin: <KakaoLogin {...props} />,
