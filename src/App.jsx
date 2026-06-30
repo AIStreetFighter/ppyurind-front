@@ -14,6 +14,7 @@ import PostDetail from "./screens/PostDetail";
 import Report from "./screens/Report";
 import Community from "./screens/Community";
 import MyPage from "./screens/MyPage";
+import NotFound from "./screens/NotFound";
 
 const SCREEN_PATHS = {
   kakaoLogin: "/",
@@ -39,7 +40,7 @@ const PATH_SCREENS = Object.fromEntries(
 function AppContent() {
   const navigate = useNavigate();
   const location = useLocation();
-  const screen = PATH_SCREENS[location.pathname] || "kakaoLogin";
+  const screen = PATH_SCREENS[location.pathname] ?? "notFound";
   const [isDark, setIsDark] = useState(true);
   const [nickname, setNickname] = useState("지우");
   const [concerns, setConcerns] = useState(["대화 단절", "서운함"]);
@@ -74,6 +75,7 @@ function AppContent() {
     report: <Report {...props} />,
     community: <Community {...props} />,
     mypage: <MyPage {...props} />,
+    notFound: <NotFound {...props} />,
   };
 
   return (
