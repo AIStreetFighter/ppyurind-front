@@ -9,16 +9,12 @@
 body {
   margin: 0;
   background: #0f1120;
-  display: flex;
-  justify-content: center;
-  align-items: flex-start;
   min-height: 100vh;
   font-family: 'Pretendard', -apple-system, 'Apple SD Gothic Neo', sans-serif;
 }
 
 #root {
   width: 100%;
-  max-width: 430px;
   min-height: 100vh;
 }
 
@@ -50,10 +46,9 @@ body {
 
   position: relative;
   width: 100%;
-  max-width: 430px;
   min-height: 100vh;
   border-radius: 0;
-  overflow: hidden;
+  overflow: visible;
   background: linear-gradient(180deg, var(--bg) 0%, var(--bg-2) 100%);
   display: flex;
   flex-direction: column;
@@ -68,16 +63,54 @@ body {
 }
 
 /* 데스크탑/태블릿(웹): 화면 가운데 떠 있는 폰 목업 — 그림자·라운드 */
-@media (min-width: 461px) {
-  body { align-items: center; padding: 22px 0; }
+@media (min-width: 768px) {
   .phone {
-    min-height: 0;
-    height: min(880px, calc(100vh - 44px));
-    border-radius: 34px;
-    box-shadow: 0 24px 70px rgba(0, 0, 0, 0.5);
-    overflow: hidden;
+    border-left: none;
+    border-right: none;
   }
-  #root { display: flex; align-items: center; }
+
+  .phone-body,
+  .pd-body {
+    width: min(100%, 1040px);
+    margin: 0 auto;
+    padding-left: 32px;
+    padding-right: 32px;
+  }
+
+  .topbar,
+  .backbar {
+    margin-left: 0;
+    margin-right: 0;
+  }
+
+  .bottom-nav,
+  .pd-input {
+    left: 50%;
+    right: auto;
+    width: min(100%, 1040px);
+    transform: translateX(-50%);
+    border-left: 1px solid var(--nav-line);
+    border-right: 1px solid var(--nav-line);
+  }
+
+  .sheet {
+    max-width: 720px;
+    border-radius: 22px 22px 0 0;
+  }
+}
+
+@media (min-width: 1120px) {
+  .phone-body,
+  .pd-body {
+    width: min(100%, 1120px);
+    padding-left: 40px;
+    padding-right: 40px;
+  }
+
+  .bottom-nav,
+  .pd-input {
+    width: min(100%, 1120px);
+  }
 }
 
 /* PDF 내보내기(인쇄): 리포트만 남기고 색/그라데이션 그대로 인쇄 */
