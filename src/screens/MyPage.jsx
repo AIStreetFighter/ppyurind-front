@@ -2,6 +2,18 @@ import { useState } from 'react'
 import BottomNav from '../components/BottomNav'
 import ThemeToggle from '../components/ThemeToggle'
 import PinPad from '../components/PinPad'
+// [API] 백엔드 연결 시 아래 import 활성화
+// import { logout, deleteMe, updateMe, getDex, addDex, deleteDex, saveCheckup, updateNotificationSettings } from '../api/ppyurindApi'
+//
+// [API] 도감 로드 (현재: DEX 더미 데이터 사용)
+//   useEffect(() => { getDex().then(data => setDex(data)) }, [])
+//   응답: { secret:[...], partner:[...], taboo:[...], cheat:[...], wish:[...] }
+//
+// [API] AI 톤 변경 (현재: 로컬 state만 변경)
+//   updateMe({ ai_tone: tone })
+//
+// [API] 알림 설정 토글 (현재: 로컬 state만 변경)
+//   updateNotificationSettings({ notify_empathy, notify_comment, notify_anniversary })
 
 const DEX = [
   {
@@ -181,6 +193,8 @@ export default function MyPage({ nav, isDark, toggleTheme, nickname }) {
             </p>
             <div style={{ display: 'flex', gap: 10 }}>
               <button className="cta cta--ghost" style={{ flex: 1 }} onClick={() => setConfirm(null)}>취소</button>
+              {/* [API] 로그아웃: logout().then(() => nav('kakaoLogin')) */}
+              {/* [API] 탈퇴: deleteMe().then(() => { clearToken(); nav('kakaoLogin') }) */}
               <button className="cta" style={{ flex: 1, background: confirm === 'withdraw' ? 'var(--like)' : 'var(--brand)' }} onClick={() => { setConfirm(null); setSettings(false); nav('kakaoLogin') }}>
                 {confirm === 'withdraw' ? '탈퇴하기' : '로그아웃'}
               </button>

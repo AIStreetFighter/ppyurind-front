@@ -2,6 +2,15 @@ import { useState } from 'react'
 import ThemeToggle from '../components/ThemeToggle'
 import BottomNav from '../components/BottomNav'
 import { EVENTS, EVENT_TYPES, ymd } from '../data/events'
+// [API] 백엔드 연결 시 아래 import 활성화
+// import { listEvents, createEvent, updateEvent, deleteEvent } from '../api/ppyurindApi'
+//
+// [API] 월별 이벤트 로드 (현재: data/events.js 더미 사용)
+//   listEvents({ from: '2026-06-01', to: '2026-06-30' }).then(data => setEvents(data.items))
+//   이벤트 type: 'anniv' | 'birthday' | 'fight' | 'talk' | 'date'
+// [API] 이벤트 추가: createEvent({ date, type, title })
+// [API] 이벤트 수정: updateEvent(id, { date, type, title })
+// [API] 이벤트 삭제: deleteEvent(id)
 
 const WEEK = ['일', '월', '화', '수', '목', '금', '토']
 

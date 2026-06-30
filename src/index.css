@@ -720,7 +720,7 @@ body {
 
 /* 글쓰기 FAB + 말풍선 */
 .fab-wrap {
-  position: absolute; right: 18px; bottom: 92px; z-index: 30;
+  position: fixed; right: 18px; bottom: 92px; z-index: 30;
   display: flex; flex-direction: column; align-items: flex-end; gap: 10px;
 }
 .fab-write {

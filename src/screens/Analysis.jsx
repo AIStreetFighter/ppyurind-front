@@ -3,6 +3,17 @@ import ThemeToggle from '../components/ThemeToggle'
 import BottomNav from '../components/BottomNav'
 import SafetyCard from '../components/SafetyCard'
 import { exportReportPdf } from '../utils/exportPdf'
+// [API] 백엔드 연결 시 아래 import 활성화
+// import { getReport } from '../api/ppyurindApi'
+//
+// [API] 주간/월간 리포트 로드 (현재: REPORTS 더미 객체 사용)
+//   useEffect(() => {
+//     getReport(period === '주간' ? 'weekly' : 'monthly').then(data => setReport(data))
+//   }, [period])
+//   응답 필드: period, range, summary, gaslight{score,level}, emotion{neg,neu,pos,tags},
+//             phrases[]{text,count,tone}, weekly[]{day,h,mood}, weekly_note
+//             (monthly 추가) weeks[]{label,pos}, trend, insight
+//   기록 부족 시: { available: false, detail: "..." } → 안내 문구 표시
 
 // 주간 / 월간 리포트 데이터 (실제 서비스에서는 사용자 기록 기반으로 채워짐)
 const REPORTS = {

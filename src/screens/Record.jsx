@@ -3,6 +3,8 @@ import ThemeToggle from '../components/ThemeToggle'
 import BottomNav from '../components/BottomNav'
 import SafetyCard from '../components/SafetyCard'
 import { analyzeEmotion } from '../api/ppyurindApi'
+// [API] 저장·업로드 연결 시 아래 import 추가
+// import { createEmotion, uploadMedia, createCommunityPost } from '../api/ppyurindApi'
 
 export default function Record({ nav, isDark, toggleTheme }) {
   const [tab, setTab] = useState('텍스트')
@@ -19,11 +21,11 @@ export default function Record({ nav, isDark, toggleTheme }) {
     setError('')
     try {
       const result = await analyzeEmotion({ rawContent: text.trim() })
-      nav('analysisResult', { result, shared: share })
+      nav('analysisResult', { result, shared: share, rawContent: text.trim() })
     } catch (e) {
       // 백엔드 미연결 등 — 더미 결과 화면으로 폴백
       setError('분석 서버에 연결하지 못했어요. 예시 결과를 보여드릴게요.')
-      setTimeout(() => { setAnalyzing(false); nav('analysisResult') }, 1200)
+      setTimeout(() => { setAnalyzing(false); nav('analysisResult', { rawContent: text.trim() }) }, 1200)
     }
   }
 
@@ -54,6 +56,7 @@ export default function Record({ nav, isDark, toggleTheme }) {
         />
       )}
 
+      {/* [API] 음성 탭: 녹음 완료 시 uploadMedia(audioBlob) → { stt_text } → setText(stt_text) */}
       {tab === '음성' && (
         <div className="field" style={{ marginTop: 14, minHeight: 148, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 14 }}>
           <button className={`mic-btn${recording ? ' rec' : ''}`} onClick={() => setRecording(r => !r)}>
@@ -68,6 +71,7 @@ export default function Record({ nav, isDark, toggleTheme }) {
         </div>
       )}
 
+      {/* [API] 캡처 탭: onChange={e => { const f = e.target.files[0]; uploadMedia(f).then(r => setText(r.ocr_text)) }} */}
       {tab === '대화 캡처' && (
         <label className="field upload" style={{ marginTop: 14, minHeight: 148 }}>
           <input type="file" accept="image/*" hidden />
@@ -107,6 +111,7 @@ export default function Record({ nav, isDark, toggleTheme }) {
       </button>
 
       {/* 분석 후 익명 공유 여부 팝업 */}
+      {/* [API] goAnalyze(true) 호출 시: 분석 결과 받은 뒤 createCommunityPost({ content: text, sourceRecordId: result.id }) */}
       {sharePopup && (
         <div className="sheet-backdrop" onClick={() => setSharePopup(false)} style={{ alignItems: 'center', padding: 22 }}>
           <div className="modal" onClick={e => e.stopPropagation()}>

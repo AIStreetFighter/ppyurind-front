@@ -4,7 +4,7 @@ import BottomNav from '../components/BottomNav'
 import SafetyCard from '../components/SafetyCard'
 import { exportReportPdf } from '../utils/exportPdf'
 
-export default function AnalysisResult({ nav, isDark, toggleTheme, nickname, result }) {
+export default function AnalysisResult({ nav, isDark, toggleTheme, nickname, result, rawContent }) {
   const [menuOpen, setMenuOpen] = useState(false)
   const who = nickname || '지우'
   const r = result // 실제 AI 분석 결과 (없으면 예시)
@@ -81,7 +81,7 @@ export default function AnalysisResult({ nav, isDark, toggleTheme, nickname, res
 
       <div style={{ marginTop: 16 }}><SafetyCard nav={nav} signal="우울 무기력" /></div>
 
-      <button className="cta" style={{ marginTop: 18 }} onClick={() => nav('translate')}>
+      <button className="cta" style={{ marginTop: 18 }} onClick={() => nav('translate', { initialText: rawContent || '' })}>
         <i className="fa-solid fa-comment-medical" style={{ marginRight: 7 }}></i>이 마음, 말투 바꿔 전하기
       </button>
 

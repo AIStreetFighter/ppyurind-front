@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import ThemeToggle from '../components/ThemeToggle'
 import PinPad from '../components/PinPad'
+// [API] 백엔드 연결 시 아래 import 활성화
+// import { saveOnboarding } from '../api/ppyurindApi'
 
 export default function Onboarding({ nav, isDark, toggleTheme, onNicknameSave, onConcernsSave }) {
   const [step, setStep] = useState(1)
@@ -148,7 +150,8 @@ export default function Onboarding({ nav, isDark, toggleTheme, onNicknameSave, o
           <button
             className="cta"
             style={{ marginTop: 26, opacity: nickname.trim() ? 1 : 0.5 }}
-            onClick={() => { if (nickname.trim()) { onNicknameSave?.(nickname.trim()); onConcernsSave?.(concerns); nav('home') } }}
+            // [API] onClick 교체: await saveOnboarding({ relation, relation_year: year, concerns, ai_tone: tone, nickname })
+          onClick={() => { if (nickname.trim()) { onNicknameSave?.(nickname.trim()); onConcernsSave?.(concerns); nav('home') } }}
           >
             감정 기록 시작하기
           </button>

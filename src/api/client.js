@@ -63,10 +63,24 @@ export async function apiRequest(path, options = {}) {
 }
 
 export const api = {
-  get: (path, options) => apiRequest(path, { ...options, method: 'GET' }),
-  post: (path, body, options) =>
-    apiRequest(path, { ...options, method: 'POST', body: JSON.stringify(body) }),
-  put: (path, body, options) =>
-    apiRequest(path, { ...options, method: 'PUT', body: JSON.stringify(body) }),
-  delete: (path, options) => apiRequest(path, { ...options, method: 'DELETE' }),
+  get:    (path, options)        => apiRequest(path, { ...options, method: 'GET' }),
+  post:   (path, body, options)  => apiRequest(path, { ...options, method: 'POST',   body: JSON.stringify(body) }),
+  patch:  (path, body, options)  => apiRequest(path, { ...options, method: 'PATCH',  body: JSON.stringify(body) }),
+  put:    (path, body, options)  => apiRequest(path, { ...options, method: 'PUT',    body: JSON.stringify(body) }),
+  delete: (path, options)        => apiRequest(path, { ...options, method: 'DELETE' }),
+}
+
+export async function uploadFile(path, file) {
+  const token = getAccessToken()
+  const headers = new Headers()
+  if (token) headers.set('Authorization', `Bearer ${token}`)
+  const form = new FormData()
+  form.append('file', file)
+  const response = await fetch(`${API_BASE_URL}${path}`, { method: 'POST', headers, body: form })
+  const payload = await parseResponse(response)
+  if (!response.ok) {
+    const message = typeof payload === 'object' && payload?.detail ? payload.detail : `Upload failed ${response.status}`
+    throw new ApiError(message, { status: response.status, payload })
+  }
+  return payload
 }

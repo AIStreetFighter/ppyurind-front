@@ -1,5 +1,16 @@
 import { useState } from 'react'
 import { nickFromId } from '../data/nicknames'
+// [API] 백엔드 연결 시 아래 import 활성화
+// import { getCommunityPost, likePost, unlikePost, comfortPost, listComments, createComment, likeComment, reportPost, muteAuthor } from '../api/ppyurindApi'
+//
+// [API] 게시글 상세 로드 (현재: props.post 더미 객체 사용)
+//   useEffect(() => { getCommunityPost(post.id).then(data => setDetail(data)) }, [post.id])
+//
+// [API] 공감/위로 토글: likePost(post.id) / comfortPost(post.id)
+// [API] 댓글 목록: listComments(post.id).then(data => setComments(data.items))
+// [API] 댓글 작성: createComment({ postId: post.id, content: draft, isAnonymous: true })
+// [API] 댓글 좋아요: likeComment(post.id, commentId)
+// [API] 신고: reportPost(post.id, reason) / muteAuthor(post.id)
 
 const AVS = ['cat_01_t', 'cat_02_t', 'cat_03_t', 'cat_04_t']
 const avatarFor = (id) => AVS[Math.abs(String(id).split('').reduce((a, c) => a + c.charCodeAt(0), 0)) % AVS.length]

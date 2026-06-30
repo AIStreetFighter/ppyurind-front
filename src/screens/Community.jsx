@@ -4,6 +4,25 @@ import ThemeToggle from '../components/ThemeToggle'
 import NotifBell from '../components/NotifBell'
 import { nickFromId, randomNick } from '../data/nicknames'
 import { maskPIIWithAI } from '../utils/maskPII'
+// [API] 백엔드 연결 시 아래 import 활성화
+// import { listCommunityPosts, createCommunityPost, likePost, unlikePost, comfortPost, reportPost, muteAuthor } from '../api/ppyurindApi'
+//
+// [API] 게시글 목록 로드 (현재: ALL_POSTS 더미 사용)
+//   useEffect(() => {
+//     listCommunityPosts({ offset: 0, limit: 20 }).then(data => setPosts(data.items))
+//   }, [])
+//   응답 필드: id, title, content, ai_tags, anonymous_nickname, anonymous_avatar,
+//             empathy_count, comfort_count, comment_count, created_at
+//
+// [API] 공감/위로 토글 (현재: 로컬 liked/comforted 상태로 처리)
+//   likePost(id)  또는 unlikePost(id) → { empathy_count, comfort_count, liked, comforted }
+//   comfortPost(id) → 동일 응답
+//
+// [API] 신고 (현재: 로컬 toast만 표시)
+//   reportPost(id, reason)
+//
+// [API] 게시글 작성 (현재: 로컬 prepend)
+//   createCommunityPost({ content, isAnonymous: true })
 
 const AVATARS = ['cat_01_t', 'cat_02_t', 'cat_03_t', 'cat_04_t']
 
@@ -250,9 +269,9 @@ export default function Community({ nav, isDark, toggleTheme, concerns = [] }) {
                 </div>
               </div>
             )
-            // 게시글 5개마다 광고 1개 삽입 (광고는 순환)
-            if ((idx + 1) % 5 === 0) {
-              const ad = FEED_ADS[Math.floor(idx / 5) % FEED_ADS.length]
+            // 게시글 4개마다 광고 1개 삽입 (광고는 순환)
+            if ((idx + 1) % 4 === 0) {
+              const ad = FEED_ADS[Math.floor(idx / 4) % FEED_ADS.length]
               return [
                 card,
                 <a key={`ad-${idx}`} className="card ad-card" href="#" onClick={e => { e.preventDefault(); flash('광고 영역 (시연용)') }}>

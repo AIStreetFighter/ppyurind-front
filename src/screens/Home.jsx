@@ -3,6 +3,16 @@ import BottomNav from '../components/BottomNav'
 import ThemeToggle from '../components/ThemeToggle'
 import { EVENTS, EVENT_TYPES } from '../data/events'
 import NotifBell from '../components/NotifBell'
+// [API] 백엔드 연결 시 아래 import 활성화
+// import { getMe, listEvents } from '../api/ppyurindApi'
+//
+// [API] 사용자 정보 + 이번달 이벤트 로드 (현재: props.nickname + data/events.js 더미 사용)
+//   useEffect(() => {
+//     const now = new Date()
+//     const from = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-01`
+//     const to   = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-31`
+//     listEvents({ from, to }).then(data => setMonthEvents(data.items.filter(e => e.type === 'anniv' || e.type === 'birthday')))
+//   }, [])
 
 // 다가오는 기념일/생일에 맞춘 선물 추천 광고 — 진입 시 랜덤 노출
 const GIFT_ADS = [

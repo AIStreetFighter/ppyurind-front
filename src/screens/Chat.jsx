@@ -1,5 +1,13 @@
 import { useState, useRef, useEffect } from 'react'
 import SafetyCard from '../components/SafetyCard'
+// [API] 백엔드 연결 시 아래 import 활성화
+// import { sendChatMessage } from '../api/ppyurindApi'
+//
+// [API] send() 함수 교체 방법:
+//   const reply = await sendChatMessage({ message: text, history: messages.map(...) })
+//   reply.lines = reply.reply  (배열 그대로 사용)
+//   if (reply.show_safety_card) → safety 메시지 push
+//   현재 buildReply() 함수는 백엔드 연결 전 데모용 폴백으로 유지
 
 // 데모용 룰베이스 응답 — 키워드로 위험신호 감지 시 안전 지원, 그 외엔 공감형 응답
 const DANGER_WORDS = ['폭력', '폭언', '때리', '맞았', '위협', '무서', '죽고', '자해', '협박', '학대']

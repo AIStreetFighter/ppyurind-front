@@ -136,8 +136,8 @@ function mockConvert(text, tone, variant = 0) {
   return arr[((variant % arr.length) + arr.length) % arr.length]
 }
 
-export default function Translate({ nav, isDark, toggleTheme }) {
-  const [inputText,   setInputText]   = useState('')
+export default function Translate({ nav, isDark, toggleTheme, initialText = '' }) {
+  const [inputText,   setInputText]   = useState(initialText)
   const [tone,        setTone]        = useState('부드럽게')
   const [converted,   setConverted]   = useState('')
   const [showResult,  setShowResult]  = useState(false)

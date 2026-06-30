@@ -50,12 +50,14 @@ function AppContent() {
   const [legal, setLegal] = useState({ doc: "privacy", from: "kakaoLogin" });
   const [activePost, setActivePost] = useState(null);
   const [analysisResult, setAnalysisResult] = useState(null);
+  const [translateInitialText, setTranslateInitialText] = useState('');
 
   const nav = (to, payload) => {
     if (to === "checkup") setCheckupSignal(payload?.signal || "");
     if (to === "legal") setLegal({ doc: payload?.doc || "privacy", from: payload?.from || "kakaoLogin" });
     if (to === "post" && payload?.post) setActivePost(payload.post);
-    if (to === "analysisResult") setAnalysisResult(payload?.result || null);
+    if (to === "analysisResult") { setAnalysisResult(payload?.result || null); setTranslateInitialText(payload?.rawContent || ''); }
+    if (to === "translate" && payload?.initialText) setTranslateInitialText(payload.initialText);
     navigate(SCREEN_PATHS[to] || "/");
   };
   const toggleTheme = () => setIsDark((prev) => !prev);
@@ -68,8 +70,8 @@ function AppContent() {
     home: <Home {...props} />,
     record: <Record {...props} />,
     analysis: <Analysis {...props} />,
-    analysisResult: <AnalysisResult {...props} result={analysisResult} />,
-    translate: <Translate {...props} />,
+    analysisResult: <AnalysisResult {...props} result={analysisResult} rawContent={translateInitialText} />,
+    translate: <Translate {...props} initialText={translateInitialText} />,
     calendar: <Calendar {...props} />,
     checkup: <MindCheckup {...props} signal={checkupSignal} />,
     legal: <Legal {...props} doc={legal.doc} from={legal.from} />,
