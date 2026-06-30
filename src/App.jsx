@@ -15,6 +15,7 @@ import Report from "./screens/Report";
 import Community from "./screens/Community";
 import MyPage from "./screens/MyPage";
 import NotFound from "./screens/NotFound";
+import Chat from "./screens/Chat";
 
 const SCREEN_PATHS = {
   kakaoLogin: "/",
@@ -31,6 +32,7 @@ const SCREEN_PATHS = {
   report: "/report",
   community: "/community",
   mypage: "/mypage",
+  chat: "/chat",
 };
 
 const PATH_SCREENS = Object.fromEntries(
@@ -75,6 +77,7 @@ function AppContent() {
     report: <Report {...props} />,
     community: <Community {...props} />,
     mypage: <MyPage {...props} />,
+    chat: <Chat {...props} />,
     notFound: <NotFound {...props} />,
   };
 

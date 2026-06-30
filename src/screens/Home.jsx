@@ -64,7 +64,8 @@ export default function Home({ nav, isDark, toggleTheme, nickname }) {
         <div className="header">
           <h1 className="page-title">오늘 마음은<br />어때요, {nickname || '지우'}님?</h1>
           <p className="page-sub">{todayLabel()}</p>
-          <div className="header-art">
+          <button className="nyang-bubble" onClick={() => nav('chat')}>고민이 있나요? 🐾</button>
+          <div className="header-art" onClick={() => nav('chat')} role="button" aria-label="쀼냥 상담 열기">
             <img src="/assets/cats/cat_01_t.png" alt="" />
           </div>
         </div>
