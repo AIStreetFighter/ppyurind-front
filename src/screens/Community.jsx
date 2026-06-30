@@ -1,63 +1,12 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import BottomNav from '../components/BottomNav'
 import ThemeToggle from '../components/ThemeToggle'
 import NotifBell from '../components/NotifBell'
-import { nickFromId, randomNick } from '../data/nicknames'
+import { randomNick } from '../data/nicknames'
 import { maskPIIWithAI } from '../utils/maskPII'
+import { listCommunityPosts } from '../api/ppyurindApi'
 
 const AVATARS = ['cat_01_t', 'cat_02_t', 'cat_03_t', 'cat_04_t']
-
-const SEED = [
-  ['기념일을 매번 제가 챙겨요', '#대화단절 #서운함', '기념일을 매번 제가 챙기는 것 같아서 서운해요. 그냥 한 번쯤 먼저 물어봐주길 바랐어요. 큰 걸 바라는 것도 아닌데 그게 그렇게 어려운 일일까요…', 106, 32, 14],
-  ['싸우고 나면 며칠씩 말을 안 해요', '#감정표현 #회피', '다투면 대화로 풀고 싶은데 상대는 며칠씩 입을 닫아요. 그 침묵의 시간이 저한테는 벌처럼 느껴져서 너무 외로워요.', 74, 21, 12],
-  ['시댁 얘기만 나오면 싸워요', '#시댁 #갈등', '시댁 얘기만 꺼내면 분위기가 싸늘해져요. 제 편을 들어달라는 게 아니라 그냥 제 마음을 알아줬으면 하는데.', 58, 19, 8],
-  ['육아는 왜 늘 제 몫일까요', '#육아분담 #지침', '둘 다 일하는데 아이 챙기는 건 늘 저예요. 도와준다는 말이 오히려 더 서운하더라고요. 같이 하는 건데.', 92, 41, 23],
-  ['표현을 잘 못 하는 사람이에요', '#스킨십 #거리감', '사랑하는 건 아는데 표현이 없으니 가끔 의심이 들어요. 저만 더 좋아하는 건가 싶어서.', 47, 15, 6],
-  ['돈 얘기만 하면 예민해져요', '#경제 #불안', '미래를 위해 얘기하자는 건데 자꾸 잔소리로 받아들여서 대화가 안 돼요.', 63, 18, 9],
-  ['화해는 했는데 마음이 안 풀려요', '#화해 #앙금', '말로는 풀었는데 속은 그대로예요. 이런 제가 속 좁은 걸까요?', 51, 27, 11],
-  ['서로 너무 바빠서 대화가 없어요', '#대화단절 #일상', '하루에 나누는 말이 손에 꼽아요. 같이 사는데 룸메이트 같다는 생각이 들어요.', 80, 22, 15],
-  ['칭찬에 인색한 배우자', '#인정욕구', '잘했다는 말 한마디가 그렇게 어려운가 봐요. 저는 그 한마디면 되는데.', 39, 12, 4],
-  ['연락 텀이 길어지니 불안해요', '#연애 #불안', '예전엔 안 그랬는데 요즘 답장이 늦어지면 별생각이 다 들어요.', 44, 16, 7],
-  ['명절만 다가오면 신경전이에요', '#시댁 #스트레스', '명절 얘기만 나오면 둘 다 예민해져요. 누구 집 먼저 갈지부터 싸움이 시작돼요.', 67, 20, 13],
-  ['데이트 코스는 늘 제가 정해요', '#연애 #서운함', '뭐 먹을지, 어디 갈지 매번 제가 정해요. 가끔은 깜짝 데이트도 받아보고 싶은데.', 41, 14, 5],
-  ['고맙다는 말을 안 해요', '#인정욕구 #서운함', '집안일도 챙기고 다 하는데 당연하게 여겨지는 것 같아 서운해요.', 55, 24, 10],
-  ['게임만 하는 배우자, 지쳐요', '#대화단절 #서운함', '퇴근하면 게임, 주말에도 게임. 같이 있어도 혼자 있는 기분이에요.', 71, 19, 16],
-  ['친구 모임을 더 좋아하는 것 같아요', '#서운함 #불안', '저보다 친구들이랑 있을 때 더 즐거워 보여서 가끔 외로워요.', 48, 17, 8],
-  ['미래 계획이 너무 안 맞아요', '#가치관 #불안', '결혼, 이사, 돈 모으는 방향이 다 달라서 얘기할 때마다 막막해요.', 62, 23, 12],
-  ['청소 기준이 너무 달라요', '#가사분담 #답답', '저는 바로 치우는데 상대는 쌓아두는 편이라 매번 제가 먼저 손대게 돼요.', 37, 11, 6],
-  ['화나면 방으로 들어가 버려요', '#회피 #답답', '대화로 풀고 싶은데 문 닫고 들어가면 더 답답하고 막막해져요.', 59, 26, 14],
-  ['스킨십이 줄어 거리감이 느껴져요', '#스킨십 #거리감', '예전 같지 않은 게 느껴져서 먼저 다가가기도 눈치 보이고 위축돼요.', 53, 21, 9],
-  ['지적이 칭찬보다 먼저예요', '#인정욕구 #상처', '잘한 건 그냥 지나가고 부족한 것만 콕 집어 말해서 자꾸 위축돼요.', 45, 18, 7],
-  ['약속을 자꾸 미뤄요', '#약속 #실망', '같이 하기로 한 걸 매번 다음에 하자고 미뤄서 기대를 안 하게 됐어요.', 50, 15, 8],
-  ['돈 쓰는 스타일이 정반대예요', '#경제 #갈등', '저는 아끼는 편인데 상대는 쓰는 편이라 통장 얘기만 하면 부딪혀요.', 56, 17, 11],
-  ['생활 리듬이 너무 달라요', '#생활패턴 #답답', '저는 일찍 자는데 상대는 새벽형이라 같이 보내는 시간이 점점 줄어요.', 34, 10, 5],
-  ['사소한 걸로 자꾸 다퉈요', '#반복다툼 #지침', '큰일도 아닌데 말투 하나에 욱하게 되고, 같은 패턴으로 반복돼서 지쳐요.', 64, 25, 13],
-  ['먼저 연락하는 건 늘 저예요', '#연애 #서운함', '안부도, 화해도 늘 제가 먼저예요. 한 번쯤 먼저 다가와 주면 좋겠어요.', 49, 20, 9],
-]
-
-function buildPosts() {
-  const arr = []
-  for (let i = 0; i < SEED.length; i++) {
-    const s = SEED[i]
-    const id = i + 1
-    // 시연용 작성 시점: id 기반으로 0~70일 분산 (공감순 최근 30일 필터 검증용)
-    const daysAgo = (id * 11) % 70
-    arr.push({
-      id,
-      avatar: AVATARS[i % AVATARS.length],
-      nick: nickFromId(id),
-      title: s[0],
-      tag: `AI 태그: ${s[1]}`,
-      body: s[2],
-      empathy: s[3], comfort: s[4], comments: s[5],
-      author: `anon${i % 12}`,
-      daysAgo,
-    })
-  }
-  return arr
-}
-
-const ALL_POSTS = buildPosts()
 const REPORT_REASONS = ['스팸 / 홍보', '욕설 / 비방', '음란성 / 부적절', '개인정보 노출', '기타']
 
 // 피드 사이에 5개마다 노출되는 광고 (순환)
@@ -67,6 +16,25 @@ const FEED_ADS = [
   { emoji: '✉️', title: '마음 전하는 손편지 세트', sub: '제휴 · 감성 편지지 기획전' },
   { emoji: '🍽️', title: '기념일 디너, 분위기 좋은 레스토랑', sub: '제휴 · 코스 메뉴 예약 할인' },
 ]
+
+function apiPostToCard(p, idx) {
+  const createdAt = new Date(p.created_at)
+  const daysAgo = Math.round((Date.now() - createdAt) / 86400000)
+  const tags = (p.ai_tags || []).map(t => `#${t}`).join(' ')
+  return {
+    id: p.id,
+    avatar: p.anonymous_avatar || AVATARS[idx % AVATARS.length],
+    nick: p.anonymous_nickname || randomNick(),
+    title: p.title || p.content.slice(0, 30),
+    tag: tags ? `AI 태그: ${tags}` : '',
+    body: p.content,
+    empathy: p.empathy_count,
+    comfort: p.comfort_count,
+    comments: p.comment_count,
+    author: p.id,
+    daysAgo,
+  }
+}
 
 export default function Community({ nav, isDark, toggleTheme, concerns = [] }) {
   const [filter, setFilter] = useState('전체')
@@ -81,9 +49,18 @@ export default function Community({ nav, isDark, toggleTheme, concerns = [] }) {
   const [userPosts, setUserPosts] = useState([])
   const [writing, setWriting] = useState(false)
   const [draft, setDraft] = useState('')
-  const [maskPreview, setMaskPreview] = useState(null) // { text, hits } 게시 전 마스킹 미리보기
-  const [count, setCount] = useState(5) // 처음 5개, '더보기'로 확장
-  const [sort, setSort] = useState('latest') // 'latest' | 'empathy'
+  const [maskPreview, setMaskPreview] = useState(null)
+  const [count, setCount] = useState(5)
+  const [sort, setSort] = useState('latest')
+  const [dbPosts, setDbPosts] = useState([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    listCommunityPosts({ offset: 0, limit: 50 })
+      .then(res => setDbPosts((res.items || []).map(apiPostToCard)))
+      .catch(() => setDbPosts([]))
+      .finally(() => setLoading(false))
+  }, [])
 
   const flash = (msg) => { setToast(msg); setTimeout(() => setToast(''), 1900) }
 
@@ -98,12 +75,11 @@ export default function Community({ nav, isDark, toggleTheme, concerns = [] }) {
     flash('이 회원의 글을 모두 숨겼어요.')
   }
 
-  // 게시 요청 → 개인정보 마스킹 후, 가려진 항목이 있으면 미리보기 확인 / 없으면 바로 게시
   const requestPublish = async () => {
     if (!draft.trim()) return
     const masked = await maskPIIWithAI(draft.trim())
     if (masked.hits.length > 0) {
-      setMaskPreview(masked) // 사용자가 확인 후 게시
+      setMaskPreview(masked)
     } else {
       doPublish(masked.text)
     }
@@ -120,11 +96,12 @@ export default function Community({ nav, isDark, toggleTheme, concerns = [] }) {
     flash('익명으로 게시됐어요. 개인정보는 자동으로 가려졌어요.')
   }
 
-  const base = [...userPosts, ...ALL_POSTS]
+  const allPosts = [...userPosts, ...dbPosts]
+
+  const base = allPosts
     .filter(p => !hiddenAuthors.includes(p.author))
     .filter(p => !query.trim() || p.nick.includes(query) || p.title.includes(query) || p.body.includes(query) || p.tag.includes(query))
 
-  // 정렬: 최신순(작성 시점) / 공감순(최근 30일 내 공감 많은 순)
   const feed = sort === 'empathy'
     ? base.filter(p => p.daysAgo <= 30).sort((a, b) => b.empathy - a.empathy)
     : [...base].sort((a, b) => a.daysAgo - b.daysAgo)
@@ -170,21 +147,21 @@ export default function Community({ nav, isDark, toggleTheme, concerns = [] }) {
         {/* 나와 비슷한 고민 (AI 추천) */}
         <div className="section-label"><i className="fa-solid fa-wand-magic-sparkles"></i>나와 비슷한 고민 <span className="muted">· AI 추천</span></div>
         <div className="stack">
-          <div className="card" style={{ padding: 15, cursor: 'pointer' }} onClick={() => nav('post', { post: ALL_POSTS[0] })}>
+          <div className="card" style={{ padding: 15, cursor: 'pointer' }} onClick={() => dbPosts[0] && nav('post', { post: dbPosts[0] })}>
             <div className="row">
               <div className="avatar"><img src="/assets/cats/cat_04_t.png" alt="" /></div>
               <div style={{ flex: 1 }}>
-                <p className="row__title">"기념일을 매번 제가 챙겨요"</p>
+                <p className="row__title">"{dbPosts[0]?.title || '기념일을 매번 제가 챙겨요'}"</p>
                 <p className="row__sub">유사도 92% · 결혼 3년 차</p>
               </div>
               <span className="badge badge--match">매칭</span>
             </div>
           </div>
-          <div className="card" style={{ padding: 15, cursor: 'pointer' }} onClick={() => nav('post', { post: ALL_POSTS[1] })}>
+          <div className="card" style={{ padding: 15, cursor: 'pointer' }} onClick={() => dbPosts[1] && nav('post', { post: dbPosts[1] })}>
             <div className="row">
               <div className="avatar"><img src="/assets/cats/cat_02_t.png" alt="" /></div>
               <div style={{ flex: 1 }}>
-                <p className="row__title">"싸우고 나면 며칠씩 말을 안 해요"</p>
+                <p className="row__title">"{dbPosts[1]?.title || '싸우고 나면 며칠씩 말을 안 해요'}"</p>
                 <p className="row__sub">유사도 87% · 연애 4년 차</p>
               </div>
               <span className="badge badge--match">매칭</span>
@@ -212,6 +189,8 @@ export default function Community({ nav, isDark, toggleTheme, concerns = [] }) {
         </div>
         {sort === 'empathy' && <p className="sort-hint">최근 30일 동안 공감을 많이 받은 고민이에요.</p>}
         <div className="stack">
+          {loading && <p className="muted" style={{ textAlign: 'center', padding: 24 }}>고민 이야기를 불러오는 중...</p>}
+          {!loading && shown.length === 0 && <p className="muted" style={{ textAlign: 'center', padding: 24 }}>아직 게시글이 없어요.</p>}
           {shown.map((p, idx) => {
             const isLiked = !!liked[p.id], isComf = !!comforted[p.id]
             const card = (
