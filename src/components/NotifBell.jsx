@@ -1,6 +1,35 @@
 import { useState } from 'react'
 
-const NOTIFICATIONS = []
+const NOTIFICATIONS = [
+  {
+    icon: 'fa-solid fa-heart',
+    color: 'var(--like)',
+    title: '공감 3',
+    body: '"기념일을 매번 제가 챙겨요" 글에 공감이 달렸어요.',
+    time: '방금',
+  },
+  {
+    icon: 'fa-solid fa-comment',
+    color: 'var(--brand)',
+    title: '새 댓글',
+    body: '익명1: 저도 똑같아요. 먼저 챙기는 사람만 서운하죠...',
+    time: '12분 전',
+  },
+  {
+    icon: 'fa-solid fa-cake-candles',
+    color: '#E0A24A',
+    title: '기념일 알림',
+    body: '첫째 생일이 일주일 남았어요. 선물 추천을 받아볼까요?',
+    time: '오늘',
+  },
+  {
+    icon: 'fa-solid fa-ring',
+    color: 'var(--brand)',
+    title: '기념일 알림',
+    body: '결혼기념일이 다가와요. AI가 문구를 준비했어요.',
+    time: '어제',
+  },
+]
 
 export default function NotifBell() {
   const [open, setOpen] = useState(false)
