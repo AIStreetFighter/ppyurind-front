@@ -24,7 +24,12 @@ export default function MindCheckup({ nav, signal = '' }) {
   }
 
   const allAnswered = answers.length > 0 && answers.every(a => a !== null)
-  const total = answers.reduce((s, v) => s + (v || 0), 0)
+  // 역채점 문항(reverse) 지원: 해당 문항은 (최대점수 - 응답)으로 합산
+  const maxOpt = checkup ? Math.max(...checkup.options.map(o => o.score)) : 0
+  const total = answers.reduce((s, v, i) => {
+    if (v == null) return s
+    return s + (checkup?.reverse?.includes(i) ? maxOpt - v : v)
+  }, 0)
 
   // 긴급 판단: 안전 점검 양성 or PHQ-9 자해 문항 1점 이상
   const isUrgent = checkup && (
@@ -33,6 +38,11 @@ export default function MindCheckup({ nav, signal = '' }) {
   )
 
   const band = checkup ? scoreBand(checkup, total) : null
+  // 결과 색상: 점수 절대값이 아니라 점수대(band) 위치로 판단 (척도마다 만점이 달라서)
+  const bandIdx = checkup && band ? checkup.bands.indexOf(band) : 0
+  const levelClass = band && (band.level === '양호' || band.level === '안심')
+    ? 'ok'
+    : (checkup && bandIdx >= checkup.bands.length - 1 ? 'high' : 'mid')
   const support = resolveSupport({ score: total, urgent: !!isUrgent })
 
   const reset = () => { setStage('list'); setActiveId(null); setAnswers([]) }
@@ -100,7 +110,7 @@ export default function MindCheckup({ nav, signal = '' }) {
         {stage === 'quiz' && checkup && (
           <>
             <h1 className="page-title" style={{ marginTop: 6, fontSize: 22 }}>{checkup.name}</h1>
-            <p className="page-sub">{checkup.period}, 얼마나 자주 그랬는지 골라주세요.</p>
+            <p className="page-sub">{checkup.prompt || `${checkup.period}, 얼마나 자주 그랬는지 골라주세요.`}</p>
 
             <div className="stack" style={{ marginTop: 8 }}>
               {checkup.questions.map((q, qi) => (
@@ -144,7 +154,7 @@ export default function MindCheckup({ nav, signal = '' }) {
                     <span className="chk-score-num">{total}</span>
                     <span className="chk-score-max">/ {checkup.maxScore}점</span>
                   </div>
-                  <span className={`chk-level chk-level--${band.level === '양호' || band.level === '안심' ? 'ok' : total >= 15 ? 'high' : 'mid'}`}>{band.level}</span>
+                  <span className={`chk-level chk-level--${levelClass}`}>{band.level}</span>
                   <p className="chk-band-text">{band.text}</p>
                 </div>
               </>
