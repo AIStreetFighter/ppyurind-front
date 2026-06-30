@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import BottomNav from '../components/BottomNav'
 import { CHECKUPS, recommendCheckups, scoreBand } from '../data/mindCheckups'
-import { resolveSupport } from '../data/supportPrograms'
+import { resolveSupport, LEGAL_AID } from '../data/supportPrograms'
 
 // 마음건강 자가점검 전용 화면 (목록 → 문항 → 결과 + 지원 안내)
 // signal: AI 분석 위험 사유 키워드(있으면 추천 검사 매칭, B안)
@@ -9,8 +9,10 @@ export default function MindCheckup({ nav, signal = '' }) {
   const [stage, setStage] = useState('list') // 'list' | 'quiz' | 'result'
   const [activeId, setActiveId] = useState(null)
   const [answers, setAnswers] = useState([])
+  const [showAll, setShowAll] = useState(false) // '전체 검사' 펼침 여부 (기본 접힘)
 
   const recommended = recommendCheckups(signal)
+  const otherCheckups = Object.values(CHECKUPS).filter(c => !recommended.includes(c.id))
   const checkup = activeId ? CHECKUPS[activeId] : null
 
   const startCheckup = (id) => {
@@ -86,16 +88,41 @@ export default function MindCheckup({ nav, signal = '' }) {
               })}
             </div>
 
-            <div className="section-label">전체 검사</div>
-            <div className="stack">
-              {Object.values(CHECKUPS).filter(c => !recommended.includes(c.id)).map(c => (
-                <div key={c.id} className="card chk-item" onClick={() => startCheckup(c.id)}>
-                  <div className="chk-ic chk-ic--soft"><i className={`fa-solid ${c.icon}`}></i></div>
-                  <div style={{ flex: 1 }}>
-                    <p className="row__title">{c.name}</p>
-                    <p className="row__sub">{c.desc}</p>
+            <div className="section-label" onClick={() => setShowAll(s => !s)}
+              style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <span>전체 검사 <span style={{ fontWeight: 400, color: 'var(--ink-muted)', fontSize: 12.5 }}>{otherCheckups.length}종</span></span>
+              <i className={`fa-solid fa-chevron-${showAll ? 'up' : 'down'}`} style={{ fontSize: 13, color: 'var(--ink-muted)' }}></i>
+            </div>
+            {showAll && (
+              <div className="stack">
+                {otherCheckups.map(c => (
+                  <div key={c.id} className="card chk-item" onClick={() => startCheckup(c.id)}>
+                    <div className="chk-ic chk-ic--soft"><i className={`fa-solid ${c.icon}`}></i></div>
+                    <div style={{ flex: 1 }}>
+                      <p className="row__title">{c.name}</p>
+                      <p className="row__sub">{c.desc}</p>
+                    </div>
+                    <i className="fa-solid fa-chevron-right chev" style={{ color: 'var(--ink-muted)' }}></i>
                   </div>
-                  <i className="fa-solid fa-chevron-right chev" style={{ color: 'var(--ink-muted)' }}></i>
+                ))}
+              </div>
+            )}
+
+            {/* 무료 법률 상담 */}
+            <div className="section-label"><i className="fa-solid fa-scale-balanced"></i>무료 법률 상담</div>
+            <p className="sort-hint">이혼·양육·가정폭력 등 관계 문제로 법률 도움이 필요하면 무료로 상담받을 수 있어요.</p>
+            <div className="stack">
+              {LEGAL_AID.map(l => (
+                <div key={l.name} className="card chk-support">
+                  <div className="chk-support-head">
+                    <p className="row__title">{l.name}</p>
+                    <span className="chk-tag">{l.tag}</span>
+                  </div>
+                  <p className="row__sub" style={{ lineHeight: 1.6 }}>{l.desc}</p>
+                  <div style={{ display: 'flex', gap: 16, marginTop: 6, flexWrap: 'wrap' }}>
+                    <a className="chk-link" href={`tel:${l.tel}`}><i className="fa-solid fa-phone"></i> {l.tel}</a>
+                    <a className="chk-link" href={l.link} target="_blank" rel="noreferrer">{l.linkLabel} <i className="fa-solid fa-arrow-up-right-from-square"></i></a>
+                  </div>
                 </div>
               ))}
             </div>
