@@ -1,13 +1,11 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import BottomNav from '../components/BottomNav'
 import ThemeToggle from '../components/ThemeToggle'
 import NotifBell from '../components/NotifBell'
 import { nickFromId, randomNick } from '../data/nicknames'
 import { maskPIIWithAI } from '../utils/maskPII'
-import { listCommunityPosts } from '../api/ppyurindApi'
 
 const AVATARS = ['cat_01_t', 'cat_02_t', 'cat_03_t', 'cat_04_t']
-const REPORT_REASONS = ['스팸 / 홍보', '욕설 / 비방', '음란성 / 부적절', '개인정보 노출', '기타']
 
 const SEED = [
   ['기념일을 매번 제가 챙겨요', '#대화단절 #서운함', '기념일을 매번 제가 챙기는 것 같아서 서운해요. 그냥 한 번쯤 먼저 물어봐주길 바랐어요. 큰 걸 바라는 것도 아닌데 그게 그렇게 어려운 일일까요…', 106, 32, 14],
@@ -37,19 +35,30 @@ const SEED = [
   ['먼저 연락하는 건 늘 저예요', '#연애 #서운함', '안부도, 화해도 늘 제가 먼저예요. 한 번쯤 먼저 다가와 주면 좋겠어요.', 49, 20, 9],
 ]
 
-function buildSeedPosts() {
-  return SEED.map((s, i) => ({
-    id: i + 1,
-    avatar: AVATARS[i % AVATARS.length],
-    nick: nickFromId(i + 1),
-    title: s[0],
-    tag: `AI 태그: ${s[1]}`,
-    body: s[2],
-    empathy: s[3], comfort: s[4], comments: s[5],
-    author: `anon${i % 12}`,
-    daysAgo: ((i + 1) * 11) % 70,
-  }))
+function buildPosts() {
+  const arr = []
+  for (let i = 0; i < SEED.length; i++) {
+    const s = SEED[i]
+    const id = i + 1
+    // 시연용 작성 시점: id 기반으로 0~70일 분산 (공감순 최근 30일 필터 검증용)
+    const daysAgo = (id * 11) % 70
+    arr.push({
+      id,
+      avatar: AVATARS[i % AVATARS.length],
+      nick: nickFromId(id),
+      title: s[0],
+      tag: `AI 태그: ${s[1]}`,
+      body: s[2],
+      empathy: s[3], comfort: s[4], comments: s[5],
+      author: `anon${i % 12}`,
+      daysAgo,
+    })
+  }
+  return arr
 }
+
+const ALL_POSTS = buildPosts()
+const REPORT_REASONS = ['스팸 / 홍보', '욕설 / 비방', '음란성 / 부적절', '개인정보 노출', '기타']
 
 // 피드 사이에 5개마다 노출되는 광고 (순환)
 const FEED_ADS = [
@@ -58,25 +67,6 @@ const FEED_ADS = [
   { emoji: '✉️', title: '마음 전하는 손편지 세트', sub: '제휴 · 감성 편지지 기획전' },
   { emoji: '🍽️', title: '기념일 디너, 분위기 좋은 레스토랑', sub: '제휴 · 코스 메뉴 예약 할인' },
 ]
-
-function apiPostToCard(p, idx) {
-  const createdAt = new Date(p.created_at)
-  const daysAgo = Math.round((Date.now() - createdAt) / 86400000)
-  const tags = (p.ai_tags || []).map(t => `#${t}`).join(' ')
-  return {
-    id: p.id,
-    avatar: p.anonymous_avatar || AVATARS[idx % AVATARS.length],
-    nick: p.anonymous_nickname || randomNick(),
-    title: p.title || p.content.slice(0, 30),
-    tag: tags ? `AI 태그: ${tags}` : '',
-    body: p.content,
-    empathy: p.empathy_count,
-    comfort: p.comfort_count,
-    comments: p.comment_count,
-    author: p.id,
-    daysAgo,
-  }
-}
 
 export default function Community({ nav, isDark, toggleTheme, concerns = [] }) {
   const [filter, setFilter] = useState('전체')
@@ -91,21 +81,9 @@ export default function Community({ nav, isDark, toggleTheme, concerns = [] }) {
   const [userPosts, setUserPosts] = useState([])
   const [writing, setWriting] = useState(false)
   const [draft, setDraft] = useState('')
-  const [maskPreview, setMaskPreview] = useState(null)
-  const [count, setCount] = useState(5)
-  const [sort, setSort] = useState('latest')
-  const [dbPosts, setDbPosts] = useState([])
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    listCommunityPosts({ offset: 0, limit: 50 })
-      .then(res => {
-        const items = (res.items || []).map(apiPostToCard)
-        setDbPosts(items.length > 0 ? items : buildSeedPosts())
-      })
-      .catch(() => setDbPosts(buildSeedPosts()))
-      .finally(() => setLoading(false))
-  }, [])
+  const [maskPreview, setMaskPreview] = useState(null) // { text, hits } 게시 전 마스킹 미리보기
+  const [count, setCount] = useState(5) // 처음 5개, '더보기'로 확장
+  const [sort, setSort] = useState('latest') // 'latest' | 'empathy'
 
   const flash = (msg) => { setToast(msg); setTimeout(() => setToast(''), 1900) }
 
@@ -120,11 +98,12 @@ export default function Community({ nav, isDark, toggleTheme, concerns = [] }) {
     flash('이 회원의 글을 모두 숨겼어요.')
   }
 
+  // 게시 요청 → 개인정보 마스킹 후, 가려진 항목이 있으면 미리보기 확인 / 없으면 바로 게시
   const requestPublish = async () => {
     if (!draft.trim()) return
     const masked = await maskPIIWithAI(draft.trim())
     if (masked.hits.length > 0) {
-      setMaskPreview(masked)
+      setMaskPreview(masked) // 사용자가 확인 후 게시
     } else {
       doPublish(masked.text)
     }
@@ -141,12 +120,11 @@ export default function Community({ nav, isDark, toggleTheme, concerns = [] }) {
     flash('익명으로 게시됐어요. 개인정보는 자동으로 가려졌어요.')
   }
 
-  const allPosts = [...userPosts, ...dbPosts]
-
-  const base = allPosts
+  const base = [...userPosts, ...ALL_POSTS]
     .filter(p => !hiddenAuthors.includes(p.author))
     .filter(p => !query.trim() || p.nick.includes(query) || p.title.includes(query) || p.body.includes(query) || p.tag.includes(query))
 
+  // 정렬: 최신순(작성 시점) / 공감순(최근 30일 내 공감 많은 순)
   const feed = sort === 'empathy'
     ? base.filter(p => p.daysAgo <= 30).sort((a, b) => b.empathy - a.empathy)
     : [...base].sort((a, b) => a.daysAgo - b.daysAgo)
@@ -192,21 +170,21 @@ export default function Community({ nav, isDark, toggleTheme, concerns = [] }) {
         {/* 나와 비슷한 고민 (AI 추천) */}
         <div className="section-label"><i className="fa-solid fa-wand-magic-sparkles"></i>나와 비슷한 고민 <span className="muted">· AI 추천</span></div>
         <div className="stack">
-          <div className="card" style={{ padding: 15, cursor: 'pointer' }} onClick={() => dbPosts[0] && nav('post', { post: dbPosts[0] })}>
+          <div className="card" style={{ padding: 15, cursor: 'pointer' }} onClick={() => nav('post', { post: ALL_POSTS[0] })}>
             <div className="row">
               <div className="avatar"><img src="/assets/cats/cat_04_t.png" alt="" /></div>
               <div style={{ flex: 1 }}>
-                <p className="row__title">"{dbPosts[0]?.title || '기념일을 매번 제가 챙겨요'}"</p>
+                <p className="row__title">"기념일을 매번 제가 챙겨요"</p>
                 <p className="row__sub">유사도 92% · 결혼 3년 차</p>
               </div>
               <span className="badge badge--match">매칭</span>
             </div>
           </div>
-          <div className="card" style={{ padding: 15, cursor: 'pointer' }} onClick={() => dbPosts[1] && nav('post', { post: dbPosts[1] })}>
+          <div className="card" style={{ padding: 15, cursor: 'pointer' }} onClick={() => nav('post', { post: ALL_POSTS[1] })}>
             <div className="row">
               <div className="avatar"><img src="/assets/cats/cat_02_t.png" alt="" /></div>
               <div style={{ flex: 1 }}>
-                <p className="row__title">"{dbPosts[1]?.title || '싸우고 나면 며칠씩 말을 안 해요'}"</p>
+                <p className="row__title">"싸우고 나면 며칠씩 말을 안 해요"</p>
                 <p className="row__sub">유사도 87% · 연애 4년 차</p>
               </div>
               <span className="badge badge--match">매칭</span>
@@ -234,8 +212,6 @@ export default function Community({ nav, isDark, toggleTheme, concerns = [] }) {
         </div>
         {sort === 'empathy' && <p className="sort-hint">최근 30일 동안 공감을 많이 받은 고민이에요.</p>}
         <div className="stack">
-          {loading && <p className="muted" style={{ textAlign: 'center', padding: 24 }}>고민 이야기를 불러오는 중...</p>}
-          {!loading && shown.length === 0 && <p className="muted" style={{ textAlign: 'center', padding: 24 }}>아직 게시글이 없어요.</p>}
           {shown.map((p, idx) => {
             const isLiked = !!liked[p.id], isComf = !!comforted[p.id]
             const card = (
