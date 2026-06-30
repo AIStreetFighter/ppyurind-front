@@ -83,7 +83,6 @@ body {
     margin-right: 0;
   }
 
-  .bottom-nav,
   .pd-input {
     left: 50%;
     right: auto;
@@ -91,6 +90,11 @@ body {
     transform: translateX(-50%);
     border-left: 1px solid var(--nav-line);
     border-right: 1px solid var(--nav-line);
+  }
+
+  .bottom-nav {
+    padding-left: max(12px, calc((100vw - 1040px) / 2 + 12px));
+    padding-right: max(12px, calc((100vw - 1040px) / 2 + 12px));
   }
 
   .sheet {
@@ -107,9 +111,13 @@ body {
     padding-right: 40px;
   }
 
-  .bottom-nav,
   .pd-input {
     width: min(100%, 1120px);
+  }
+
+  .bottom-nav {
+    padding-left: max(12px, calc((100vw - 1120px) / 2 + 12px));
+    padding-right: max(12px, calc((100vw - 1120px) / 2 + 12px));
   }
 }
 
@@ -737,12 +745,15 @@ body {
 
 /* Bottom Nav */
 .bottom-nav {
-  position: absolute; left: 0; right: 0; bottom: 0;
-  display: flex; background: var(--nav-bg);
-  border-top: 1px solid var(--nav-line); padding: 11px 6px 22px; backdrop-filter: blur(12px);
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 30;
+  display: flex; justify-content: center; background: var(--nav-bg);
+  border-top: 1px solid var(--nav-line);
+  padding: 11px 12px calc(22px + env(safe-area-inset-bottom));
+  backdrop-filter: blur(12px);
 }
 .bottom-nav .tab {
-  flex: 1; display: flex; flex-direction: column; align-items: center; gap: 5px;
+  flex: 1 1 0; max-width: 224px; min-width: 0;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px;
   color: var(--ink-muted); font-size: 11.5px; font-weight: 500; cursor: pointer;
 }
 .bottom-nav .tab i { font-size: 21px; }
