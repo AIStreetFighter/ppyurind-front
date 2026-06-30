@@ -15,7 +15,6 @@ export default function NotFound({ nav }) {
       alignItems: 'center',
       justifyContent: 'center',
     }}>
-      {/* 배경 레이어 */}
       <img
         src="/assets/404_bg.png"
         alt=""
@@ -28,8 +27,6 @@ export default function NotFound({ nav }) {
           zIndex: 0,
         }}
       />
-
-      {/* 콘텐츠 영역 */}
       <div style={{
         position: 'relative',
         zIndex: 1,
@@ -40,34 +37,11 @@ export default function NotFound({ nav }) {
         alignItems: 'center',
         padding: '0 24px',
       }}>
-        {/* 고양이 레이어 */}
-        <img
-          src="/assets/404_cats.png"
-          alt=""
-          style={{ width: '75%', maxWidth: 320, marginBottom: -8 }}
-        />
-
-        {/* 텍스트 레이어 (404 + 앗 길을 잃었어요) */}
-        <img
-          src="/assets/404_text.png"
-          alt="404 앗, 길을 잃었어요"
-          style={{ width: '100%', maxWidth: 400 }}
-        />
-
-        {/* 버튼 */}
-        <div style={{ display: 'flex', gap: 16, marginTop: 32 }}>
-          <img
-            src="/assets/404_home_button.png"
-            alt="홈으로 가기"
-            onClick={() => nav('home')}
-            style={{ width: 148, cursor: 'pointer' }}
-          />
-          <img
-            src="/assets/404_back_button.png"
-            alt="이전으로"
-            onClick={handleBack}
-            style={{ width: 148, cursor: 'pointer' }}
-          />
+        <img src="/assets/404_cats.png" alt="" style={{ width: '90%', maxWidth: 380, marginBottom: -48 }} />
+        <img src="/assets/404_text.png" alt="404 앗, 길을 잃었어요" style={{ width: '100%', maxWidth: 480 }} />
+        <div style={{ display: 'flex', gap: 16, marginTop: 24 }}>
+          <img src="/assets/404_home_button.png" alt="홈으로 가기" onClick={() => nav('home')} style={{ width: 148, cursor: 'pointer' }} />
+          <img src="/assets/404_back_button.png" alt="이전으로" onClick={handleBack} style={{ width: 148, cursor: 'pointer' }} />
         </div>
       </div>
     </div>
