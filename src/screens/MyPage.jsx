@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import BottomNav from '../components/BottomNav'
 import ThemeToggle from '../components/ThemeToggle'
 import PinPad from '../components/PinPad'
@@ -14,6 +14,8 @@ import PinPad from '../components/PinPad'
 //
 // [API] 알림 설정 토글 (현재: 로컬 state만 변경)
 //   updateNotificationSettings({ notify_empathy, notify_comment, notify_anniversary })
+
+const DEX_STORAGE_KEY = 'ppyurind:dexItems'
 
 const DEX = [
   {
@@ -39,7 +41,16 @@ const DEX = [
 ]
 
 export default function MyPage({ nav, isDark, toggleTheme, nickname }) {
+  const [dexItems, setDexItems] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem(DEX_STORAGE_KEY) || 'null') || DEX
+    } catch {
+      return DEX
+    }
+  })
   const [open, setOpen] = useState(null)
+  const [addTarget, setAddTarget] = useState(null)
+  const [dexDraft, setDexDraft] = useState('')
   const [settings, setSettings] = useState(false)
   const [tone, setTone] = useState('부드럽게')
   const [push, setPush] = useState({ empathy: true, comment: true, anniv: true })
@@ -48,6 +59,32 @@ export default function MyPage({ nav, isDark, toggleTheme, nickname }) {
   const [pinDone, setPinDone] = useState(false)
 
   const toggleDex = (k) => setOpen(prev => prev === k ? null : k)
+  const targetDex = dexItems.find(d => d.key === addTarget)
+
+  useEffect(() => {
+    localStorage.setItem(DEX_STORAGE_KEY, JSON.stringify(dexItems))
+  }, [dexItems])
+
+  const openDexAdd = (key) => {
+    setOpen(key)
+    setAddTarget(key)
+    setDexDraft('')
+  }
+
+  const submitDexAdd = () => {
+    const value = dexDraft.trim()
+    if (!value || !addTarget) return
+    setDexItems(items => items.map(item => {
+      if (item.key !== addTarget) return item
+      return {
+        ...item,
+        count: item.count == null ? undefined : item.count + 1,
+        body: [...item.body, value],
+      }
+    }))
+    setDexDraft('')
+    setAddTarget(null)
+  }
 
   return (
     <>
@@ -74,7 +111,7 @@ export default function MyPage({ nav, isDark, toggleTheme, nickname }) {
         {/* 나만의 도감 — 아코디언 */}
         <div className="section-label"><i className="fa-solid fa-book"></i>나만의 도감</div>
         <div className="card" style={{ padding: '4px 0' }}>
-          {DEX.map((d, i) => (
+          {dexItems.map((d, i) => (
             <div key={d.key} className={`acc${i > 0 ? ' acc--line' : ''}`}>
               <div className="acc-head" onClick={() => toggleDex(d.key)}>
                 <i className={`fa-solid ${d.icon} acc-ic`}></i>
@@ -85,7 +122,7 @@ export default function MyPage({ nav, isDark, toggleTheme, nickname }) {
               {open === d.key && (
                 <div className="acc-body">
                   {d.body.map((line, j) => <p key={j} className="acc-line-item">· {line}</p>)}
-                  <button className="acc-add"><i className="fa-solid fa-plus"></i> 추가하기</button>
+                  <button className="acc-add" onClick={() => openDexAdd(d.key)}><i className="fa-solid fa-plus"></i> 추가하기</button>
                 </div>
               )}
             </div>
@@ -127,7 +164,7 @@ export default function MyPage({ nav, isDark, toggleTheme, nickname }) {
             <span className="mlabel">대화 분석 <span style={{ fontSize: 12, color: 'var(--ink-muted)' }}>· 상대와의 대화 기록</span></span>
             <i className="fa-solid fa-chevron-right chev"></i>
           </div>
-          <div className="menu-item" onClick={() => nav('community')}>
+          <div className="menu-item" onClick={() => nav('myPosts')}>
             <i className="fa-solid fa-pen-nib"></i>
             <span className="mlabel">내가 쓴 커뮤니티 글</span>
             <i className="fa-solid fa-chevron-right chev"></i>
@@ -175,6 +212,30 @@ export default function MyPage({ nav, isDark, toggleTheme, nickname }) {
             <div style={{ display: 'flex', gap: 10, marginTop: 16 }}>
               <button className="cta cta--ghost" style={{ flex: 1 }} onClick={() => setConfirm('logout')}>로그아웃</button>
               <button className="cta cta--ghost" style={{ flex: 1, color: 'var(--danger-text)', borderColor: 'var(--danger-line)' }} onClick={() => setConfirm('withdraw')}>회원 탈퇴</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 도감 항목 추가 */}
+      {addTarget && (
+        <div className="sheet-backdrop" onClick={() => setAddTarget(null)} style={{ alignItems: 'center', padding: 22 }}>
+          <div className="modal modal--wide" onClick={e => e.stopPropagation()} style={{ textAlign: 'left' }}>
+            <h3 style={{ margin: '0 0 6px', fontSize: 18, color: 'var(--ink)' }}>{targetDex?.label} 추가</h3>
+            <p style={{ margin: '0 0 14px', fontSize: 12.5, lineHeight: 1.6, color: 'var(--ink-muted)' }}>
+              기억해두고 싶은 말이나 포인트를 한 줄로 적어주세요.
+            </p>
+            <textarea
+              className="field"
+              value={dexDraft}
+              onChange={e => setDexDraft(e.target.value)}
+              placeholder="예: 피곤한 날에는 조언보다 먼저 안아주는 걸 좋아해요."
+              style={{ width: '100%', minHeight: 110, resize: 'none', fontFamily: 'inherit' }}
+              autoFocus
+            />
+            <div style={{ display: 'flex', gap: 10, marginTop: 14 }}>
+              <button className="cta cta--ghost" style={{ flex: 1 }} onClick={() => setAddTarget(null)}>취소</button>
+              <button className="cta" style={{ flex: 1, opacity: dexDraft.trim() ? 1 : 0.5 }} onClick={submitDexAdd}>저장</button>
             </div>
           </div>
         </div>

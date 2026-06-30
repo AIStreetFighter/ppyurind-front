@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import BottomNav from '../components/BottomNav'
 import ThemeToggle from '../components/ThemeToggle'
 import NotifBell from '../components/NotifBell'
@@ -25,6 +25,7 @@ import { maskPIIWithAI } from '../utils/maskPII'
 //   createCommunityPost({ content, isAnonymous: true })
 
 const AVATARS = ['cat_01_t', 'cat_02_t', 'cat_03_t', 'cat_04_t']
+const MY_POSTS_STORAGE_KEY = 'ppyurind:myCommunityPosts'
 
 const SEED = [
   ['기념일을 매번 제가 챙겨요', '#대화단절 #서운함', '기념일을 매번 제가 챙기는 것 같아서 서운해요. 그냥 한 번쯤 먼저 물어봐주길 바랐어요. 큰 걸 바라는 것도 아닌데 그게 그렇게 어려운 일일까요…', 106, 32, 14],
@@ -97,12 +98,22 @@ export default function Community({ nav, isDark, toggleTheme, concerns = [] }) {
   const [toast, setToast] = useState('')
   const [reportFor, setReportFor] = useState(null)
   const [hiddenAuthors, setHiddenAuthors] = useState([])
-  const [userPosts, setUserPosts] = useState([])
+  const [userPosts, setUserPosts] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem(MY_POSTS_STORAGE_KEY) || '[]')
+    } catch {
+      return []
+    }
+  })
   const [writing, setWriting] = useState(false)
   const [draft, setDraft] = useState('')
   const [maskPreview, setMaskPreview] = useState(null) // { text, hits } 게시 전 마스킹 미리보기
   const [count, setCount] = useState(5) // 처음 5개, '더보기'로 확장
   const [sort, setSort] = useState('latest') // 'latest' | 'empathy'
+
+  useEffect(() => {
+    localStorage.setItem(MY_POSTS_STORAGE_KEY, JSON.stringify(userPosts))
+  }, [userPosts])
 
   const flash = (msg) => { setToast(msg); setTimeout(() => setToast(''), 1900) }
 
@@ -132,6 +143,7 @@ export default function Community({ nav, isDark, toggleTheme, concerns = [] }) {
     setUserPosts(p => [{
       id: 'u' + Date.now(), avatar: AVATARS[1], nick: randomNick(), title: '방금 남긴 고민',
       tag: 'AI 태그: #방금작성', body: finalText, empathy: 0, comfort: 0, comments: 0, author: 'me', daysAgo: 0,
+      createdAt: new Date().toISOString(),
     }, ...p])
     setDraft('')
     setWriting(false)
@@ -162,7 +174,7 @@ export default function Community({ nav, isDark, toggleTheme, concerns = [] }) {
           </div>
         </div>
 
-        <div className="header">
+        <div className="header community-header">
           <h1 className="page-title">비슷한 마음들</h1>
           <p className="page-sub">결혼 2년 차, 비슷한 고민을 가진 사람들의 이야기</p>
           <div className="header-art"><img src="/assets/cats/cat_03_t.png" alt="" /></div>

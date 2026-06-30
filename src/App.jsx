@@ -14,6 +14,7 @@ import PostDetail from "./screens/PostDetail";
 import Report from "./screens/Report";
 import Community from "./screens/Community";
 import MyPage from "./screens/MyPage";
+import MyCommunityPosts from "./screens/MyCommunityPosts";
 import NotFound from "./screens/NotFound";
 import Chat from "./screens/Chat";
 
@@ -32,6 +33,7 @@ const SCREEN_PATHS = {
   report: "/report",
   community: "/community",
   mypage: "/mypage",
+  myPosts: "/mypage/community-posts",
   chat: "/chat",
 };
 
@@ -79,6 +81,7 @@ function AppContent() {
     report: <Report {...props} />,
     community: <Community {...props} />,
     mypage: <MyPage {...props} />,
+    myPosts: <MyCommunityPosts {...props} />,
     chat: <Chat {...props} />,
     notFound: <NotFound {...props} />,
   };
