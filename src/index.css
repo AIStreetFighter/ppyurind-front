@@ -588,12 +588,70 @@ body {
 .pinpad__key--ghost { background: transparent; border-color: transparent; font-size: 15px; color: var(--ink-soft); }
 
 /* 알림 벨 */
-.notif-dot { position: absolute; top: -1px; right: -1px; width: 7px; height: 7px; border-radius: 50%; background: var(--like); border: 1.5px solid var(--bg); }
+.notif-trigger {
+  position: relative; width: 28px; height: 28px; padding: 0; border: 0; background: transparent;
+  color: inherit; display: inline-flex; align-items: center; justify-content: center;
+  font: inherit; cursor: pointer;
+}
+.notif-trigger i { font-size: 21px; }
+.notif-dot { position: absolute; top: 2px; right: 2px; width: 7px; height: 7px; border-radius: 50%; background: var(--like); border: 1.5px solid var(--bg); }
 .notif-item { display: flex; gap: 12px; align-items: flex-start; background: var(--surface); border: 1px solid var(--surface-line); border-radius: 13px; padding: 13px 14px; }
 .notif-ic { width: 38px; height: 38px; border-radius: 11px; display: flex; align-items: center; justify-content: center; font-size: 15px; flex-shrink: 0; }
 .notif-title { margin: 0 0 3px; font-size: 14px; font-weight: 600; color: var(--ink); }
 .notif-time { font-size: 12px; color: var(--ink-muted); font-weight: 400; }
 .notif-body { margin: 0; font-size: 13px; line-height: 1.5; color: var(--ink-soft); }
+.notif-drawer-backdrop {
+  position: fixed; inset: 0; z-index: 90; background: rgba(0,0,0,0.36);
+  display: flex; justify-content: flex-end;
+}
+.notif-drawer {
+  width: min(100vw, 430px); height: 100dvh; background: var(--bg);
+  color: var(--ink); border-left: 1px solid var(--surface-line);
+  box-shadow: -18px 0 40px rgba(0,0,0,0.28);
+  display: flex; flex-direction: column; overflow-y: auto;
+  animation: notifSlideIn .22s ease-out both;
+}
+@keyframes notifSlideIn { from { transform: translateX(100%); } to { transform: translateX(0); } }
+.notif-drawer__top {
+  position: sticky; top: 0; z-index: 1; min-height: 72px; padding: 16px 20px;
+  display: grid; grid-template-columns: 44px 1fr 44px; align-items: center;
+  background: var(--bg); border-bottom: 1px solid var(--surface-line);
+}
+.notif-drawer__top h2 { margin: 0; text-align: center; font-size: 21px; font-weight: 800; color: var(--ink); }
+.notif-back {
+  width: 40px; height: 40px; border: 0; border-radius: 50%; background: transparent;
+  color: var(--ink); display: inline-flex; align-items: center; justify-content: center;
+  font-size: 20px; cursor: pointer;
+}
+.notif-back:active { background: var(--surface); }
+.notif-top-spacer { width: 40px; height: 40px; }
+.notif-push-card {
+  margin: 24px 20px 18px; padding: 17px 18px; border-radius: 16px;
+  background: var(--surface); border: 1px solid var(--surface-line);
+  display: flex; align-items: center; gap: 12px;
+}
+.notif-push-card__icon { color: var(--ink-muted); font-size: 17px; }
+.notif-push-card p {
+  flex: 1; margin: 0; font-size: 15px; line-height: 1.45; color: var(--ink-soft);
+}
+.notif-push-card button {
+  border: 0; background: transparent; color: var(--brand-soft-text);
+  font: 800 14.5px 'Pretendard'; white-space: nowrap; cursor: pointer;
+}
+.notif-list { display: flex; flex-direction: column; gap: 12px; padding: 0 20px 24px; }
+.notif-empty {
+  flex: 1; min-height: 420px; padding: 80px 24px 24px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  text-align: center;
+}
+.notif-empty__mascot {
+  width: 86px; height: 86px; border-radius: 50%;
+  border: 2px dashed var(--surface-line); color: var(--ink-muted);
+  display: flex; align-items: center; justify-content: center; font-size: 34px;
+  opacity: 0.72; margin-bottom: 24px;
+}
+.notif-empty h3 { margin: 0 0 12px; font-size: 22px; font-weight: 800; color: var(--ink); }
+.notif-empty p { margin: 0; font-size: 15.5px; line-height: 1.55; color: var(--ink-soft); }
 
 /* 마이 — 살짝 광고 */
 .mini-ad { display: flex; align-items: center; gap: 12px; padding: 12px 15px; text-decoration: none; position: relative; margin-top: 11px; }
