@@ -112,6 +112,20 @@ export default function MindCheckup({ nav, signal = '' }) {
             <h1 className="page-title" style={{ marginTop: 6, fontSize: 22 }}>{checkup.name}</h1>
             <p className="page-sub">{checkup.prompt || `${checkup.period}, 얼마나 자주 그랬는지 골라주세요.`}</p>
 
+            {checkup.intro && (
+              <div className="card" style={{ marginTop: 12, padding: 15, display: 'flex', gap: 11, alignItems: 'flex-start', borderColor: 'var(--brand)' }}>
+                <i className="fa-solid fa-hand-holding-heart" style={{ color: 'var(--brand)', fontSize: 17, marginTop: 2 }}></i>
+                <div style={{ flex: 1 }}>
+                  <p style={{ margin: 0, fontSize: 13.5, lineHeight: 1.65, color: 'var(--ink)' }}>{checkup.intro}</p>
+                  {checkup.introTel && (
+                    <a className="chk-tel" href={`tel:${checkup.introTel}`} style={{ marginTop: 11, display: 'inline-flex' }}>
+                      <i className="fa-solid fa-phone"></i> {checkup.introTelLabel || '전화하기'} {checkup.introTel}
+                    </a>
+                  )}
+                </div>
+              </div>
+            )}
+
             <div className="stack" style={{ marginTop: 8 }}>
               {checkup.questions.map((q, qi) => (
                 <div key={qi} className="card chk-q">
