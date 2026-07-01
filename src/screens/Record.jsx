@@ -2,7 +2,7 @@ import { useState, useRef } from 'react'
 import ThemeToggle from '../components/ThemeToggle'
 import BottomNav from '../components/BottomNav'
 import SafetyCard from '../components/SafetyCard'
-import { analyzeEmotion, createEmotion, createCommunityPost, getSpeechToken, uploadOcrImage } from '../api/ppyurindApi'
+import { analyzeEmotion, createCommunityPost, getSpeechToken, uploadOcrImage } from '../api/ppyurindApi'
 import { mapCommunityPostToLocal, saveMyCommunityPost } from '../utils/myCommunityPosts'
 
 export default function Record({ nav, isDark, toggleTheme }) {
@@ -75,12 +75,12 @@ export default function Record({ nav, isDark, toggleTheme }) {
     setError('')
     const inputType = tab === '음성' ? 'voice' : tab === '대화 캡처' ? 'image' : 'text'
     try {
+      // PR#16 이후 analyzeEmotion이 DB 저장까지 처리 → createEmotion 이중 호출 제거
       const result = await analyzeEmotion({ rawContent: text.trim(), inputType })
-      const saved = await createEmotion({ rawContent: text.trim(), inputType, isSecretExcluded: !share })
-      if (share && saved?.id) {
+      if (share && result?.id) {
         const emotion = result?.primary_emotion || result?.primaryEmotion || ''
         const autoTitle = emotion ? `${emotion}을(를) 느낀 이야기` : text.trim().split(/[\n.?!]/)[0].slice(0, 30) || '오늘의 이야기'
-        const post = await createCommunityPost({ content: text.trim(), title: autoTitle, isAnonymous: true, sourceRecordId: saved.id })
+        const post = await createCommunityPost({ content: text.trim(), title: autoTitle, isAnonymous: true, sourceRecordId: result.id })
         saveMyCommunityPost(mapCommunityPostToLocal(post, {
           title: autoTitle,
           body: text.trim(),

@@ -59,7 +59,7 @@ export const updateNotificationSettings = (payload) =>
 export const setPin = (pin) => api.put('/users/me/pin', { pin })
 
 // ── 4. 감정 기록 ──────────────────────────────
-// 분석만 (저장 없음) — POST /emotions/analyze
+// 분석 + DB 저장 — POST /emotions/analyze (PR#16 이후 저장까지 처리)
 // inputType: 'text' | 'voice' | 'image'
 export const analyzeEmotion = ({ rawContent, inputType = 'text' }) =>
   api.post('/emotions/analyze', { raw_content: rawContent, input_type: inputType })
