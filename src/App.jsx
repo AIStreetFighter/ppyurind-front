@@ -13,6 +13,7 @@ import Legal from "./screens/Legal";
 import PostDetail from "./screens/PostDetail";
 import Report from "./screens/Report";
 import Community from "./screens/Community";
+import CommunityWrite from "./screens/CommunityWrite";
 import MyPage from "./screens/MyPage";
 import MyCommunityPosts from "./screens/MyCommunityPosts";
 import NotFound from "./screens/NotFound";
@@ -30,6 +31,7 @@ const SCREEN_PATHS = {
   checkup: "/mind-checkup",
   legal: "/legal",
   post: "/community/post",
+  communityWrite: "/community/write",
   report: "/report",
   community: "/community",
   mypage: "/mypage",
@@ -78,6 +80,7 @@ function AppContent() {
     checkup: <MindCheckup {...props} signal={checkupSignal} />,
     legal: <Legal {...props} doc={legal.doc} from={legal.from} />,
     post: <PostDetail {...props} post={activePost} />,
+    communityWrite: <CommunityWrite {...props} />,
     report: <Report {...props} />,
     community: <Community {...props} />,
     mypage: <MyPage {...props} />,

@@ -763,6 +763,141 @@ body {
 .more-btn { margin-top: 4px; font-size: 14.5px; }
 .feed-end { text-align: center; padding: 16px 0; font-size: 13px; color: var(--ink-muted); }
 
+/* 커뮤니티 글쓰기 */
+.compose {
+  flex: 1;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-2);
+  color: var(--ink);
+}
+.compose-top {
+  min-height: 68px;
+  padding: 18px 20px 12px;
+  display: grid;
+  grid-template-columns: 72px 1fr 72px;
+  align-items: center;
+  border-bottom: 1px solid var(--surface-line);
+}
+.compose-top h1 {
+  margin: 0;
+  text-align: center;
+  font-size: 18px;
+  font-weight: 800;
+}
+.compose-action {
+  border: 0;
+  background: transparent;
+  font: 700 15px 'Pretendard';
+  cursor: pointer;
+}
+.compose-action--cancel { color: var(--ink-soft); text-align: left; }
+.compose-action--submit { color: var(--brand-soft-text); text-align: right; }
+.compose-action--submit:disabled { color: var(--ink-muted); cursor: default; opacity: 0.55; }
+.compose-tags {
+  padding: 16px 20px 14px;
+  border-bottom: 1px solid var(--surface-line);
+}
+.compose-tag-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.compose-tag-head span { font-size: 13px; color: var(--ink-muted); }
+.compose-tag-head b {
+  flex-shrink: 0;
+  font-size: 12.5px;
+  color: var(--brand-soft-text);
+  background: var(--brand-soft-bg);
+  border-radius: 999px;
+  padding: 6px 11px;
+}
+.compose-tag-row {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 2px;
+  scrollbar-width: none;
+}
+.compose-tag-row::-webkit-scrollbar { display: none; }
+.compose-tag {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  border: 1px solid var(--surface-line);
+  background: var(--surface);
+  color: var(--ink-soft);
+  border-radius: 999px;
+  padding: 10px 14px;
+  font: 700 13px 'Pretendard';
+  cursor: pointer;
+}
+.compose-tag i { font-size: 12px; }
+.compose-tag.active {
+  background: var(--brand);
+  border-color: var(--brand);
+  color: #fff;
+}
+.compose-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 24px 20px;
+}
+.compose-title,
+.compose-textarea {
+  width: 100%;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--ink);
+  font-family: 'Pretendard';
+}
+.compose-title {
+  font-size: 24px;
+  font-weight: 800;
+  line-height: 1.35;
+  padding: 0 0 18px;
+  border-bottom: 1px solid var(--surface-line);
+}
+.compose-title::placeholder,
+.compose-textarea::placeholder { color: color-mix(in srgb, var(--ink-muted) 72%, transparent); }
+.compose-textarea {
+  flex: 1;
+  resize: none;
+  min-height: 340px;
+  padding: 22px 0;
+  font-size: 16px;
+  line-height: 1.75;
+}
+.compose-tools {
+  min-height: 72px;
+  padding: 12px 20px calc(14px + env(safe-area-inset-bottom));
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  background: var(--nav-bg);
+  border-top: 1px solid var(--nav-line);
+}
+.compose-tools button {
+  width: 38px;
+  height: 38px;
+  border: 0;
+  background: transparent;
+  color: var(--ink-soft);
+  font-size: 23px;
+  cursor: pointer;
+}
+.compose-tools span {
+  margin-left: auto;
+  font-size: 12.5px;
+  color: var(--ink-muted);
+}
+
 .my-post-card { cursor: pointer; }
 .my-post-card .chev { color: var(--ink-muted); font-size: 13px; }
 .empty-state-card {

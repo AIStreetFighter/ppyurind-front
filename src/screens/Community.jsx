@@ -1,9 +1,8 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import BottomNav from '../components/BottomNav'
 import ThemeToggle from '../components/ThemeToggle'
 import NotifBell from '../components/NotifBell'
-import { nickFromId, randomNick } from '../data/nicknames'
-import { maskPIIWithAI } from '../utils/maskPII'
+import { nickFromId } from '../data/nicknames'
 // [API] 백엔드 연결 시 아래 import 활성화
 // import { listCommunityPosts, createCommunityPost, likePost, unlikePost, comfortPost, reportPost, muteAuthor } from '../api/ppyurindApi'
 //
@@ -98,22 +97,15 @@ export default function Community({ nav, isDark, toggleTheme, concerns = [] }) {
   const [toast, setToast] = useState('')
   const [reportFor, setReportFor] = useState(null)
   const [hiddenAuthors, setHiddenAuthors] = useState([])
-  const [userPosts, setUserPosts] = useState(() => {
+  const [userPosts] = useState(() => {
     try {
       return JSON.parse(localStorage.getItem(MY_POSTS_STORAGE_KEY) || '[]')
     } catch {
       return []
     }
   })
-  const [writing, setWriting] = useState(false)
-  const [draft, setDraft] = useState('')
-  const [maskPreview, setMaskPreview] = useState(null) // { text, hits } 게시 전 마스킹 미리보기
   const [count, setCount] = useState(5) // 처음 5개, '더보기'로 확장
   const [sort, setSort] = useState('latest') // 'latest' | 'empathy'
-
-  useEffect(() => {
-    localStorage.setItem(MY_POSTS_STORAGE_KEY, JSON.stringify(userPosts))
-  }, [userPosts])
 
   const flash = (msg) => { setToast(msg); setTimeout(() => setToast(''), 1900) }
 
@@ -126,29 +118,6 @@ export default function Community({ nav, isDark, toggleTheme, concerns = [] }) {
     setHiddenAuthors(a => [...a, author])
     setMenuOpen(null)
     flash('이 회원의 글을 모두 숨겼어요.')
-  }
-
-  // 게시 요청 → 개인정보 마스킹 후, 가려진 항목이 있으면 미리보기 확인 / 없으면 바로 게시
-  const requestPublish = async () => {
-    if (!draft.trim()) return
-    const masked = await maskPIIWithAI(draft.trim())
-    if (masked.hits.length > 0) {
-      setMaskPreview(masked) // 사용자가 확인 후 게시
-    } else {
-      doPublish(masked.text)
-    }
-  }
-
-  const doPublish = (finalText) => {
-    setUserPosts(p => [{
-      id: 'u' + Date.now(), avatar: AVATARS[1], nick: randomNick(), title: '방금 남긴 고민',
-      tag: 'AI 태그: #방금작성', body: finalText, empathy: 0, comfort: 0, comments: 0, author: 'me', daysAgo: 0,
-      createdAt: new Date().toISOString(),
-    }, ...p])
-    setDraft('')
-    setWriting(false)
-    setMaskPreview(null)
-    flash('익명으로 게시됐어요. 개인정보는 자동으로 가려졌어요.')
   }
 
   const base = [...userPosts, ...ALL_POSTS]
@@ -339,45 +308,8 @@ export default function Community({ nav, isDark, toggleTheme, concerns = [] }) {
 
       <div className="fab-wrap">
         <div className="fab-bubble">익명으로 글 남기기 ✍️</div>
-        <button className="fab-write" aria-label="글쓰기" onClick={() => setWriting(true)}><i className="fa-solid fa-pen"></i></button>
+        <button className="fab-write" aria-label="글쓰기" onClick={() => nav('communityWrite')}><i className="fa-solid fa-pen"></i></button>
       </div>
-
-      {/* 글쓰기 모달 */}
-      {writing && (
-        <div className="sheet-backdrop" onClick={() => setWriting(false)}>
-          <div className="sheet" onClick={e => e.stopPropagation()}>
-            <div className="sheet-handle" />
-            <h2 style={{ margin: '0 0 6px', fontSize: 19, color: 'var(--ink)' }}>익명으로 고민 남기기</h2>
-            <p style={{ margin: '0 0 14px', fontSize: 12.5, color: 'var(--ink-muted)' }}><i className="fa-solid fa-shield-halved" style={{ marginRight: 5 }}></i>이름·날짜 등 개인정보는 게시 전 자동으로 제거돼요.</p>
-            <textarea className="field" style={{ width: '100%', minHeight: 130, resize: 'none', fontFamily: 'inherit' }}
-              placeholder="어떤 마음인지 편하게 적어보세요. 비슷한 고민의 사람들이 공감해줄 거예요." value={draft} onChange={e => setDraft(e.target.value)} autoFocus />
-            <div style={{ display: 'flex', gap: 10, marginTop: 14 }}>
-              <button className="cta cta--ghost" style={{ flex: 1 }} onClick={() => setWriting(false)}>취소</button>
-              <button className="cta" style={{ flex: 1.4, opacity: draft.trim() ? 1 : 0.5 }} onClick={requestPublish}>익명으로 게시</button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* 개인정보 마스킹 미리보기 */}
-      {maskPreview && (
-        <div className="sheet-backdrop" onClick={() => setMaskPreview(null)} style={{ alignItems: 'center', padding: 22 }}>
-          <div className="modal" onClick={e => e.stopPropagation()} style={{ textAlign: 'left' }}>
-            <h3 style={{ margin: '0 0 4px', fontSize: 18, color: 'var(--ink)' }}><i className="fa-solid fa-shield-halved" style={{ marginRight: 6, color: 'var(--brand)' }}></i>개인정보를 가렸어요</h3>
-            <p style={{ margin: '0 0 12px', fontSize: 12.5, color: 'var(--ink-muted)' }}>
-              감지된 정보: {maskPreview.hits.map(h => <span key={h} className="mask-chip">{h}</span>)}
-            </p>
-            <div className="mask-preview">{maskPreview.text}</div>
-            <p style={{ margin: '10px 0 16px', fontSize: 11.5, color: 'var(--ink-muted)', lineHeight: 1.6 }}>
-              <i className="fa-solid fa-circle-info" style={{ marginRight: 4 }}></i>실명·자녀 이름 등 문맥 정보는 AI가 추가로 가립니다 <span style={{ opacity: 0.7 }}>(연동 예정)</span>.
-            </p>
-            <div style={{ display: 'flex', gap: 10 }}>
-              <button className="cta cta--ghost" style={{ flex: 1 }} onClick={() => setMaskPreview(null)}>다시 쓰기</button>
-              <button className="cta" style={{ flex: 1.4 }} onClick={() => doPublish(maskPreview.text)}>이대로 게시</button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* 신고 사유 모달 */}
       {reportFor && (
