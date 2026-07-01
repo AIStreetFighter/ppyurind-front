@@ -45,10 +45,22 @@ export const getMe    = ()        => api.get('/users/me')
 export const updateMe = (payload) => api.put('/users/me', payload)
 export const deleteMe = ()        => api.delete('/users/me')
 
-// 온보딩 (camelCase body) — /auth/onboarding
-// payload: { nickname, birthDate, gender, relationshipStatus[], relationshipYears,
-//   relationshipStartDate, anniversaryDate, childrenCount, mainConcernTopics[], concernEtc, aiTone }
-export const saveOnboarding = (payload) => api.post('/users/me/onboarding', payload)
+// 온보딩 — POST /users/me/onboarding (백엔드는 snake_case 필드만 받음)
+export const saveOnboarding = ({
+  nickname, relationshipStatus, relationshipYears, relationshipStartDate,
+  anniversaryDate, childrenCount, mainConcernTopics, concernEtc, aiTone,
+} = {}) =>
+  api.post('/users/me/onboarding', {
+    nickname: nickname ?? null,
+    relationship_status: relationshipStatus ?? null,
+    relationship_years: relationshipYears ?? null,
+    relationship_start_date: relationshipStartDate ?? null,
+    anniversary_date: anniversaryDate ?? null,
+    children_count: childrenCount ?? 0,
+    main_concern_topics: mainConcernTopics ?? null,
+    concern_etc: concernEtc ?? null,
+    ai_tone: aiTone ?? null,
+  })
 
 // 알림 설정 — PATCH /users/me/notification-settings
 // payload: { notify_empathy, notify_comment, notify_anniversary }
@@ -155,14 +167,14 @@ export const muteAuthor = (id)         => api.post(`/community/posts/${id}/mute-
 // 유사 게시글
 export const getSimilarPosts = (id) => api.get(`/community/posts/${id}/similar`)
 
-// ── 8. 캘린더 이벤트 (경로: /events) ──────────
-// 응답(EventResponse): { id, date, type, title }
+// ── 8. 캘린더 이벤트 (경로: /calendar) ──────────
+// 응답(EventListResponse): { items: EventResponse[], total } — EventResponse: { id, date, type, title }
 // type: 'anniv' | 'birthday' | 'fight' | 'talk' | 'date'
-export const listEvents  = ()        => api.get('/events')
-export const deleteEvent = (id)      => api.delete(`/events/${id}`)
+export const listEvents  = ()        => api.get('/calendar')
+export const deleteEvent = (id)      => api.delete(`/calendar/${id}`)
 
 export const createEvent = ({ eventType, eventDate, title, description, recommendationCategory, externalLink, repeatYearly, sourceRecordId }) =>
-  api.post('/events', {
+  api.post('/calendar', {
     event_type: eventType,
     event_date: eventDate,
     title,
@@ -173,7 +185,7 @@ export const createEvent = ({ eventType, eventDate, title, description, recommen
     source_record_id: sourceRecordId ?? null,
   })
 
-export const updateEvent = (id, body) => api.put(`/events/${id}`, body)
+export const updateEvent = (id, body) => api.put(`/calendar/${id}`, body)
 
 // ── 9. 관계 마음 리포트 ───────────────────────
 // 응답: { report_type, period_start, period_end, emotion_summary[],
