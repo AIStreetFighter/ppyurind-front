@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { randomNick } from '../data/nicknames'
 import { maskPIIWithAI } from '../utils/maskPII'
+import { createCommunityPost } from '../api/ppyurindApi'
 
 const MY_POSTS_STORAGE_KEY = 'ppyurind:myCommunityPosts'
 
@@ -61,8 +62,13 @@ export default function CommunityWrite({ nav }) {
       daysAgo: 0,
       createdAt: new Date().toISOString(),
     }
-    const posts = loadMyPosts()
-    localStorage.setItem(MY_POSTS_STORAGE_KEY, JSON.stringify([nextPost, ...posts]))
+    try {
+      await createCommunityPost({ content: masked.text, isAnonymous: true })
+    } catch {
+      // 로그인 안 됐거나 API 오류 시 로컬 저장으로 폴백
+      const posts = loadMyPosts()
+      localStorage.setItem(MY_POSTS_STORAGE_KEY, JSON.stringify([nextPost, ...posts]))
+    }
     nav('community')
   }
 

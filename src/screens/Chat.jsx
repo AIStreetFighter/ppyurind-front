@@ -1,13 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import SafetyCard from '../components/SafetyCard'
-// [API] 백엔드 연결 시 아래 import 활성화
-// import { sendChatMessage } from '../api/ppyurindApi'
-//
-// [API] send() 함수 교체 방법:
-//   const reply = await sendChatMessage({ message: text, history: messages.map(...) })
-//   reply.lines = reply.reply  (배열 그대로 사용)
-//   if (reply.show_safety_card) → safety 메시지 push
-//   현재 buildReply() 함수는 백엔드 연결 전 데모용 폴백으로 유지
+import { sendChatMessage } from '../api/ppyurindApi'
 
 // 데모용 룰베이스 응답 — 키워드로 위험신호 감지 시 안전 지원, 그 외엔 공감형 응답
 const DANGER_WORDS = ['폭력', '폭언', '때리', '맞았', '위협', '무서', '죽고', '자해', '협박', '학대']
@@ -62,26 +55,36 @@ export default function Chat({ nav }) {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' })
   }, [messages, typing])
 
-  const send = (raw) => {
+  const send = async (raw) => {
     const text = (raw ?? draft).trim()
     if (!text || typing) return
+    const history = messages
+      .filter(m => !m.safety)
+      .map(m => ({ role: m.from === 'me' ? 'user' : 'assistant', content: m.text }))
     setMessages(m => [...m, { from: 'me', text, time: nowTime() }])
     setDraft('')
     setTyping(true)
 
-    const reply = buildReply(text)
-    // AI 응답을 한 줄씩 시차를 두고 추가 (대화 느낌)
-    reply.lines.forEach((line, i) => {
-      setTimeout(() => {
-        setMessages(m => [...m, { from: 'ai', text: line, time: nowTime() }])
-        if (i === reply.lines.length - 1) {
-          if (reply.danger) {
+    try {
+      const data = await sendChatMessage({ message: text, history })
+      const replyText = data?.reply || data?.message || ''
+      const danger = DANGER_WORDS.some(w => replyText.includes(w))
+      setMessages(m => [...m, { from: 'ai', text: replyText, time: nowTime() }])
+      if (danger) setTimeout(() => setMessages(m => [...m, { from: 'ai', safety: true }]), 500)
+    } catch {
+      // 백엔드 오류 시 룰베이스 폴백
+      const reply = buildReply(text)
+      reply.lines.forEach((line, i) => {
+        setTimeout(() => {
+          setMessages(m => [...m, { from: 'ai', text: line, time: nowTime() }])
+          if (i === reply.lines.length - 1 && reply.danger) {
             setTimeout(() => setMessages(m => [...m, { from: 'ai', safety: true }]), 500)
           }
-          setTyping(false)
-        }
-      }, 600 * (i + 1))
-    })
+        }, 600 * (i + 1))
+      })
+    } finally {
+      setTyping(false)
+    }
   }
 
   return (
