@@ -1,18 +1,9 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import BottomNav from '../components/BottomNav'
 import ThemeToggle from '../components/ThemeToggle'
-import { EVENTS, EVENT_TYPES } from '../data/events'
+import { EVENT_TYPES } from '../data/events'
 import NotifBell from '../components/NotifBell'
-// [API] 백엔드 연결 시 아래 import 활성화
-// import { getMe, listEvents } from '../api/ppyurindApi'
-//
-// [API] 사용자 정보 + 이번달 이벤트 로드 (현재: props.nickname + data/events.js 더미 사용)
-//   useEffect(() => {
-//     const now = new Date()
-//     const from = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-01`
-//     const to   = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-31`
-//     listEvents({ from, to }).then(data => setMonthEvents(data.items.filter(e => e.type === 'anniv' || e.type === 'birthday')))
-//   }, [])
+import { getMe, listEvents } from '../api/ppyurindApi'
 
 // 다가오는 기념일/생일에 맞춘 선물 추천 광고 — 진입 시 랜덤 노출
 const GIFT_ADS = [
@@ -43,22 +34,36 @@ function todayLabel() {
   return `${d.getMonth() + 1}월 ${d.getDate()}일 ${WEEKDAYS[d.getDay()]}요일`
 }
 
-export default function Home({ nav, isDark, toggleTheme, nickname }) {
-  const now = new Date()
-  const ym = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
-  // 홈 '이번 달 일정'에는 기념일·생일만 노출 (다툰 날 등은 캘린더에서만 확인)
-  const monthEvents = EVENTS
-    .filter(e => e.date.startsWith(ym) && (e.type === 'anniv' || e.type === 'birthday'))
-    .sort((a, b) => a.date.localeCompare(b.date))
-
-  // 이번 달 일정 타입에 맞는 선물 광고를 진입 시 랜덤 노출 (X로 닫기)
+export default function Home({ nav, isDark, toggleTheme, nickname: propNickname, onNicknameSave }) {
+  const [nickname, setNickname] = useState(propNickname || '')
+  const [monthEvents, setMonthEvents] = useState([])
   const [adClosed, setAdClosed] = useState(false)
-  const [gift] = useState(() => {
-    const types = new Set(monthEvents.map(e => e.type))
-    const pool = GIFT_ADS.filter(a => types.has(a.for))
-    const list = pool.length ? pool : GIFT_ADS
-    return list[Math.floor(Math.random() * list.length)]
-  })
+
+  useEffect(() => {
+    getMe().then(u => {
+      const name = u.nickname || propNickname || ''
+      setNickname(name)
+      if (onNicknameSave) onNicknameSave(name)
+      // 온보딩 미완료 시 온보딩으로 이동
+      if (u.onboarding_completed === false) { nav('onboarding'); return }
+    }).catch(() => {})
+    listEvents().then(data => {
+      const now = new Date()
+      const ym = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
+      const evs = Array.isArray(data) ? data : (data.items || [])
+      setMonthEvents(
+        evs
+          .filter(e => {
+            const d = e.date || e.event_date || ''
+            const t = e.type || e.event_type || ''
+            return d.startsWith(ym) && (t === 'anniv' || t === 'birthday' || t === 'date')
+          })
+          .sort((a, b) => (a.date || a.event_date || '').localeCompare(b.date || b.event_date || ''))
+      )
+    }).catch(() => {})
+  }, [])
+
+  const [gift] = useState(() => GIFT_ADS[Math.floor(Math.random() * GIFT_ADS.length)])
 
   return (
     <>
@@ -146,16 +151,18 @@ export default function Home({ nav, isDark, toggleTheme, nickname }) {
             <div className="card" style={{ textAlign: 'center', color: 'var(--ink-muted)', fontSize: 13.5 }}>이번 달 일정이 없어요</div>
           )}
           {monthEvents.slice(0, 3).map((e, i) => {
-            const t = EVENT_TYPES[e.type]
-            const dday = Math.round((new Date(e.date) - new Date(new Date().toDateString())) / 86400000)
+            const type = e.type || e.event_type || 'anniv'
+            const date = e.date || e.event_date || ''
+            const t = EVENT_TYPES[type] || EVENT_TYPES.anniv
+            const dday = Math.round((new Date(date) - new Date(new Date().toDateString())) / 86400000)
             return (
               <div key={i} className="card event-row" onClick={() => nav('calendar')}>
                 <div className="event-emoji" style={{ background: `color-mix(in srgb, ${t.color} 18%, transparent)` }}>{t.emoji}</div>
                 <div style={{ flex: 1 }}>
                   <p className="row__title" style={{ marginBottom: 2 }}>{e.title}</p>
-                  <p className="row__sub">{e.date.slice(5).replace('-', '월 ')}일 · {t.label}</p>
+                  <p className="row__sub">{date.slice(5).replace('-', '월 ')}일 · {t.label}</p>
                 </div>
-                {(e.type === 'anniv' || e.type === 'birthday') && dday >= 0 && <span className="badge badge--match">D-{dday}</span>}
+                {dday >= 0 && <span className="badge badge--match">D-{dday}</span>}
               </div>
             )
           })}
