@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import BottomNav from '../components/BottomNav'
 import { listMyCommunityPosts } from '../api/ppyurindApi'
 import { loadMyCommunityPosts, mapCommunityPostToLocal } from '../utils/myCommunityPosts'
+import { avatarSrc } from '../data/nicknames'
 
 export default function MyCommunityPosts({ nav }) {
   const [posts, setPosts] = useState([])
@@ -39,10 +40,10 @@ export default function MyCommunityPosts({ nav }) {
             {posts.map(post => (
               <article key={post.id} className="card my-post-card" onClick={() => nav('post', { post })}>
                 <div className="post-head">
-                  <div className="avatar"><img src={`/assets/cats/${post.avatar}.png`} alt="" /></div>
+                  <div className="avatar"><img className="pfp" src={avatarSrc(post.id)} alt="" /></div>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <p className="post-name">{post.nick || '익명'} · {post.createdAt ? new Date(post.createdAt).toLocaleDateString('ko-KR') : '방금'}</p>
-                    <p className="post-title">{post.title}</p>
+                    {post.title && post.title.trim() !== (post.body || '').trim() && <p className="post-title">{post.title}</p>}
                     <p className="post-tag">{post.tag}</p>
                   </div>
                   <i className="fa-solid fa-chevron-right chev"></i>

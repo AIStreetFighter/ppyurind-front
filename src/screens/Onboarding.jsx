@@ -3,14 +3,18 @@ import ThemeToggle from '../components/ThemeToggle'
 import PinPad from '../components/PinPad'
 import { saveOnboarding, setPin as apiSetPin } from '../api/ppyurindApi'
 
-const YEAR_TO_NUM = { '1년 미만': 0, '1년 차': 1, '2년 차': 2, '2~3년': 2, '3~5년': 3, '5년 이상': 5, '3년 이상': 3, '선택안함': null }
+// 라벨 → relationship_years(정수, 구간 하한값). 과거 라벨도 하위호환 유지.
+const YEAR_TO_NUM = {
+  '1년 미만': 0, '1~2년': 1, '3~5년': 3, '6~10년': 6, '11~20년': 11, '20년 이상': 20,
+  '1년 차': 1, '2년 차': 2, '2~3년': 2, '5년 이상': 5, '3년 이상': 3, '선택안함': null,
+}
 
 export default function Onboarding({ nav, isDark, toggleTheme, onNicknameSave, onConcernsSave }) {
   const [step, setStep] = useState(1)
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState('')
   const [relation, setRelation] = useState('신혼')
-  const [year, setYear] = useState('2년 차')
+  const [year, setYear] = useState('1~2년')
   const [concerns, setConcerns] = useState(['대화 단절', '서운함'])
   const [etcText, setEtcText] = useState('')
   const [tone, setTone] = useState('부드럽게')
@@ -29,7 +33,7 @@ export default function Onboarding({ nav, isDark, toggleTheme, onNicknameSave, o
   const yearLabel = isDating ? '연애 연차' : '결혼 연차'
   const yearOptions = isDating
     ? ['1년 미만', '1년 차', '2~3년', '3년 이상', '선택안함']
-    : ['1년 미만', '2년 차', '3~5년', '5년 이상', '선택안함']
+    : ['1년 미만', '1~2년', '3~5년', '6~10년', '11~20년', '20년 이상', '선택안함']
 
   const CONCERN_OPTIONS = {
     '연애':    ['대화 단절', '서운함', '성격·가치관 차이', '스킨십·친밀감', '경제·소비 갈등', '신뢰 문제', '미래 계획', '양가 가족 문제', '기타'],

@@ -25,10 +25,18 @@ function recommendTag(text) {
   return '#방금작성'
 }
 
+// 성인(19+) 소지 가능성 휴리스틱 감지 — 등록 시 확인창 노출용
+const ADULT_PATTERN = /잠자리|성관계|섹스|스킨십|부부관계|야한|음란|은밀|19금|성적|잠자리 거부|불감증/
+function looksAdult(text) {
+  return ADULT_PATTERN.test(text.replace(/\s/g, ''))
+}
+
 export default function CommunityWrite({ nav }) {
   const [tagMode, setTagMode] = useState('auto')
   const [title, setTitle] = useState('')
   const [body, setBody] = useState('')
+  const [isAdult, setIsAdult] = useState(false)   // 19+ 게시물 여부
+  const [adultPrompt, setAdultPrompt] = useState(false) // 자동감지 확인창
   const [isSaving, setIsSaving] = useState(false)
   const [toast, setToast] = useState('')
 
@@ -36,8 +44,8 @@ export default function CommunityWrite({ nav }) {
   const selectedTag = tagMode === 'auto' ? autoTag : tagMode
   const canSubmit = title.trim().length > 0 && body.trim().length > 0 && !isSaving
 
-  const submit = async () => {
-    if (!canSubmit) return
+  const doSubmit = async (adult) => {
+    setAdultPrompt(false)
     setIsSaving(true)
     const masked = await maskPIIWithAI(body.trim())
     const nextPost = {
@@ -47,6 +55,7 @@ export default function CommunityWrite({ nav }) {
       title: title.trim(),
       tag: `AI 태그: ${selectedTag}`,
       body: masked.text,
+      isAdultOnly: adult,
       empathy: 0,
       comfort: 0,
       comments: 0,
@@ -55,7 +64,7 @@ export default function CommunityWrite({ nav }) {
       createdAt: new Date().toISOString(),
     }
     try {
-      const created = await createCommunityPost({ content: masked.text, title: title.trim(), isAnonymous: true })
+      const created = await createCommunityPost({ content: masked.text, title: title.trim(), isAnonymous: true, isAdultOnly: adult })
       saveMyCommunityPost(mapCommunityPostToLocal(created, nextPost))
       nav('community')
     } catch {
@@ -64,6 +73,16 @@ export default function CommunityWrite({ nav }) {
       setToast('서버 저장 실패 · 내 글에서 확인 가능해요')
       setTimeout(() => nav('community'), 1800)
     }
+  }
+
+  const submit = () => {
+    if (!canSubmit) return
+    // 19+로 이미 표시했으면 바로 등록, 아니면 자동감지 후 확인창
+    if (!isAdult && looksAdult(`${title} ${body}`)) {
+      setAdultPrompt(true)
+      return
+    }
+    doSubmit(isAdult)
   }
 
   return (
@@ -99,6 +118,15 @@ export default function CommunityWrite({ nav }) {
               {tag.label}
             </button>
           ))}
+          <button
+            type="button"
+            className={`compose-tag compose-tag--age${isAdult ? ' active' : ''}`}
+            onClick={() => setIsAdult(v => !v)}
+            aria-pressed={isAdult}
+          >
+            <i className="fa-solid fa-lock"></i>
+            19+
+          </button>
         </div>
       </section>
 
@@ -126,6 +154,22 @@ export default function CommunityWrite({ nav }) {
         <button type="button" aria-label="태그"><i className="fa-solid fa-hashtag"></i></button>
         <span>{body.length}/1200</span>
       </footer>
+
+      {adultPrompt && (
+        <div className="sheet-backdrop" onClick={() => setAdultPrompt(false)} style={{ alignItems: 'center', padding: 22 }}>
+          <div className="modal" onClick={e => e.stopPropagation()}>
+            <i className="fa-solid fa-lock" style={{ fontSize: 24, color: 'var(--brand)' }}></i>
+            <h3 style={{ margin: '12px 0 6px', fontSize: 17, color: 'var(--ink)' }}>19금 게시물로 등록될 수 있어요</h3>
+            <p style={{ margin: '0 0 18px', fontSize: 13.5, lineHeight: 1.6, color: 'var(--ink-soft)' }}>
+              성인(19+) 관련 내용이 감지됐어요.<br />내용을 수정하시겠어요, 아니면 19+ 게시물로 등록할까요?
+            </p>
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button className="cta cta--ghost" style={{ flex: 1 }} onClick={() => setAdultPrompt(false)}>내용 수정</button>
+              <button className="cta" style={{ flex: 1 }} onClick={() => { setIsAdult(true); doSubmit(true) }}>19+로 등록</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

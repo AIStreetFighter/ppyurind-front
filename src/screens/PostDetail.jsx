@@ -1,8 +1,6 @@
 import { useEffect, useState } from 'react'
 import { getCommunityPost, empathyPost, comfortPost, listComments, createComment, createReply, likeComment, reportPost, muteAuthor } from '../api/ppyurindApi'
-
-const AVS = ['cat_01_t', 'cat_02_t', 'cat_03_t', 'cat_04_t']
-const avatarFor = (id) => AVS[Math.abs(String(id).split('').reduce((a, c) => a + c.charCodeAt(0), 0)) % AVS.length]
+import { avatarSrc } from '../data/nicknames'
 
 // 로컬 저장 글(id가 'u'로 시작)인지 판별
 const isLocalPost = (id) => typeof id === 'string' && id.startsWith('u')
@@ -191,15 +189,25 @@ export default function PostDetail({ nav, post }) {
 
       <div className="pd-body">
         <div className="post-head">
-          <div className="avatar"><img src={`/assets/cats/${d.avatar || avatarFor(post.id)}.png`} alt="" /></div>
+          <div className="avatar"><img className="pfp" src={avatarSrc(post.id)} alt="" /></div>
           <div style={{ flex: 1, minWidth: 0 }}>
             <p className="post-name">{d.anonymous_nickname || d.nick}</p>
             <p className="post-tag">{d.tag || (d.ai_tags ? `AI 태그: ${d.ai_tags}` : '')}</p>
           </div>
         </div>
 
-        <h1 className="pd-title">{d.title || d.body?.slice(0, 30)}</h1>
-        <p className="pd-content">{d.content || d.body}</p>
+        {(() => {
+          const pdBody = d.content || d.body || ''
+          const pdTitle = d.title || ''
+          // 제목이 본문과 동일하면(짧은 글 자동 제목 등) 제목 줄 생략해 중복 표시 방지
+          const showTitle = pdTitle && pdTitle.trim() !== pdBody.trim()
+          return (
+            <>
+              {showTitle && <h1 className="pd-title">{pdTitle}</h1>}
+              <p className="pd-content">{pdBody}</p>
+            </>
+          )
+        })()}
 
         <a className="pd-ad" href="#" onClick={e => e.preventDefault()}>
           <span className="ad-tag">AD</span>
@@ -221,7 +229,7 @@ export default function PostDetail({ nav, post }) {
           {comments.map(c => (
             <div key={c.id} className="pd-comment">
               <div className="pd-c-row">
-                <div className="avatar avatar--sm"><img src={`/assets/cats/${avatarFor(c.id)}.png`} alt="" /></div>
+                <div className="avatar avatar--sm"><img className="pfp" src={avatarSrc(c.id)} alt="" /></div>
                 <div className="pd-c-main">
                   <p className="pd-c-nick">{c.nick}</p>
                   <p className="pd-c-body">{c.body}</p>
@@ -236,7 +244,7 @@ export default function PostDetail({ nav, post }) {
 
               {c.replies.map(r => (
                 <div key={r.id} className="pd-c-row pd-reply">
-                  <div className="avatar avatar--sm"><img src={`/assets/cats/${avatarFor(r.id)}.png`} alt="" /></div>
+                  <div className="avatar avatar--sm"><img className="pfp" src={avatarSrc(r.id)} alt="" /></div>
                   <div className="pd-c-main">
                     <p className="pd-c-nick">{r.nick}</p>
                     <p className="pd-c-body">{r.body}</p>

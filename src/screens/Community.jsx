@@ -2,10 +2,9 @@ import { useEffect, useState } from 'react'
 import BottomNav from '../components/BottomNav'
 import ThemeToggle from '../components/ThemeToggle'
 import NotifBell from '../components/NotifBell'
-import { nickFromId } from '../data/nicknames'
+import { nickFromId, avatarSrc } from '../data/nicknames'
 import { listCommunityPosts, empathyPost, comfortPost, reportPost, muteAuthor } from '../api/ppyurindApi'
 
-const AVATARS = ['cat_01_t', 'cat_02_t', 'cat_03_t', 'cat_04_t']
 const MY_POSTS_STORAGE_KEY = 'ppyurind:myCommunityPosts'
 
 const SEED = [
@@ -45,7 +44,6 @@ function buildPosts() {
     const daysAgo = (id * 11) % 70
     arr.push({
       id,
-      avatar: AVATARS[i % AVATARS.length],
       nick: nickFromId(id),
       title: s[0],
       tag: `AI 태그: ${s[1]}`,
@@ -72,7 +70,6 @@ const FEED_ADS = [
 function mapApiPost(p) {
   return {
     id: p.id,
-    avatar: AVATARS[(p.id || 0) % AVATARS.length],
     nick: p.anonymous_nickname || nickFromId(p.id),
     title: p.title || p.content?.slice(0, 22) || '',
     tag: p.ai_tags ? `AI 태그: ${p.ai_tags}` : '',
@@ -191,7 +188,7 @@ export default function Community({ nav, isDark, toggleTheme, concerns = [] }) {
         <div className="stack">
           <div className="card" style={{ padding: 15, cursor: 'pointer' }} onClick={() => nav('post', { post: ALL_POSTS[0] })}>
             <div className="row">
-              <div className="avatar"><img src="/assets/cats/cat_04_t.png" alt="" /></div>
+              <div className="avatar"><img className="pfp" src={avatarSrc(ALL_POSTS[0].id)} alt="" /></div>
               <div style={{ flex: 1 }}>
                 <p className="row__title">"기념일을 매번 제가 챙겨요"</p>
                 <p className="row__sub">유사도 92% · 결혼 3년 차</p>
@@ -201,7 +198,7 @@ export default function Community({ nav, isDark, toggleTheme, concerns = [] }) {
           </div>
           <div className="card" style={{ padding: 15, cursor: 'pointer' }} onClick={() => nav('post', { post: ALL_POSTS[1] })}>
             <div className="row">
-              <div className="avatar"><img src="/assets/cats/cat_02_t.png" alt="" /></div>
+              <div className="avatar"><img className="pfp" src={avatarSrc(ALL_POSTS[1].id)} alt="" /></div>
               <div style={{ flex: 1 }}>
                 <p className="row__title">"싸우고 나면 며칠씩 말을 안 해요"</p>
                 <p className="row__sub">유사도 87% · 연애 4년 차</p>
@@ -236,13 +233,13 @@ export default function Community({ nav, isDark, toggleTheme, concerns = [] }) {
             const card = (
               <div key={p.id} className="card" onClick={() => nav('post', { post: p })} style={{ cursor: 'pointer' }}>
                 <div className="post-head">
-                  <div className="avatar"><img src={`/assets/cats/${p.avatar}.png`} alt="" /></div>
+                  <div className="avatar"><img className="pfp" src={avatarSrc(p.id)} alt="" /></div>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <p className="post-name">
                       {p.nick}
                       {sort === 'empathy' && p.empathy >= 60 && <span className="hot-badge"><i className="fa-solid fa-fire"></i> HOT</span>}
                     </p>
-                    <p className="post-title">{p.title}</p>
+                    {p.title && p.title.trim() !== (p.body || '').trim() && <p className="post-title">{p.title}</p>}
                     <p className="post-tag">{p.tag}</p>
                   </div>
                   <div style={{ position: 'relative' }} onClick={e => e.stopPropagation()}>

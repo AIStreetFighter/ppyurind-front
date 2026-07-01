@@ -67,10 +67,18 @@ export default function Chat({ nav }) {
 
     try {
       const data = await sendChatMessage({ message: text, history })
-      const replyText = data?.reply || data?.message || ''
-      const danger = DANGER_WORDS.some(w => replyText.includes(w))
-      setMessages(m => [...m, { from: 'ai', text: replyText, time: nowTime() }])
-      if (danger) setTimeout(() => setMessages(m => [...m, { from: 'ai', safety: true }]), 500)
+      // 백엔드 ChatResponse.reply 는 문자열 배열(list[str]) — 각 줄을 개별 말풍선으로 표시
+      const rawReply = data?.reply ?? data?.message ?? ''
+      const lines = (Array.isArray(rawReply) ? rawReply : [rawReply]).filter(Boolean)
+      const showSafety = data?.show_safety_card || data?.risk_level === 'high'
+      lines.forEach((line, i) => {
+        setTimeout(() => {
+          setMessages(m => [...m, { from: 'ai', text: line, time: nowTime() }])
+          if (i === lines.length - 1 && showSafety) {
+            setTimeout(() => setMessages(m => [...m, { from: 'ai', safety: true }]), 500)
+          }
+        }, 350 * i)
+      })
     } catch {
       // 백엔드 오류 시 룰베이스 폴백
       const reply = buildReply(text)

@@ -38,3 +38,13 @@ export function randomNick() {
   const ani = ANIMALS[Math.floor(Math.random() * ANIMALS.length)]
   return `${adj} ${ani}`
 }
+
+// ── 익명 프로필 이미지 (public/assets/profiles/01.png ~ 27.png) ──
+// 글/댓글 id를 시드로 항상 같은 프로필이 나오도록 결정적 매핑.
+// id가 UUID 문자열이든 숫자든 안전하게 동작(기존 `id % n`은 UUID에서 NaN → 액박 원인).
+const PROFILE_COUNT = 27
+
+export function avatarSrc(id) {
+  const n = (hashSeed(id) % PROFILE_COUNT) + 1
+  return `/assets/profiles/${String(n).padStart(2, '0')}.png`
+}

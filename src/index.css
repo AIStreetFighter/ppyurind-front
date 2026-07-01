@@ -277,6 +277,8 @@ body {
   display: flex; align-items: flex-end; justify-content: center;
 }
 .avatar img { width: 96%; height: 96%; object-fit: contain; object-position: bottom; display: block; }
+/* 익명 프로필 사진: 원을 꽉 채우도록 cover + 살짝 확대 */
+.avatar img.pfp { width: 100%; height: 100%; object-fit: cover; object-position: center top; transform: scale(1.12); }
 
 /* Post */
 .post-head { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
@@ -844,6 +846,9 @@ body {
   border-color: var(--brand);
   color: #fff;
 }
+/* 19+ 토글 태그 */
+.compose-tag--age { color: var(--danger-text); border-color: var(--danger-line); }
+.compose-tag--age.active { background: var(--like); border-color: var(--like); color: #fff; }
 .compose-body {
   flex: 1;
   display: flex;
@@ -1050,7 +1055,7 @@ body {
 .legal-list li { font-size: 13px; line-height: 1.7; color: var(--ink-soft); margin-bottom: 4px; }
 
 /* ── 게시글 상세 (전체 화면) ── */
-.pd { flex: 1; display: flex; flex-direction: column; min-height: 100vh; }
+.pd { position: relative; flex: 1; display: flex; flex-direction: column; min-height: 100vh; }
 .pd-top { display: flex; align-items: center; gap: 12px; padding: 16px 18px 12px; border-bottom: 1px solid var(--surface-line); }
 .pd-top-title { font-size: 14px; font-weight: 600; color: var(--ink-soft); }
 .pd-top-right { margin-left: auto; display: flex; align-items: center; gap: 16px; }

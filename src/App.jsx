@@ -54,7 +54,13 @@ function AppContent() {
   const location = useLocation();
   const screen = PATH_SCREENS[location.pathname] ?? "notFound";
   const [isDark, setIsDark] = useState(true);
-  const [nickname, setNickname] = useState("지우");
+  // 닉네임: 새로고침해도 유지되도록 localStorage에 저장된 마지막 값으로 초기화
+  const [nickname, setNickname] = useState(() => localStorage.getItem("ppyurind:nickname") || "지우");
+  const saveNickname = (name) => {
+    if (!name) return;              // 빈 값으로 덮어써서 초기화되는 것 방지
+    localStorage.setItem("ppyurind:nickname", name);
+    setNickname(name);
+  };
   const [concerns, setConcerns] = useState(["대화 단절", "서운함"]);
   const [checkupSignal, setCheckupSignal] = useState("");
   const [legal, setLegal] = useState({ doc: "privacy", from: "kakaoLogin" });
@@ -82,7 +88,7 @@ function AppContent() {
   };
   const toggleTheme = () => setIsDark((prev) => !prev);
 
-  const props = { nav, isDark, toggleTheme, nickname, onNicknameSave: setNickname, concerns, onConcernsSave: setConcerns };
+  const props = { nav, isDark, toggleTheme, nickname, onNicknameSave: saveNickname, concerns, onConcernsSave: setConcerns };
 
   const screens = {
     kakaoLogin: <KakaoLogin {...props} />,
