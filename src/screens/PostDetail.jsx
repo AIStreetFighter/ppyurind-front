@@ -119,9 +119,9 @@ export default function PostDetail({ nav, post }) {
       const created = await createComment({ postId: post.id, content: text, isAnonymous: true })
       setComments(c => [...c, mapComment(created)])
     } catch {
-      // API 실패 시 draft 복원 + 안내 (가짜 댓글 추가하지 않음)
-      setDraft(text)
-      flashComment('댓글 저장에 실패했어요. 로그인 후 다시 시도해주세요.')
+      // API 실패해도 댓글은 화면에 표시 (세션 내 유지)
+      setComments(c => [...c, { id: Date.now(), nick: '나', body: text, time: '방금', likes: 0, liked: false, replies: [] }])
+      flashComment('댓글이 임시 저장됐어요 · 새로고침하면 사라질 수 있어요')
     }
   }
 
@@ -143,8 +143,10 @@ export default function PostDetail({ nav, post }) {
         ? { ...c, replies: [...c.replies, mapComment(created)] }
         : c))
     } catch {
-      setReplyDraft(text)
-      flashComment('답글 저장에 실패했어요. 로그인 후 다시 시도해주세요.')
+      setComments(cs => cs.map(c => c.id === cid
+        ? { ...c, replies: [...c.replies, { id: Date.now(), nick: '나', body: text, time: '방금', likes: 0, liked: false }] }
+        : c))
+      flashComment('답글이 임시 저장됐어요 · 새로고침하면 사라질 수 있어요')
     }
   }
 
