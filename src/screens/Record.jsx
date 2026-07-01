@@ -3,6 +3,7 @@ import ThemeToggle from '../components/ThemeToggle'
 import BottomNav from '../components/BottomNav'
 import SafetyCard from '../components/SafetyCard'
 import { analyzeEmotion, createEmotion, createCommunityPost, getSpeechToken, uploadOcrImage } from '../api/ppyurindApi'
+import { mapCommunityPostToLocal, saveMyCommunityPost } from '../utils/myCommunityPosts'
 
 export default function Record({ nav, isDark, toggleTheme }) {
   const [tab, setTab] = useState('텍스트')
@@ -75,11 +76,16 @@ export default function Record({ nav, isDark, toggleTheme }) {
     const inputType = tab === '음성' ? 'voice' : tab === '대화 캡처' ? 'image' : 'text'
     try {
       const result = await analyzeEmotion({ rawContent: text.trim(), inputType })
-      const saved = await createEmotion({ rawContent: text.trim(), inputType, isSecretExcluded: !share }).catch(() => null)
+      const saved = await createEmotion({ rawContent: text.trim(), inputType, isSecretExcluded: !share })
       if (share && saved?.id) {
         const emotion = result?.primary_emotion || result?.primaryEmotion || ''
         const autoTitle = emotion ? `${emotion}을(를) 느낀 이야기` : text.trim().split(/[\n.?!]/)[0].slice(0, 30) || '오늘의 이야기'
-        await createCommunityPost({ content: text.trim(), title: autoTitle, isAnonymous: true, sourceRecordId: saved.id }).catch(() => {})
+        const post = await createCommunityPost({ content: text.trim(), title: autoTitle, isAnonymous: true, sourceRecordId: saved.id })
+        saveMyCommunityPost(mapCommunityPostToLocal(post, {
+          title: autoTitle,
+          body: text.trim(),
+          tag: emotion ? `AI 태그: ${emotion}` : '',
+        }))
       }
       nav('analysisResult', { result, shared: share, rawContent: text.trim() })
     } catch {

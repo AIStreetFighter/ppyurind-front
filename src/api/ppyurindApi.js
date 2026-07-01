@@ -1,7 +1,7 @@
 // ─────────────────────────────────────────────
 // 쀼라인드 API 함수 모음 (신버전 백엔드 정렬 기준)
 // ─────────────────────────────────────────────
-import { api, uploadFile, setAccessToken, clearAccessToken } from './client'
+import { api, uploadFile, setAccessToken, clearAccessToken, getAccessToken } from './client'
 
 // ── 1. 헬스체크 ──────────────────────────────
 export const checkHealth   = () => api.get('/health')
@@ -105,8 +105,16 @@ export const sendChatMessage = ({ message, history = [] }) =>
   api.post('/chat', { message, history })
 
 // ── 7. 커뮤니티 ──────────────────────────────
-export const listCommunityPosts = ({ offset = 0, limit = 20 } = {}) =>
-  api.get(`/community/posts?offset=${offset}&limit=${limit}`)
+export const listCommunityPosts = ({ offset = 0, limit = 20, author } = {}) => {
+  const params = new URLSearchParams({ offset: String(offset), limit: String(limit) })
+  if (author) params.set('author', author)
+  return api.get(`/community/posts?${params.toString()}`)
+}
+
+export const listMyCommunityPosts = ({ offset = 0, limit = 50 } = {}) =>
+  getAccessToken()
+    ? listCommunityPosts({ offset, limit, author: 'me' })
+    : Promise.resolve({ items: [], total: 0 })
 
 export const getCommunityPost = (id) =>
   api.get(`/community/posts/${id}`)
@@ -136,6 +144,9 @@ export const listReplies   = (commentId) => api.get(`/community/comments/${comme
 export const createReply   = ({ commentId, content, isAnonymous = true }) =>
   api.post(`/community/comments/${commentId}/replies`, { content, is_anonymous: isAnonymous })
 export const likeComment   = (commentId) => api.post(`/community/comments/${commentId}/like`, {})
+
+// 내 게시글 삭제 — 백엔드 DELETE /community/posts/{id} 구현 후 사용 가능
+export const deleteCommunityPost = (id) => api.delete(`/community/posts/${id}`)
 
 // 신고 / 작성자 숨김
 export const reportPost = (id, reason) => api.post(`/community/posts/${id}/report`, { reason })

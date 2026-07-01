@@ -96,7 +96,7 @@ export default function Community({ nav, isDark, toggleTheme, concerns = [] }) {
   const [reportFor, setReportFor] = useState(null)
   const [hiddenAuthors, setHiddenAuthors] = useState([])
   const [apiPosts, setApiPosts] = useState(null) // null = 로딩 중, [] = 빈 결과
-  const [userPosts] = useState(() => {
+  const [userPosts, setUserPosts] = useState(() => {
     try {
       return JSON.parse(localStorage.getItem(MY_POSTS_STORAGE_KEY) || '[]')
     } catch {
@@ -126,6 +126,16 @@ export default function Community({ nav, isDark, toggleTheme, concerns = [] }) {
     setHiddenAuthors(a => [...a, author])
     setMenuOpen(null)
     flash('이 회원의 글을 모두 숨겼어요.')
+  }
+
+  const deleteMyPost = (id) => {
+    setUserPosts(posts => posts.filter(p => p.id !== id))
+    try {
+      const stored = JSON.parse(localStorage.getItem(MY_POSTS_STORAGE_KEY) || '[]')
+      localStorage.setItem(MY_POSTS_STORAGE_KEY, JSON.stringify(stored.filter(p => p.id !== id)))
+    } catch {}
+    setMenuOpen(null)
+    flash('게시글을 삭제했어요.')
   }
 
   const seedPosts = apiPosts !== null ? apiPosts : ALL_POSTS
@@ -240,14 +250,20 @@ export default function Community({ nav, isDark, toggleTheme, concerns = [] }) {
                        onClick={() => setMenuOpen(menuOpen === p.id ? null : p.id)}></i>
                     {menuOpen === p.id && (
                       <div className="kebab-menu">
-                        <div className="kebab-item" onClick={() => { setMenuOpen(null); flash('1:1 대화는 곧 열려요.') }}><i className="fa-solid fa-comment"></i> 대화하기</div>
-                        <div className="kebab-item danger" onClick={() => { setMenuOpen(null); setReportFor(p) }}><i className="fa-solid fa-flag"></i> 게시물 / 회원 신고하기</div>
-                        <div className="kebab-item danger" onClick={() => hideAuthor(p.author, p.id)}><i className="fa-solid fa-eye-slash"></i> 이 회원의 글 모두 숨기기</div>
+                        {p.author === 'me' ? (
+                          <div className="kebab-item danger" onClick={() => deleteMyPost(p.id)}><i className="fa-solid fa-trash"></i> 게시글 삭제</div>
+                        ) : (
+                          <>
+                            <div className="kebab-item" onClick={() => { setMenuOpen(null); flash('1:1 대화는 곧 열려요.') }}><i className="fa-solid fa-comment"></i> 대화하기</div>
+                            <div className="kebab-item danger" onClick={() => { setMenuOpen(null); setReportFor(p) }}><i className="fa-solid fa-flag"></i> 게시물 / 회원 신고하기</div>
+                            <div className="kebab-item danger" onClick={() => hideAuthor(p.author, p.id)}><i className="fa-solid fa-eye-slash"></i> 이 회원의 글 모두 숨기기</div>
+                          </>
+                        )}
                       </div>
                     )}
                   </div>
                 </div>
-                <p className="quote">"{p.body.length > 64 ? p.body.slice(0, 64) + '…' : p.body}" <span className="link-more" onClick={(e) => { e.stopPropagation(); nav('post', { post: p }) }}>더보기</span></p>
+                <p className="quote">{p.body.length > 64 ? p.body.slice(0, 64) + '…' : p.body} <span className="link-more" onClick={(e) => { e.stopPropagation(); nav('post', { post: p }) }}>더보기</span></p>
                 <div className="reactions" onClick={e => e.stopPropagation()}>
                   <span className={isLiked ? 'like' : ''} style={{ cursor: 'pointer' }} onClick={() => { empathyPost(p.id).catch(() => {}); setLiked(s => ({ ...s, [p.id]: !s[p.id] })) }}>
                     <i className={`${isLiked ? 'fa-solid' : 'fa-regular'} fa-heart`}></i> 공감 {p.empathy + (isLiked ? 1 : 0)}

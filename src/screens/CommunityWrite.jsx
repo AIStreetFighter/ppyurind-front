@@ -2,8 +2,7 @@ import { useMemo, useState } from 'react'
 import { randomNick } from '../data/nicknames'
 import { maskPIIWithAI } from '../utils/maskPII'
 import { createCommunityPost } from '../api/ppyurindApi'
-
-const MY_POSTS_STORAGE_KEY = 'ppyurind:myCommunityPosts'
+import { mapCommunityPostToLocal, saveMyCommunityPost } from '../utils/myCommunityPosts'
 
 const TAGS = [
   { label: 'AI 자동 추천', value: 'auto', icon: 'fa-wand-magic-sparkles' },
@@ -14,14 +13,6 @@ const TAGS = [
   { label: '가사 분담', value: '#가사분담', icon: 'fa-broom' },
   { label: '스킨십·친밀감', value: '#스킨십 #친밀감', icon: 'fa-heart' },
 ]
-
-function loadMyPosts() {
-  try {
-    return JSON.parse(localStorage.getItem(MY_POSTS_STORAGE_KEY) || '[]')
-  } catch {
-    return []
-  }
-}
 
 function recommendTag(text) {
   const source = text.replace(/\s/g, '')
@@ -39,6 +30,7 @@ export default function CommunityWrite({ nav }) {
   const [title, setTitle] = useState('')
   const [body, setBody] = useState('')
   const [isSaving, setIsSaving] = useState(false)
+  const [toast, setToast] = useState('')
 
   const autoTag = useMemo(() => recommendTag(`${title} ${body}`), [title, body])
   const selectedTag = tagMode === 'auto' ? autoTag : tagMode
@@ -63,17 +55,20 @@ export default function CommunityWrite({ nav }) {
       createdAt: new Date().toISOString(),
     }
     try {
-      await createCommunityPost({ content: masked.text, title: title.trim(), isAnonymous: true })
+      const created = await createCommunityPost({ content: masked.text, title: title.trim(), isAnonymous: true })
+      saveMyCommunityPost(mapCommunityPostToLocal(created, nextPost))
+      nav('community')
     } catch {
-      // 로그인 안 됐거나 API 오류 시 로컬 저장으로 폴백
-      const posts = loadMyPosts()
-      localStorage.setItem(MY_POSTS_STORAGE_KEY, JSON.stringify([nextPost, ...posts]))
+      saveMyCommunityPost(nextPost)
+      setIsSaving(false)
+      setToast('서버 저장 실패 · 내 글에서 확인 가능해요')
+      setTimeout(() => nav('community'), 1800)
     }
-    nav('community')
   }
 
   return (
     <div className="compose">
+      {toast && <div className="toast">{toast}</div>}
       <header className="compose-top">
         <button type="button" className="compose-action compose-action--cancel" onClick={() => nav('community')}>취소</button>
         <h1>글쓰기</h1>

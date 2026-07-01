@@ -1,21 +1,24 @@
 import { useEffect, useState } from 'react'
 import BottomNav from '../components/BottomNav'
-
-const MY_POSTS_STORAGE_KEY = 'ppyurind:myCommunityPosts'
-
-function loadMyPosts() {
-  try {
-    return JSON.parse(localStorage.getItem(MY_POSTS_STORAGE_KEY) || '[]')
-  } catch {
-    return []
-  }
-}
+import { listMyCommunityPosts } from '../api/ppyurindApi'
+import { loadMyCommunityPosts, mapCommunityPostToLocal } from '../utils/myCommunityPosts'
 
 export default function MyCommunityPosts({ nav }) {
   const [posts, setPosts] = useState([])
 
   useEffect(() => {
-    setPosts(loadMyPosts())
+    const localPosts = loadMyCommunityPosts()
+    setPosts(localPosts)
+
+    listMyCommunityPosts({ offset: 0, limit: 50 }).then(data => {
+      const items = Array.isArray(data) ? data : (data.items || [])
+      const apiPosts = items.map(item => mapCommunityPostToLocal(item))
+      const merged = [
+        ...apiPosts,
+        ...localPosts.filter(local => !apiPosts.some(apiPost => apiPost.id === local.id)),
+      ]
+      setPosts(merged)
+    }).catch(() => {})
   }, [])
 
   return (
