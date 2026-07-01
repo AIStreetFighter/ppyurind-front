@@ -1,7 +1,8 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import BottomNav from '../components/BottomNav'
 import { CHECKUPS, recommendCheckups, scoreBand } from '../data/mindCheckups'
 import { resolveSupport, LEGAL_AID } from '../data/supportPrograms'
+import { saveCheckup } from '../api/ppyurindApi'
 
 // 마음건강 자가점검 전용 화면 (목록 → 문항 → 결과 + 지원 안내)
 // signal: AI 분석 위험 사유 키워드(있으면 추천 검사 매칭, B안)
@@ -48,6 +49,12 @@ export default function MindCheckup({ nav, signal = '' }) {
   const support = resolveSupport({ score: total, urgent: !!isUrgent })
 
   const reset = () => { setStage('list'); setActiveId(null); setAnswers([]) }
+
+  useEffect(() => {
+    if (stage === 'result' && checkup && band) {
+      saveCheckup({ checkupId: activeId, score: total, level: band.level }).catch(() => {})
+    }
+  }, [stage])
 
   return (
     <>

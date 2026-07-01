@@ -63,7 +63,7 @@ export default function CommunityWrite({ nav }) {
       createdAt: new Date().toISOString(),
     }
     try {
-      await createCommunityPost({ content: masked.text, isAnonymous: true })
+      await createCommunityPost({ content: masked.text, title: title.trim(), isAnonymous: true })
     } catch {
       // 로그인 안 됐거나 API 오류 시 로컬 저장으로 폴백
       const posts = loadMyPosts()

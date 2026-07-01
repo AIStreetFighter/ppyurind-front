@@ -132,8 +132,10 @@ export const createComment = ({ postId, content, isAnonymous = true }) =>
   api.post(`/community/posts/${postId}/comments`, { content, is_anonymous: isAnonymous })
 
 // 댓글 대댓글
-export const listReplies  = (commentId) => api.get(`/community/comments/${commentId}/replies`)
-export const likeComment  = (commentId) => api.post(`/community/comments/${commentId}/like`, {})
+export const listReplies   = (commentId) => api.get(`/community/comments/${commentId}/replies`)
+export const createReply   = ({ commentId, content, isAnonymous = true }) =>
+  api.post(`/community/comments/${commentId}/replies`, { content, is_anonymous: isAnonymous })
+export const likeComment   = (commentId) => api.post(`/community/comments/${commentId}/like`, {})
 
 // 신고 / 작성자 숨김
 export const reportPost = (id, reason) => api.post(`/community/posts/${id}/report`, { reason })

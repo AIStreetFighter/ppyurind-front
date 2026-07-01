@@ -1,19 +1,9 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import ThemeToggle from '../components/ThemeToggle'
 import BottomNav from '../components/BottomNav'
 import SafetyCard from '../components/SafetyCard'
 import { exportReportPdf } from '../utils/exportPdf'
-// [API] 백엔드 연결 시 아래 import 활성화
-// import { getReport } from '../api/ppyurindApi'
-//
-// [API] 주간/월간 리포트 로드 (현재: REPORTS 더미 객체 사용)
-//   useEffect(() => {
-//     getReport(period === '주간' ? 'weekly' : 'monthly').then(data => setReport(data))
-//   }, [period])
-//   응답 필드: period, range, summary, gaslight{score,level}, emotion{neg,neu,pos,tags},
-//             phrases[]{text,count,tone}, weekly[]{day,h,mood}, weekly_note
-//             (monthly 추가) weeks[]{label,pos}, trend, insight
-//   기록 부족 시: { available: false, detail: "..." } → 안내 문구 표시
+import { getReport } from '../api/ppyurindApi'
 
 // 주간 / 월간 리포트 데이터 (실제 서비스에서는 사용자 기록 기반으로 채워짐)
 const REPORTS = {
@@ -85,7 +75,31 @@ const MOOD_COLOR = {
 export default function Analysis({ nav, isDark, toggleTheme, nickname }) {
   const [period, setPeriod] = useState('월간')
   const [menuOpen, setMenuOpen] = useState(false)
-  const r = REPORTS[period]
+  const [apiData, setApiData] = useState(null)
+
+  useEffect(() => {
+    const now = new Date()
+    const end = now.toISOString().slice(0, 10)
+    const days = period === '주간' ? 7 : 30
+    const start = new Date(now - days * 86400000).toISOString().slice(0, 10)
+    getReport({ reportType: period === '주간' ? 'weekly' : 'monthly', periodStart: start, periodEnd: end })
+      .then(data => setApiData(data))
+      .catch(() => setApiData(null))
+  }, [period])
+
+  const dummy = REPORTS[period]
+  const r = apiData ? {
+    ...dummy,
+    summary: apiData.monthly_self_insight || apiData.recurring_conflict_pattern || dummy.summary,
+    gaslight: apiData.gaslight || dummy.gaslight,
+    emotion: apiData.emotion || dummy.emotion,
+    phrases: apiData.phrases?.length ? apiData.phrases : dummy.phrases,
+    weekly: apiData.weekly?.length ? apiData.weekly : dummy.weekly,
+    weekly_note: apiData.weekly_note || dummy.weekly_note,
+    weeks: apiData.weeks?.length ? apiData.weeks : dummy.weeks,
+    trend: apiData.trend || dummy.trend,
+    insight: apiData.insight || dummy.insight,
+  } : dummy
   const maxCount = Math.max(...r.phrases.map(p => p.count))
   const gaugePct = Math.min(100, (r.gaslight.score / 20) * 100)
 

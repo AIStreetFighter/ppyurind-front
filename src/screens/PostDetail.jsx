@@ -1,59 +1,48 @@
-import { useState } from 'react'
-import { nickFromId } from '../data/nicknames'
-// [API] 백엔드 연결 시 아래 import 활성화
-// import { getCommunityPost, likePost, unlikePost, comfortPost, listComments, createComment, likeComment, reportPost, muteAuthor } from '../api/ppyurindApi'
-//
-// [API] 게시글 상세 로드 (현재: props.post 더미 객체 사용)
-//   useEffect(() => { getCommunityPost(post.id).then(data => setDetail(data)) }, [post.id])
-//
-// [API] 공감/위로 토글: likePost(post.id) / comfortPost(post.id)
-// [API] 댓글 목록: listComments(post.id).then(data => setComments(data.items))
-// [API] 댓글 작성: createComment({ postId: post.id, content: draft, isAnonymous: true })
-// [API] 댓글 좋아요: likeComment(post.id, commentId)
-// [API] 신고: reportPost(post.id, reason) / muteAuthor(post.id)
+import { useEffect, useState } from 'react'
+import { getCommunityPost, empathyPost, comfortPost, listComments, createComment, createReply, likeComment, reportPost, muteAuthor } from '../api/ppyurindApi'
 
 const AVS = ['cat_01_t', 'cat_02_t', 'cat_03_t', 'cat_04_t']
 const avatarFor = (id) => AVS[Math.abs(String(id).split('').reduce((a, c) => a + c.charCodeAt(0), 0)) % AVS.length]
 
-// 커뮤니티 게시글 상세 — 전체 화면(블라인드 스타일)
-// post: 선택된 게시글 객체, nav('community')로 목록 복귀
+function relTime(iso) {
+  const mins = Math.round((Date.now() - new Date(iso)) / 60000)
+  if (mins < 1) return '방금'
+  if (mins < 60) return `${mins}분`
+  const hrs = Math.round(mins / 60)
+  if (hrs < 24) return `${hrs}시간`
+  return `${Math.round(hrs / 24)}일`
+}
+
+function mapComment(c) {
+  return {
+    id: c.id,
+    nick: c.anonymous_nickname || '익명',
+    body: c.content,
+    time: c.created_at ? relTime(c.created_at) : '방금',
+    likes: c.like_count || 0,
+    liked: false,
+    replies: (c.replies || []).map(mapComment),
+  }
+}
+
 export default function PostDetail({ nav, post }) {
-  const [liked, setLiked] = useState(false)
+  const [detail, setDetail]   = useState(post)
+  const [liked, setLiked]     = useState(false)
   const [comforted, setComforted] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
-  const [muted, setMuted] = useState(false)
-  const [draft, setDraft] = useState('')
+  const [draft, setDraft]     = useState('')
   const [replyTo, setReplyTo] = useState(null)
   const [replyDraft, setReplyDraft] = useState('')
-  const [comments, setComments] = useState(() => ([
-    {
-      id: 1, nick: nickFromId('c-' + (post?.id ?? 'x') + '-1'), body: '저도 똑같아요. 먼저 챙기는 사람만 서운하죠…',
-      time: '3시간', likes: 2, liked: false,
-      replies: [
-        { id: 11, nick: nickFromId('c-' + (post?.id ?? 'x') + '-1r'), body: '그 마음 정말 이해돼요. 표현 안 하면 모르더라고요.', time: '2시간', likes: 0, liked: false },
-      ],
-    },
-    {
-      id: 2, nick: nickFromId('c-' + (post?.id ?? 'x') + '-2'), body: '한 번 솔직하게 말해보는 건 어때요? 응원할게요 🙏',
-      time: '1시간', likes: 5, liked: false, replies: [],
-    },
-  ]))
+  const [comments, setComments] = useState([])
+  const [reportOpen, setReportOpen] = useState(false)
 
-  const toggleLike = (cid, rid) => {
-    setComments(cs => cs.map(c => {
-      if (c.id !== cid) return c
-      if (rid == null) return { ...c, liked: !c.liked, likes: c.likes + (c.liked ? -1 : 1) }
-      return { ...c, replies: c.replies.map(r => r.id === rid ? { ...r, liked: !r.liked, likes: r.likes + (r.liked ? -1 : 1) } : r) }
-    }))
-  }
-
-  const addReply = (cid) => {
-    if (!replyDraft.trim()) return
-    setComments(cs => cs.map(c => c.id === cid
-      ? { ...c, replies: [...c.replies, { id: Date.now(), nick: '나', body: replyDraft.trim(), time: '방금', likes: 0, liked: false, mine: true }] }
-      : c))
-    setReplyDraft(''); setReplyTo(null)
-  }
+  useEffect(() => {
+    if (!post?.id) return
+    getCommunityPost(post.id).then(d => setDetail(d)).catch(() => {})
+    listComments(post.id)
+      .then(data => setComments((data.comments || data.items || []).map(mapComment)))
+      .catch(() => {})
+  }, [post?.id])
 
   if (!post) {
     return (
@@ -64,74 +53,131 @@ export default function PostDetail({ nav, post }) {
     )
   }
 
-  const addComment = () => {
-    if (!draft.trim()) return
-    setComments(c => [...c, {
-      id: Date.now(), nick: '나', body: draft.trim(),
-      time: '방금', likes: 0, liked: false, replies: [], mine: true,
-    }])
-    setDraft('')
+  const handleEmpathy = () => {
+    empathyPost(post.id).then(d => {
+      if (d?.liked != null) setLiked(d.liked)
+    }).catch(() => {})
+    setLiked(v => !v)
   }
+
+  const handleComfort = () => {
+    comfortPost(post.id).then(d => {
+      if (d?.comforted != null) setComforted(d.comforted)
+    }).catch(() => {})
+    setComforted(v => !v)
+  }
+
+  const toggleLike = (cid, rid) => {
+    const targetId = rid ?? cid
+    likeComment(targetId).catch(() => {})
+    setComments(cs => cs.map(c => {
+      if (c.id !== cid) return c
+      if (rid == null) return { ...c, liked: !c.liked, likes: c.likes + (c.liked ? -1 : 1) }
+      return { ...c, replies: c.replies.map(r => r.id === rid ? { ...r, liked: !r.liked, likes: r.likes + (r.liked ? -1 : 1) } : r) }
+    }))
+  }
+
+  const addComment = async () => {
+    if (!draft.trim()) return
+    const text = draft.trim()
+    setDraft('')
+    try {
+      const created = await createComment({ postId: post.id, content: text, isAnonymous: true })
+      setComments(c => [...c, mapComment(created)])
+    } catch {
+      setComments(c => [...c, { id: Date.now(), nick: '나', body: text, time: '방금', likes: 0, liked: false, replies: [] }])
+    }
+  }
+
+  const addReply = async (cid) => {
+    if (!replyDraft.trim()) return
+    const text = replyDraft.trim()
+    setReplyDraft(''); setReplyTo(null)
+    try {
+      const created = await createReply({ commentId: cid, content: text, isAnonymous: true })
+      setComments(cs => cs.map(c => c.id === cid
+        ? { ...c, replies: [...c.replies, mapComment(created)] }
+        : c))
+    } catch {
+      setComments(cs => cs.map(c => c.id === cid
+        ? { ...c, replies: [...c.replies, { id: Date.now(), nick: '나', body: text, time: '방금', likes: 0, liked: false }] }
+        : c))
+    }
+  }
+
+  const handleReport = (reason) => {
+    reportPost(post.id, reason).catch(() => {})
+    setReportOpen(false)
+    setMenuOpen(false)
+  }
+
+  const handleMute = () => {
+    muteAuthor(post.id).catch(() => {})
+    setMenuOpen(false)
+    nav('community')
+  }
+
+  const d = detail || post
+  const empathyCount = (d.empathy_count ?? d.empathy ?? 0) + (liked ? 1 : 0)
+  const comfortCount = (d.comfort_count ?? d.comfort ?? 0) + (comforted ? 1 : 0)
 
   return (
     <div className="pd">
-      {/* 상단 바 */}
       <div className="pd-top">
         <i className="fa-solid fa-arrow-left pd-top-ic" onClick={() => nav('community')}></i>
         <span className="pd-top-title">커뮤니티</span>
         <div className="pd-top-right">
-          <i className={`fa-solid ${muted ? 'fa-bell-slash' : 'fa-bell'} pd-top-ic`} onClick={() => setMuted(m => !m)} title="알림 끄기"></i>
           <div style={{ position: 'relative' }}>
             <i className="fa-solid fa-ellipsis-vertical pd-top-ic" onClick={() => setMenuOpen(o => !o)}></i>
             {menuOpen && (
               <div className="kebab-menu">
-                <div className="kebab-item" onClick={() => { setMenuOpen(false); nav('community') }}><i className="fa-solid fa-comment"></i> 1:1 대화하기</div>
-                <div className="kebab-item danger" onClick={() => { setMenuOpen(false) }}><i className="fa-solid fa-flag"></i> 신고하기</div>
+                <div className="kebab-item danger" onClick={() => { setMenuOpen(false); setReportOpen(true) }}>
+                  <i className="fa-solid fa-flag"></i> 신고하기
+                </div>
+                <div className="kebab-item danger" onClick={handleMute}>
+                  <i className="fa-solid fa-eye-slash"></i> 이 회원 글 숨기기
+                </div>
               </div>
             )}
           </div>
         </div>
       </div>
 
-      {/* 본문 스크롤 영역 */}
       <div className="pd-body">
         <div className="post-head">
-          <div className="avatar"><img src={`/assets/cats/${post.avatar}.png`} alt="" /></div>
+          <div className="avatar"><img src={`/assets/cats/${d.avatar || avatarFor(post.id)}.png`} alt="" /></div>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <p className="post-name">{post.nick}</p>
-            <p className="post-tag">{post.tag}</p>
+            <p className="post-name">{d.anonymous_nickname || d.nick}</p>
+            <p className="post-tag">{d.tag || (d.ai_tags ? `AI 태그: ${d.ai_tags}` : '')}</p>
           </div>
         </div>
 
-        <h1 className="pd-title">{post.title}</h1>
-        <p className="pd-content">{post.body}</p>
+        <h1 className="pd-title">{d.title || d.body?.slice(0, 30)}</h1>
+        <p className="pd-content">{d.content || d.body}</p>
 
-        {/* 광고 (작은 배너) */}
         <a className="pd-ad" href="#" onClick={e => e.preventDefault()}>
           <span className="ad-tag">AD</span>
           <span className="pd-ad-text">다가오는 기념일, 꽃으로 마음 전하기 · 20% 쿠폰</span>
           <i className="fa-solid fa-chevron-right" style={{ color: 'var(--ink-muted)', fontSize: 11 }}></i>
         </a>
 
-        {/* 반응 바 */}
         <div className="pd-reactions">
-          <span className={liked ? 'like' : ''} onClick={() => setLiked(v => !v)}>
-            <i className={`${liked ? 'fa-solid' : 'fa-regular'} fa-heart`}></i> 공감 {post.empathy + (liked ? 1 : 0)}
+          <span className={liked ? 'like' : ''} onClick={handleEmpathy}>
+            <i className={`${liked ? 'fa-solid' : 'fa-regular'} fa-heart`}></i> 공감 {empathyCount}
           </span>
-          <span style={{ color: comforted ? 'var(--warm-text)' : '' }} onClick={() => setComforted(v => !v)}>
-            <i className={`${comforted ? 'fa-solid' : 'fa-regular'} fa-hand`}></i> 위로 {post.comfort + (comforted ? 1 : 0)}
+          <span style={{ color: comforted ? 'var(--warm-text)' : '' }} onClick={handleComfort}>
+            <i className={`${comforted ? 'fa-solid' : 'fa-regular'} fa-hand`}></i> 위로 {comfortCount}
           </span>
           <span><i className="fa-regular fa-comment"></i> 댓글 {comments.length}</span>
         </div>
 
-        {/* 댓글 목록 */}
         <div className="pd-comments">
           {comments.map(c => (
             <div key={c.id} className="pd-comment">
               <div className="pd-c-row">
                 <div className="avatar avatar--sm"><img src={`/assets/cats/${avatarFor(c.id)}.png`} alt="" /></div>
                 <div className="pd-c-main">
-                  <p className={`pd-c-nick${c.mine ? ' mine' : ''}`}>{c.nick}</p>
+                  <p className="pd-c-nick">{c.nick}</p>
                   <p className="pd-c-body">{c.body}</p>
                   <div className="pd-c-meta">
                     <span>{c.time}</span>
@@ -142,12 +188,11 @@ export default function PostDetail({ nav, post }) {
                 <i className={`${c.liked ? 'fa-solid' : 'fa-regular'} fa-heart pd-c-heart${c.liked ? ' on' : ''}`} onClick={() => toggleLike(c.id)}></i>
               </div>
 
-              {/* 대댓글 (선 없이 들여쓰기) */}
               {c.replies.map(r => (
                 <div key={r.id} className="pd-c-row pd-reply">
                   <div className="avatar avatar--sm"><img src={`/assets/cats/${avatarFor(r.id)}.png`} alt="" /></div>
                   <div className="pd-c-main">
-                    <p className={`pd-c-nick${r.mine ? ' mine' : ''}`}>{r.nick}</p>
+                    <p className="pd-c-nick">{r.nick}</p>
                     <p className="pd-c-body">{r.body}</p>
                     <div className="pd-c-meta">
                       <span>{r.time}</span>
@@ -158,7 +203,6 @@ export default function PostDetail({ nav, post }) {
                 </div>
               ))}
 
-              {/* 대댓글 입력 */}
               {replyTo === c.id && (
                 <div className="pd-reply-input">
                   <input
@@ -171,14 +215,15 @@ export default function PostDetail({ nav, post }) {
               )}
             </div>
           ))}
+          {comments.length === 0 && (
+            <p style={{ textAlign: 'center', color: 'var(--ink-muted)', fontSize: 13.5, padding: '20px 0' }}>첫 댓글을 남겨보세요 💬</p>
+          )}
         </div>
       </div>
 
-      {/* 하단 댓글 입력창 (사진 아이콘 없음) */}
       <div className="pd-input">
         <input
-          className="field"
-          style={{ flex: 1 }}
+          className="field" style={{ flex: 1 }}
           placeholder="따뜻한 댓글을 남겨주세요"
           value={draft}
           onChange={e => setDraft(e.target.value)}
@@ -186,6 +231,20 @@ export default function PostDetail({ nav, post }) {
         />
         <button className="pd-send" onClick={addComment} disabled={!draft.trim()}>등록</button>
       </div>
+
+      {/* 신고 모달 */}
+      {reportOpen && (
+        <div className="sheet-backdrop" onClick={() => setReportOpen(false)} style={{ alignItems: 'center', padding: 22 }}>
+          <div className="modal" onClick={e => e.stopPropagation()} style={{ textAlign: 'left' }}>
+            <h3 style={{ margin: '0 0 14px', fontSize: 17, color: 'var(--ink)' }}>신고 사유를 선택해주세요</h3>
+            {['스팸·도배', '음란·불건전', '욕설·혐오', '개인정보 노출', '기타'].map(r => (
+              <div key={r} className="kebab-item" style={{ borderRadius: 10, marginBottom: 4 }} onClick={() => handleReport(r)}>
+                {r}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   )
 }

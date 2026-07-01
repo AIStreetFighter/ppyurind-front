@@ -824,6 +824,7 @@ body {
   scrollbar-width: none;
 }
 .compose-tag-row::-webkit-scrollbar { display: none; }
+.compose-tag-row::after { content: ''; display: block; min-width: 20px; flex-shrink: 0; }
 .compose-tag {
   flex: 0 0 auto;
   display: inline-flex;
