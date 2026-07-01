@@ -77,7 +77,9 @@ export default function Record({ nav, isDark, toggleTheme }) {
       const result = await analyzeEmotion({ rawContent: text.trim(), inputType })
       const saved = await createEmotion({ rawContent: text.trim(), inputType, isSecretExcluded: !share }).catch(() => null)
       if (share && saved?.id) {
-        await createCommunityPost({ content: text.trim(), isAnonymous: true, sourceRecordId: saved.id }).catch(() => {})
+        const emotion = result?.primary_emotion || result?.primaryEmotion || ''
+        const autoTitle = emotion ? `${emotion}을(를) 느낀 이야기` : text.trim().split(/[\n.?!]/)[0].slice(0, 30) || '오늘의 이야기'
+        await createCommunityPost({ content: text.trim(), title: autoTitle, isAnonymous: true, sourceRecordId: saved.id }).catch(() => {})
       }
       nav('analysisResult', { result, shared: share, rawContent: text.trim() })
     } catch {

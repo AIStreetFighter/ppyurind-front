@@ -111,9 +111,10 @@ export const listCommunityPosts = ({ offset = 0, limit = 20 } = {}) =>
 export const getCommunityPost = (id) =>
   api.get(`/community/posts/${id}`)
 
-export const createCommunityPost = ({ content, isAnonymous = true, isAdultOnly = false, sourceRecordId }) =>
+export const createCommunityPost = ({ content, title, isAnonymous = true, isAdultOnly = false, sourceRecordId }) =>
   api.post('/community/posts', {
     content,
+    title: title ?? null,
     is_anonymous: isAnonymous,
     is_adult_only: isAdultOnly,
     source_record_id: sourceRecordId ?? null,
