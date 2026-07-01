@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { BrowserRouter, useLocation, useNavigate } from "react-router-dom";
 import KakaoLogin from "./screens/KakaoLogin";
 import Onboarding from "./screens/Onboarding";
@@ -58,14 +58,24 @@ function AppContent() {
   const [concerns, setConcerns] = useState(["대화 단절", "서운함"]);
   const [checkupSignal, setCheckupSignal] = useState("");
   const [legal, setLegal] = useState({ doc: "privacy", from: "kakaoLogin" });
-  const [activePost, setActivePost] = useState(null);
+  const [activePost, setActivePost] = useState(() => {
+    try { return JSON.parse(sessionStorage.getItem('ppyurind:activePost') || 'null') } catch { return null }
+  });
   const [analysisResult, setAnalysisResult] = useState(null);
   const [translateInitialText, setTranslateInitialText] = useState('');
+
+  // post 없이 /community/post 직접 접근 또는 새로고침 시 커뮤니티로 복귀
+  useEffect(() => {
+    if (screen === 'post' && !activePost) navigate(SCREEN_PATHS['community'])
+  }, [screen, activePost])
 
   const nav = (to, payload) => {
     if (to === "checkup") setCheckupSignal(payload?.signal || "");
     if (to === "legal") setLegal({ doc: payload?.doc || "privacy", from: payload?.from || "kakaoLogin" });
-    if (to === "post" && payload?.post) setActivePost(payload.post);
+    if (to === "post" && payload?.post) {
+      setActivePost(payload.post);
+      try { sessionStorage.setItem('ppyurind:activePost', JSON.stringify(payload.post)) } catch {}
+    }
     if (to === "analysisResult") { setAnalysisResult(payload?.result || null); setTranslateInitialText(payload?.rawContent || ''); }
     if (to === "translate" && payload?.initialText) setTranslateInitialText(payload.initialText);
     navigate(SCREEN_PATHS[to] || "/");
