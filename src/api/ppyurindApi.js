@@ -60,8 +60,9 @@ export const setPin = (pin) => api.put('/users/me/pin', { pin })
 
 // ── 4. 감정 기록 ──────────────────────────────
 // 분석만 (저장 없음) — POST /emotions/analyze
-export const analyzeEmotion = ({ rawContent }) =>
-  api.post('/emotions/analyze', { raw_content: rawContent })
+// inputType: 'text' | 'voice' | 'image'
+export const analyzeEmotion = ({ rawContent, inputType = 'text' }) =>
+  api.post('/emotions/analyze', { raw_content: rawContent, input_type: inputType })
 
 // 저장
 export const createEmotion = ({ inputType = 'text', rawContent, mediaUrl, isSecretExcluded = false }) =>
@@ -77,9 +78,17 @@ export const listEmotions  = ({ offset = 0, limit = 20 } = {}) =>
 export const getEmotion    = (id) => api.get(`/emotions/${id}`)
 export const deleteEmotion = (id) => api.delete(`/emotions/${id}`)
 
-// 미디어 업로드 — /records/image | /records/voice
+// 미디어 업로드 — /records/image | /records/voice (DB 저장까지 포함)
 export const uploadRecordImage = (file) => uploadFile('/records/image', file)
 export const uploadRecordVoice = (file) => uploadFile('/records/voice', file)
+
+// 음성 탭 클라이언트 STT용 토큰 — GET /media/speech-token
+// 응답: { token: string, region: string }
+export const getSpeechToken = () => api.get('/media/speech-token')
+
+// 대화 캡처 탭 OCR (저장 없음) — POST /media/ocr
+// 응답: { masked_text: string }
+export const uploadOcrImage = (file) => uploadFile('/media/ocr', file)
 
 // ── 5. 말투 변환 ──────────────────────────────
 // filterMode: 'soft' | 'honest' | 'short' | 'request'
