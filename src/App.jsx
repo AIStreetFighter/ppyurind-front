@@ -46,6 +46,8 @@ const SCREEN_PATHS = {
 const PATH_SCREENS = Object.fromEntries(
   Object.entries(SCREEN_PATHS).map(([screen, path]) => [path, screen])
 );
+// 백엔드 OAuth 성공 리다이렉트 경로(/auth/callback) 별칭 — /auth/success와 동일하게 콜백 처리
+PATH_SCREENS["/auth/callback"] = "oauthCallback";
 
 function AppContent() {
   const navigate = useNavigate();
