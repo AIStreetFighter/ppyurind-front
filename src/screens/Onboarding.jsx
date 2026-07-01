@@ -1,11 +1,14 @@
 import { useState } from 'react'
 import ThemeToggle from '../components/ThemeToggle'
 import PinPad from '../components/PinPad'
-// [API] 백엔드 연결 시 아래 import 활성화
-// import { saveOnboarding } from '../api/ppyurindApi'
+import { saveOnboarding, setPin as apiSetPin } from '../api/ppyurindApi'
+
+const YEAR_TO_NUM = { '1년 미만': 0, '1년 차': 1, '2년 차': 2, '2~3년': 2, '3~5년': 3, '5년 이상': 5, '3년 이상': 3, '선택안함': null }
 
 export default function Onboarding({ nav, isDark, toggleTheme, onNicknameSave, onConcernsSave }) {
   const [step, setStep] = useState(1)
+  const [saving, setSaving] = useState(false)
+  const [saveError, setSaveError] = useState('')
   const [relation, setRelation] = useState('신혼')
   const [year, setYear] = useState('2년 차')
   const [concerns, setConcerns] = useState(['대화 단절', '서운함'])
@@ -50,7 +53,6 @@ export default function Onboarding({ nav, isDark, toggleTheme, onNicknameSave, o
         </div>
         <div className="topbar__icons">
           <ThemeToggle isDark={isDark} toggleTheme={toggleTheme} />
-          <i className="fa-solid fa-xmark" onClick={() => nav('kakaoLogin')} style={{ cursor: 'pointer' }}></i>
         </div>
       </div>
 
@@ -149,12 +151,41 @@ export default function Onboarding({ nav, isDark, toggleTheme, onNicknameSave, o
 
           <button
             className="cta"
-            style={{ marginTop: 26, opacity: nickname.trim() ? 1 : 0.5 }}
-            // [API] onClick 교체: await saveOnboarding({ relation, relation_year: year, concerns, ai_tone: tone, nickname })
-          onClick={() => { if (nickname.trim()) { onNicknameSave?.(nickname.trim()); onConcernsSave?.(concerns); nav('home') } }}
+            style={{ marginTop: 26, opacity: (nickname.trim() && !saving) ? 1 : 0.5 }}
+            onClick={async () => {
+              if (!nickname.trim() || saving) return
+              setSaving(true)
+              setSaveError('')
+              try {
+                await saveOnboarding({
+                  nickname: nickname.trim(),
+                  relationshipStatus: [relation],
+                  relationshipYears: YEAR_TO_NUM[year] ?? null,
+                  mainConcernTopics: concerns.filter(c => c !== '기타'),
+                  concernEtc: concerns.includes('기타') ? etcText : null,
+                  aiTone: tone,
+                })
+                if (useLock && pinSet) {
+                  // PIN은 별도로 전달 (pinSet 시 PinPad에서 pin값 필요 → 현재는 스킵)
+                }
+                onNicknameSave?.(nickname.trim())
+                onConcernsSave?.(concerns)
+                nav('home')
+              } catch (err) {
+                // 저장 실패 시 조용히 넘어가지 않고 사용자에게 알린다.
+                setSaveError(err?.message || '저장에 실패했어요. 잠시 후 다시 시도해주세요.')
+              } finally {
+                setSaving(false)
+              }
+            }}
           >
-            감정 기록 시작하기
+            {saving ? '저장 중...' : '감정 기록 시작하기'}
           </button>
+          {saveError && (
+            <p style={{ margin: '12px 0 0', fontSize: 13.5, color: '#e74c3c', textAlign: 'center' }}>
+              {saveError}
+            </p>
+          )}
         </>
       )}
 
