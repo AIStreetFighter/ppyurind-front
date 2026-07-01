@@ -4,6 +4,23 @@ import { getCommunityPost, empathyPost, comfortPost, listComments, createComment
 const AVS = ['cat_01_t', 'cat_02_t', 'cat_03_t', 'cat_04_t']
 const avatarFor = (id) => AVS[Math.abs(String(id).split('').reduce((a, c) => a + c.charCodeAt(0), 0)) % AVS.length]
 
+// 로컬 저장 글(id가 'u'로 시작)인지 판별
+const isLocalPost = (id) => typeof id === 'string' && id.startsWith('u')
+const localCommentKey = (postId) => `ppyurind:comments:${postId}`
+
+function getLocalComments(postId) {
+  try { return JSON.parse(localStorage.getItem(localCommentKey(postId)) || '[]') } catch { return [] }
+}
+function saveLocalComment(postId, comment) {
+  const prev = getLocalComments(postId)
+  localStorage.setItem(localCommentKey(postId), JSON.stringify([...prev, comment]))
+}
+function saveLocalReply(postId, commentId, reply) {
+  const prev = getLocalComments(postId)
+  const next = prev.map(c => c.id === commentId ? { ...c, replies: [...(c.replies || []), reply] } : c)
+  localStorage.setItem(localCommentKey(postId), JSON.stringify(next))
+}
+
 function relTime(iso) {
   const mins = Math.round((Date.now() - new Date(iso)) / 60000)
   if (mins < 1) return '방금'
@@ -35,9 +52,17 @@ export default function PostDetail({ nav, post }) {
   const [replyDraft, setReplyDraft] = useState('')
   const [comments, setComments] = useState([])
   const [reportOpen, setReportOpen] = useState(false)
+  const [commentToast, setCommentToast] = useState('')
+
+  const flashComment = (msg) => { setCommentToast(msg); setTimeout(() => setCommentToast(''), 2500) }
 
   useEffect(() => {
     if (!post?.id) return
+    if (isLocalPost(post.id)) {
+      // 로컬 저장 글: localStorage에서 댓글 로드
+      setComments(getLocalComments(post.id))
+      return
+    }
     getCommunityPost(post.id).then(d => setDetail(d)).catch(() => {})
     listComments(post.id)
       .then(data => setComments((data.comments || data.items || []).map(mapComment)))
@@ -81,11 +106,22 @@ export default function PostDetail({ nav, post }) {
     if (!draft.trim()) return
     const text = draft.trim()
     setDraft('')
+
+    if (isLocalPost(post.id)) {
+      // 로컬 글: localStorage에 저장해서 새로고침해도 유지
+      const local = { id: Date.now(), nick: '나', body: text, time: '방금', likes: 0, liked: false, replies: [] }
+      saveLocalComment(post.id, local)
+      setComments(c => [...c, local])
+      return
+    }
+
     try {
       const created = await createComment({ postId: post.id, content: text, isAnonymous: true })
       setComments(c => [...c, mapComment(created)])
     } catch {
-      setComments(c => [...c, { id: Date.now(), nick: '나', body: text, time: '방금', likes: 0, liked: false, replies: [] }])
+      // API 실패 시 draft 복원 + 안내 (가짜 댓글 추가하지 않음)
+      setDraft(text)
+      flashComment('댓글 저장에 실패했어요. 로그인 후 다시 시도해주세요.')
     }
   }
 
@@ -93,15 +129,22 @@ export default function PostDetail({ nav, post }) {
     if (!replyDraft.trim()) return
     const text = replyDraft.trim()
     setReplyDraft(''); setReplyTo(null)
+
+    if (isLocalPost(post.id)) {
+      const local = { id: Date.now(), nick: '나', body: text, time: '방금', likes: 0, liked: false }
+      saveLocalReply(post.id, cid, local)
+      setComments(cs => cs.map(c => c.id === cid ? { ...c, replies: [...c.replies, local] } : c))
+      return
+    }
+
     try {
       const created = await createReply({ commentId: cid, content: text, isAnonymous: true })
       setComments(cs => cs.map(c => c.id === cid
         ? { ...c, replies: [...c.replies, mapComment(created)] }
         : c))
     } catch {
-      setComments(cs => cs.map(c => c.id === cid
-        ? { ...c, replies: [...c.replies, { id: Date.now(), nick: '나', body: text, time: '방금', likes: 0, liked: false }] }
-        : c))
+      setReplyDraft(text)
+      flashComment('답글 저장에 실패했어요. 로그인 후 다시 시도해주세요.')
     }
   }
 
@@ -123,6 +166,7 @@ export default function PostDetail({ nav, post }) {
 
   return (
     <div className="pd">
+      {commentToast && <div className="toast">{commentToast}</div>}
       <div className="pd-top">
         <i className="fa-solid fa-arrow-left pd-top-ic" onClick={() => nav('community')}></i>
         <span className="pd-top-title">커뮤니티</span>
