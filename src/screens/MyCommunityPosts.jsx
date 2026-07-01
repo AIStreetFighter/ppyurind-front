@@ -1,7 +1,10 @@
 import { useEffect, useState } from 'react'
 import BottomNav from '../components/BottomNav'
+import { nickFromId } from '../data/nicknames'
+import { listCommunityPosts } from '../api/ppyurindApi'
 
 const MY_POSTS_STORAGE_KEY = 'ppyurind:myCommunityPosts'
+const AVATARS = ['cat_01_t', 'cat_02_t', 'cat_03_t', 'cat_04_t']
 
 function loadMyPosts() {
   try {
@@ -11,11 +14,33 @@ function loadMyPosts() {
   }
 }
 
+function mapApiPost(p) {
+  return {
+    id: p.id,
+    avatar: AVATARS[(p.id || 0) % AVATARS.length],
+    nick: p.anonymous_nickname || nickFromId(p.id),
+    title: p.title || p.content?.slice(0, 22) || '',
+    tag: p.ai_tags ? `AI 태그: ${p.ai_tags}` : '',
+    body: p.content || '',
+    empathy: p.empathy_count || 0,
+    comfort: p.comfort_count || 0,
+    comments: p.comment_count || 0,
+    createdAt: p.created_at,
+  }
+}
+
 export default function MyCommunityPosts({ nav }) {
   const [posts, setPosts] = useState([])
 
   useEffect(() => {
-    setPosts(loadMyPosts())
+    // 로그인 상태면 백엔드에 실제로 저장된 내 글을 가져오고,
+    // 미로그인/API 실패 시에는 로컬 폴백 글(localStorage)로 대체한다.
+    listCommunityPosts({ offset: 0, limit: 50, author: 'me' })
+      .then(data => {
+        const items = Array.isArray(data) ? data : (data.items || [])
+        setPosts(items.map(mapApiPost))
+      })
+      .catch(() => setPosts(loadMyPosts()))
   }, [])
 
   return (
