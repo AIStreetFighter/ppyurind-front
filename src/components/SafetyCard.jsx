@@ -1,52 +1,90 @@
 import { useState } from 'react'
 
-// 어디서나 동일하게 쓰는 안전(상담 연결) 카드.
-// collapsible=true 면 기록 탭처럼 눌러서 펼치는 토글형, 아니면 항상 펼친 형태.
-// 전화는 tel: 로 휴대폰 전화앱 연결, 외부 기관은 새 탭 링크.
 export default function SafetyCard({ collapsible = false, nav, signal = '' }) {
   const [open, setOpen] = useState(!collapsible)
 
+  const pink = '#e88fa8'
+  const pinkBg = 'rgba(232,143,168,0.10)'
+  const pinkBorder = 'rgba(232,143,168,0.35)'
+  const rowStyle = {
+    display: 'flex', alignItems: 'center', gap: 14,
+    padding: '16px 18px', cursor: 'pointer',
+    borderBottom: `1px solid ${pinkBorder}`,
+    textDecoration: 'none',
+  }
+
   return (
-    <div className={`safety${collapsible ? ' safety--toggle' : ''}`}>
-      <i className="fa-solid fa-shield-heart safety__lead"></i>
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div
-          className="safety__head"
-          onClick={collapsible ? () => setOpen(o => !o) : undefined}
-          style={{ cursor: collapsible ? 'pointer' : 'default' }}
-        >
-          <h4>혼자 감당하기 버겁다면</h4>
-          {collapsible && <i className={`fa-solid fa-chevron-${open ? 'up' : 'down'} safety__chev`}></i>}
+    <div style={{
+      border: `1.5px solid ${pinkBorder}`,
+      borderRadius: 18,
+      background: 'var(--surface)',
+      overflow: 'hidden',
+    }}>
+      {/* 헤더 */}
+      <div
+        style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '18px 18px 14px', cursor: collapsible ? 'pointer' : 'default' }}
+        onClick={collapsible ? () => setOpen(o => !o) : undefined}
+      >
+        <div style={{ width: 40, height: 40, borderRadius: 12, background: pinkBg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+          <i className="fa-solid fa-shield-heart" style={{ color: pink, fontSize: 18 }}></i>
         </div>
-        {open && (
-          <div className="safety__body">
-            <p>24시간 · 비밀보장으로 연결돼요.</p>
-
-            {/* 긴급 전화 (풀너비 행, 양끝 전화 아이콘) */}
-            <a href="tel:1366" className="tel-btn">
-              <span><i className="fa-solid fa-phone"></i> 여성긴급전화 1366</span>
-              <i className="fa-solid fa-phone tel-btn__end"></i>
-            </a>
-            <a href="tel:109" className="tel-btn">
-              <span><i className="fa-solid fa-phone"></i> 자살예방상담 109</span>
-              <i className="fa-solid fa-phone tel-btn__end"></i>
-            </a>
-
-            {/* 쉼터 / 상담기관 (균등 2열) */}
-            <div className="safety__actions">
-              <button className="safety-btn"><i className="fa-solid fa-comments" style={{ marginRight: 5 }}></i>쉼터 연결</button>
-              <button className="safety-btn">상담기관 연결 <i className="fa-solid fa-arrow-up-right-from-square" style={{ fontSize: 10, marginLeft: 3 }}></i></button>
-            </div>
-
-            {/* 마음건강 자가점검 (풀너비 강조 버튼) */}
-            {nav && (
-              <button className="safety-checkup" onClick={() => nav('checkup', { signal })}>
-                <i className="fa-solid fa-clipboard-check" style={{ marginRight: 6 }}></i>마음건강 자가점검 해보기
-              </button>
-            )}
-          </div>
-        )}
+        <div style={{ flex: 1 }}>
+          <p style={{ margin: 0, fontSize: 16, fontWeight: 700, color: 'var(--ink)' }}>혼자 감당하기 버겁다면</p>
+          <p style={{ margin: '3px 0 0', fontSize: 12.5, color: 'var(--ink-muted)' }}>24시간 · 비밀보장으로 연결돼요.</p>
+        </div>
+        {collapsible && <i className={`fa-solid fa-chevron-${open ? 'up' : 'down'}`} style={{ color: 'var(--ink-muted)', fontSize: 13 }}></i>}
       </div>
+
+      {open && (
+        <>
+          {/* 전화 행 */}
+          <a href="tel:1366" style={{ ...rowStyle, borderTop: `1px solid ${pinkBorder}` }}>
+            <i className="fa-solid fa-phone" style={{ color: pink, fontSize: 15, width: 20, textAlign: 'center' }}></i>
+            <span style={{ flex: 1, fontSize: 15, fontWeight: 600, color: 'var(--ink)' }}>여성긴급전화 1366</span>
+            <i className="fa-solid fa-chevron-right" style={{ color: 'var(--ink-muted)', fontSize: 13 }}></i>
+          </a>
+          <a href="tel:109" style={{ ...rowStyle, borderBottom: 'none' }}>
+            <i className="fa-solid fa-phone" style={{ color: pink, fontSize: 15, width: 20, textAlign: 'center' }}></i>
+            <span style={{ flex: 1, fontSize: 15, fontWeight: 600, color: 'var(--ink)' }}>자살예방상담 109</span>
+            <i className="fa-solid fa-chevron-right" style={{ color: 'var(--ink-muted)', fontSize: 13 }}></i>
+          </a>
+
+          {/* 쉼터 / 상담기관 */}
+          <div style={{ display: 'flex', borderTop: `1px solid ${pinkBorder}` }}>
+            <button style={{
+              flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7,
+              padding: '15px 10px', background: 'transparent', border: 'none',
+              borderRight: `1px solid ${pinkBorder}`, cursor: 'pointer',
+              fontSize: 14, fontWeight: 600, color: pink, fontFamily: 'inherit',
+            }}>
+              <i className="fa-regular fa-comment-dots"></i>쉼터 연결
+            </button>
+            <a href="https://www.counselling.or.kr" target="_blank" rel="noreferrer" style={{
+              flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7,
+              padding: '15px 10px', background: 'transparent',
+              cursor: 'pointer', fontSize: 14, fontWeight: 600, color: pink,
+              textDecoration: 'none',
+            }}>
+              <i className="fa-regular fa-building"></i>상담기관 연결
+              <i className="fa-solid fa-arrow-up-right-from-square" style={{ fontSize: 10 }}></i>
+            </a>
+          </div>
+
+          {/* 마음건강 자기점검 */}
+          {nav && (
+            <div style={{ padding: '10px 12px 12px' }}>
+              <button onClick={() => nav('checkup', { signal })} style={{
+                width: '100%', padding: '15px', border: 'none', borderRadius: 12,
+                background: 'var(--brand)', color: '#fff', cursor: 'pointer',
+                fontSize: 15, fontWeight: 700, fontFamily: 'inherit',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+              }}>
+                <i className="fa-solid fa-clipboard-check"></i>마음건강 자기점검 해보기
+              </button>
+            </div>
+          )}
+        </>
+      )}
     </div>
   )
 }

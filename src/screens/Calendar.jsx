@@ -1,27 +1,26 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import ThemeToggle from '../components/ThemeToggle'
 import BottomNav from '../components/BottomNav'
-import { EVENTS, EVENT_TYPES, ymd } from '../data/events'
-// [API] 백엔드 연결 시 아래 import 활성화
-// import { listEvents, createEvent, updateEvent, deleteEvent } from '../api/ppyurindApi'
-//
-// [API] 월별 이벤트 로드 (현재: data/events.js 더미 사용)
-//   listEvents({ from: '2026-06-01', to: '2026-06-30' }).then(data => setEvents(data.items))
-//   이벤트 type: 'anniv' | 'birthday' | 'fight' | 'talk' | 'date'
-// [API] 이벤트 추가: createEvent({ date, type, title })
-// [API] 이벤트 수정: updateEvent(id, { date, type, title })
-// [API] 이벤트 삭제: deleteEvent(id)
+import { EVENT_TYPES, ymd } from '../data/events'
+import { listEvents, createEvent, deleteEvent } from '../api/ppyurindApi'
 
 const WEEK = ['일', '월', '화', '수', '목', '금', '토']
 
 export default function Calendar({ nav, isDark, toggleTheme }) {
-  const [view, setView] = useState(new Date(2026, 5, 1)) // 2026-06
-  const [selected, setSelected] = useState('2026-06-25')
+  const [view, setView] = useState(new Date())
+  const [selected, setSelected] = useState(ymd(new Date()))
   const [adding, setAdding] = useState(false)
-  const [events, setEvents] = useState(EVENTS) // 추가 가능하도록 로컬 상태로
+  const [events, setEvents] = useState([])
   const [newTitle, setNewTitle] = useState('')
   const [newDate, setNewDate] = useState('')
   const [newType, setNewType] = useState('anniv')
+
+  useEffect(() => {
+    listEvents().then(data => {
+      const arr = Array.isArray(data) ? data : (data.items || [])
+      setEvents(arr.map(e => ({ ...e, date: e.date || e.event_date, type: e.type || e.event_type })))
+    }).catch(() => {})
+  }, [])
 
   const year = view.getFullYear()
   const month = view.getMonth()
@@ -36,12 +35,22 @@ export default function Calendar({ nav, isDark, toggleTheme }) {
 
   const openAdd = () => { setNewTitle(''); setNewDate(selected || todayStr); setNewType('anniv'); setAdding(true) }
 
-  const submitEvent = () => {
+  const submitEvent = async () => {
     if (!newTitle.trim() || !newDate) return
-    setEvents(prev => [...prev, { date: newDate, type: newType, title: newTitle.trim() }])
+    try {
+      const created = await createEvent({ eventType: newType, eventDate: newDate, title: newTitle.trim() })
+      setEvents(prev => [...prev, { ...created, date: created.date || newDate, type: created.type || newType }])
+    } catch {
+      setEvents(prev => [...prev, { date: newDate, type: newType, title: newTitle.trim() }])
+    }
     setView(new Date(Number(newDate.slice(0, 4)), Number(newDate.slice(5, 7)) - 1, 1))
     setSelected(newDate)
     setAdding(false)
+  }
+
+  const removeEvent = async (e) => {
+    if (e.id) await deleteEvent(e.id).catch(() => {})
+    setEvents(prev => prev.filter(ev => ev !== e))
   }
 
   const shift = (delta) => { setView(new Date(year, month + delta, 1)); setSelected('') }
@@ -103,7 +112,8 @@ export default function Calendar({ nav, isDark, toggleTheme }) {
       </div>
       <div className="stack">
         {(selectedEvents.length ? selectedEvents : monthEvents).map((e, i) => {
-          const t = EVENT_TYPES[e.type]
+          const t = EVENT_TYPES[e.type] || EVENT_TYPES.anniv
+          const dday = Math.round((new Date(e.date) - new Date(todayStr)) / 86400000)
           return (
             <div key={i} className="card event-row" onClick={() => setSelected(e.date)}>
               <div className="event-emoji" style={{ background: `color-mix(in srgb, ${t.color} 18%, transparent)` }}>{t.emoji}</div>
@@ -111,7 +121,9 @@ export default function Calendar({ nav, isDark, toggleTheme }) {
                 <p className="row__title" style={{ marginBottom: 2 }}>{e.title}</p>
                 <p className="row__sub">{e.date.slice(5).replace('-', '월 ')}일 · {t.label}</p>
               </div>
-              {(e.type === 'anniv' || e.type === 'birthday') && <span className="badge badge--match">D-{Math.max(0, Math.round((new Date(e.date) - new Date(todayStr)) / 86400000))}</span>}
+              {dday >= 0 && <span className="badge badge--match">D-{dday}</span>}
+              <i className="fa-solid fa-trash" style={{ color: 'var(--ink-muted)', fontSize: 13, marginLeft: 8, cursor: 'pointer' }}
+                onClick={ev => { ev.stopPropagation(); removeEvent(e) }} />
             </div>
           )
         })}

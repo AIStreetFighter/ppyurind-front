@@ -3,7 +3,6 @@ import { login, register } from '../api/ppyurindApi'
 
 export default function EmailAuth({ nav }) {
   const [mode, setMode] = useState('login') // 'login' | 'register'
-  const [nickname, setNickname] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
@@ -18,7 +17,7 @@ export default function EmailAuth({ nav }) {
         await login({ email, password })
         nav('home')
       } else {
-        await register({ nickname, email, password })
+        await register({ nickname: '새싹', email, password })
         nav('onboarding')
       }
     } catch (err) {
@@ -49,21 +48,6 @@ export default function EmailAuth({ nav }) {
         </p>
 
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          {mode === 'register' && (
-            <div>
-              <label style={labelStyle}>닉네임</label>
-              <input
-                style={inputStyle}
-                type="text"
-                placeholder="쀼라인드에서 쓸 이름"
-                value={nickname}
-                onChange={e => setNickname(e.target.value)}
-                required
-                maxLength={20}
-              />
-            </div>
-          )}
-
           <div>
             <label style={labelStyle}>이메일</label>
             <input

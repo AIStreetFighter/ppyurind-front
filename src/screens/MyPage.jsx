@@ -2,18 +2,7 @@ import { useEffect, useState } from 'react'
 import BottomNav from '../components/BottomNav'
 import ThemeToggle from '../components/ThemeToggle'
 import PinPad from '../components/PinPad'
-// [API] 백엔드 연결 시 아래 import 활성화
-// import { logout, deleteMe, updateMe, getDex, addDex, deleteDex, saveCheckup, updateNotificationSettings } from '../api/ppyurindApi'
-//
-// [API] 도감 로드 (현재: DEX 더미 데이터 사용)
-//   useEffect(() => { getDex().then(data => setDex(data)) }, [])
-//   응답: { secret:[...], partner:[...], taboo:[...], cheat:[...], wish:[...] }
-//
-// [API] AI 톤 변경 (현재: 로컬 state만 변경)
-//   updateMe({ ai_tone: tone })
-//
-// [API] 알림 설정 토글 (현재: 로컬 state만 변경)
-//   updateNotificationSettings({ notify_empathy, notify_comment, notify_anniversary })
+import { logout, deleteMe, updateMe, getDex, addDex, deleteDex, updateNotificationSettings, getMe } from '../api/ppyurindApi'
 
 const DEX_STORAGE_KEY = 'ppyurind:dexItems'
 
@@ -53,6 +42,8 @@ export default function MyPage({ nav, isDark, toggleTheme, nickname }) {
   const [dexDraft, setDexDraft] = useState('')
   const [settings, setSettings] = useState(false)
   const [tone, setTone] = useState('부드럽게')
+  const [relationLabel, setRelationLabel] = useState('신혼 · 결혼 2년 차')
+  const [concernLabel, setConcernLabel] = useState('대화 단절 · 서운함')
   const [push, setPush] = useState({ empathy: true, comment: true, anniv: true })
   const [confirm, setConfirm] = useState(null) // 'logout' | 'withdraw'
   const [pinOpen, setPinOpen] = useState(false)
@@ -60,6 +51,33 @@ export default function MyPage({ nav, isDark, toggleTheme, nickname }) {
 
   const toggleDex = (k) => setOpen(prev => prev === k ? null : k)
   const targetDex = dexItems.find(d => d.key === addTarget)
+
+  useEffect(() => {
+    getMe().then(u => {
+      if (u.ai_tone) setTone(u.ai_tone)
+      if (u.push_empathy != null || u.push_comment != null || u.push_anniversary != null) {
+        setPush({ empathy: u.push_empathy ?? true, comment: u.push_comment ?? true, anniv: u.push_anniversary ?? true })
+      }
+      // 관계 상태 라벨
+      const rel = Array.isArray(u.relationship_status) ? u.relationship_status[0] : u.relationship_status
+      const years = u.relationship_years
+      let relStr = rel || ''
+      if (years != null) relStr += ` · ${years === 0 ? '1년 미만' : `결혼 ${years}년 차`}`
+      if (relStr) setRelationLabel(relStr)
+      // 고민 라벨
+      if (Array.isArray(u.main_concern_topics) && u.main_concern_topics.length > 0) {
+        setConcernLabel(u.main_concern_topics.slice(0, 3).join(' · '))
+      }
+    }).catch(() => {})
+    getDex().then(items => {
+      if (!Array.isArray(items) || items.length === 0) return
+      setDexItems(prev => prev.map(d => {
+        const apiItems = items.filter(i => i.category === d.key)
+        if (!apiItems.length) return d
+        return { ...d, body: apiItems.map(i => i.content) }
+      }))
+    }).catch(() => {})
+  }, [])
 
   useEffect(() => {
     localStorage.setItem(DEX_STORAGE_KEY, JSON.stringify(dexItems))
@@ -71,9 +89,10 @@ export default function MyPage({ nav, isDark, toggleTheme, nickname }) {
     setDexDraft('')
   }
 
-  const submitDexAdd = () => {
+  const submitDexAdd = async () => {
     const value = dexDraft.trim()
     if (!value || !addTarget) return
+    addDex({ category: addTarget, content: value }).catch(() => {})
     setDexItems(items => items.map(item => {
       if (item.key !== addTarget) return item
       return {
@@ -103,7 +122,7 @@ export default function MyPage({ nav, isDark, toggleTheme, nickname }) {
           </div>
           <div style={{ flex: 1 }}>
             <p className="row__title" style={{ fontSize: 17 }}>{nickname || '들풀'} <span style={{ fontSize: 12, color: 'var(--ink-muted)', fontWeight: 400 }}>#0421</span></p>
-            <p className="row__sub">신혼 · 결혼 2년 차 · 응답 톤: {tone}</p>
+            <p className="row__sub">{relationLabel} · 응답 톤: {tone}</p>
           </div>
           <i className="fa-solid fa-pen" style={{ color: 'var(--ink-muted)', fontSize: 14, cursor: 'pointer' }} onClick={() => setSettings(true)}></i>
         </div>
@@ -181,12 +200,12 @@ export default function MyPage({ nav, isDark, toggleTheme, nickname }) {
 
             <div className="section-label" style={{ marginTop: 0 }}><i className="fa-solid fa-sliders"></i>맞춤정보 설정</div>
             <p style={{ margin: '0 0 10px', fontSize: 12.5, color: 'var(--ink-muted)' }}>가입 시 입력한 정보를 언제든 수정할 수 있어요.</p>
-            <div className="setrow"><span>관계 상태</span><b>신혼 · 결혼 2년 차</b></div>
-            <div className="setrow"><span>주요 고민</span><b>대화 단절 · 서운함</b></div>
+            <div className="setrow"><span>관계 상태</span><b>{relationLabel}</b></div>
+            <div className="setrow"><span>주요 고민</span><b>{concernLabel}</b></div>
             <div style={{ margin: '4px 0 6px', fontSize: 13, color: 'var(--ink-soft)' }}>AI 응답 톤</div>
             <div className="chip-row" style={{ marginBottom: 6 }}>
               {['부드럽게', '현실적으로', '공감 중심', '해결책 중심'].map(v => (
-                <span key={v} className={`chip chip--sm${tone === v ? ' selected' : ''}`} onClick={() => setTone(v)}>{v}</span>
+                <span key={v} className={`chip chip--sm${tone === v ? ' selected' : ''}`} onClick={() => { setTone(v); updateMe({ ai_tone: v }).catch(() => {}) }}>{v}</span>
               ))}
             </div>
 
@@ -198,7 +217,11 @@ export default function MyPage({ nav, isDark, toggleTheme, nickname }) {
             ].map(p => (
               <div key={p.k} className="toggle-row" style={{ marginBottom: 9 }}>
                 <div style={{ fontSize: 14, color: 'var(--ink)' }}>{p.label}</div>
-                <div className={`switch${push[p.k] ? '' : ' off'}`} onClick={() => setPush(s => ({ ...s, [p.k]: !s[p.k] }))} />
+                <div className={`switch${push[p.k] ? '' : ' off'}`} onClick={() => {
+                  const next = { ...push, [p.k]: !push[p.k] }
+                  setPush(next)
+                  updateNotificationSettings({ notify_empathy: next.empathy, notify_comment: next.comment, notify_anniversary: next.anniv }).catch(() => {})
+                }} />
               </div>
             ))}
 
@@ -254,9 +277,12 @@ export default function MyPage({ nav, isDark, toggleTheme, nickname }) {
             </p>
             <div style={{ display: 'flex', gap: 10 }}>
               <button className="cta cta--ghost" style={{ flex: 1 }} onClick={() => setConfirm(null)}>취소</button>
-              {/* [API] 로그아웃: logout().then(() => nav('kakaoLogin')) */}
-              {/* [API] 탈퇴: deleteMe().then(() => { clearToken(); nav('kakaoLogin') }) */}
-              <button className="cta" style={{ flex: 1, background: confirm === 'withdraw' ? 'var(--like)' : 'var(--brand)' }} onClick={() => { setConfirm(null); setSettings(false); nav('kakaoLogin') }}>
+              <button className="cta" style={{ flex: 1, background: confirm === 'withdraw' ? 'var(--like)' : 'var(--brand)' }} onClick={async () => {
+                const action = confirm
+                setConfirm(null); setSettings(false)
+                if (action === 'withdraw') { await deleteMe().catch(() => {}); nav('kakaoLogin') }
+                else { await logout().catch(() => {}); nav('kakaoLogin') }
+              }}>
                 {confirm === 'withdraw' ? '탈퇴하기' : '로그아웃'}
               </button>
             </div>

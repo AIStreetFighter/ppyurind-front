@@ -2,9 +2,7 @@ import { useState } from 'react'
 import ThemeToggle from '../components/ThemeToggle'
 import BottomNav from '../components/BottomNav'
 import SafetyCard from '../components/SafetyCard'
-import { analyzeEmotion } from '../api/ppyurindApi'
-// [API] 저장·업로드 연결 시 아래 import 추가
-// import { createEmotion, uploadMedia, createCommunityPost } from '../api/ppyurindApi'
+import { analyzeEmotion, createEmotion, createCommunityPost } from '../api/ppyurindApi'
 
 export default function Record({ nav, isDark, toggleTheme }) {
   const [tab, setTab] = useState('텍스트')
@@ -21,9 +19,14 @@ export default function Record({ nav, isDark, toggleTheme }) {
     setError('')
     try {
       const result = await analyzeEmotion({ rawContent: text.trim() })
+      // 감정 저장
+      const saved = await createEmotion({ rawContent: text.trim(), isSecretExcluded: !share }).catch(() => null)
+      // 익명 공유
+      if (share && saved?.id) {
+        await createCommunityPost({ content: text.trim(), isAnonymous: true, sourceRecordId: saved.id }).catch(() => {})
+      }
       nav('analysisResult', { result, shared: share, rawContent: text.trim() })
-    } catch (e) {
-      // 백엔드 미연결 등 — 더미 결과 화면으로 폴백
+    } catch {
       setError('분석 서버에 연결하지 못했어요. 예시 결과를 보여드릴게요.')
       setTimeout(() => { setAnalyzing(false); nav('analysisResult', { rawContent: text.trim() }) }, 1200)
     }

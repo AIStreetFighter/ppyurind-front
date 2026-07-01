@@ -1,27 +1,9 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import BottomNav from '../components/BottomNav'
 import ThemeToggle from '../components/ThemeToggle'
 import NotifBell from '../components/NotifBell'
 import { nickFromId } from '../data/nicknames'
-// [API] 백엔드 연결 시 아래 import 활성화
-// import { listCommunityPosts, createCommunityPost, likePost, unlikePost, comfortPost, reportPost, muteAuthor } from '../api/ppyurindApi'
-//
-// [API] 게시글 목록 로드 (현재: ALL_POSTS 더미 사용)
-//   useEffect(() => {
-//     listCommunityPosts({ offset: 0, limit: 20 }).then(data => setPosts(data.items))
-//   }, [])
-//   응답 필드: id, title, content, ai_tags, anonymous_nickname, anonymous_avatar,
-//             empathy_count, comfort_count, comment_count, created_at
-//
-// [API] 공감/위로 토글 (현재: 로컬 liked/comforted 상태로 처리)
-//   likePost(id)  또는 unlikePost(id) → { empathy_count, comfort_count, liked, comforted }
-//   comfortPost(id) → 동일 응답
-//
-// [API] 신고 (현재: 로컬 toast만 표시)
-//   reportPost(id, reason)
-//
-// [API] 게시글 작성 (현재: 로컬 prepend)
-//   createCommunityPost({ content, isAnonymous: true })
+import { listCommunityPosts, empathyPost, comfortPost, reportPost, muteAuthor } from '../api/ppyurindApi'
 
 const AVATARS = ['cat_01_t', 'cat_02_t', 'cat_03_t', 'cat_04_t']
 const MY_POSTS_STORAGE_KEY = 'ppyurind:myCommunityPosts'
@@ -87,6 +69,22 @@ const FEED_ADS = [
   { emoji: '🍽️', title: '기념일 디너, 분위기 좋은 레스토랑', sub: '제휴 · 코스 메뉴 예약 할인' },
 ]
 
+function mapApiPost(p) {
+  return {
+    id: p.id,
+    avatar: AVATARS[(p.id || 0) % AVATARS.length],
+    nick: p.anonymous_nickname || nickFromId(p.id),
+    title: p.title || p.content?.slice(0, 22) || '',
+    tag: p.ai_tags ? `AI 태그: ${p.ai_tags}` : '',
+    body: p.content || '',
+    empathy: p.empathy_count || 0,
+    comfort: p.comfort_count || 0,
+    comments: p.comment_count || 0,
+    author: `user_${p.id}`,
+    daysAgo: p.created_at ? Math.round((Date.now() - new Date(p.created_at)) / 86400000) : 0,
+  }
+}
+
 export default function Community({ nav, isDark, toggleTheme, concerns = [] }) {
   const [filter, setFilter] = useState('전체')
   const [query, setQuery] = useState('')
@@ -97,6 +95,7 @@ export default function Community({ nav, isDark, toggleTheme, concerns = [] }) {
   const [toast, setToast] = useState('')
   const [reportFor, setReportFor] = useState(null)
   const [hiddenAuthors, setHiddenAuthors] = useState([])
+  const [apiPosts, setApiPosts] = useState(null) // null = 로딩 중, [] = 빈 결과
   const [userPosts] = useState(() => {
     try {
       return JSON.parse(localStorage.getItem(MY_POSTS_STORAGE_KEY) || '[]')
@@ -104,23 +103,33 @@ export default function Community({ nav, isDark, toggleTheme, concerns = [] }) {
       return []
     }
   })
-  const [count, setCount] = useState(5) // 처음 5개, '더보기'로 확장
-  const [sort, setSort] = useState('latest') // 'latest' | 'empathy'
+  const [count, setCount] = useState(5)
+  const [sort, setSort] = useState('latest')
+
+  useEffect(() => {
+    listCommunityPosts({ offset: 0, limit: 50 }).then(data => {
+      const items = Array.isArray(data) ? data : (data.items || [])
+      setApiPosts(items.map(mapApiPost))
+    }).catch(() => setApiPosts(null))
+  }, [])
 
   const flash = (msg) => { setToast(msg); setTimeout(() => setToast(''), 1900) }
 
   const submitReport = (reason) => {
+    reportPost(reportFor?.id, reason).catch(() => {})
     setReportFor(null)
     flash(`신고가 접수되었습니다 (${reason}). 누적 3회 시 자동 블라인드 처리돼요.`)
   }
 
-  const hideAuthor = (author) => {
+  const hideAuthor = (author, postId) => {
+    muteAuthor(postId).catch(() => {})
     setHiddenAuthors(a => [...a, author])
     setMenuOpen(null)
     flash('이 회원의 글을 모두 숨겼어요.')
   }
 
-  const base = [...userPosts, ...ALL_POSTS]
+  const seedPosts = apiPosts !== null ? apiPosts : ALL_POSTS
+  const base = [...userPosts, ...seedPosts]
     .filter(p => !hiddenAuthors.includes(p.author))
     .filter(p => !query.trim() || p.nick.includes(query) || p.title.includes(query) || p.body.includes(query) || p.tag.includes(query))
 
@@ -233,17 +242,17 @@ export default function Community({ nav, isDark, toggleTheme, concerns = [] }) {
                       <div className="kebab-menu">
                         <div className="kebab-item" onClick={() => { setMenuOpen(null); flash('1:1 대화는 곧 열려요.') }}><i className="fa-solid fa-comment"></i> 대화하기</div>
                         <div className="kebab-item danger" onClick={() => { setMenuOpen(null); setReportFor(p) }}><i className="fa-solid fa-flag"></i> 게시물 / 회원 신고하기</div>
-                        <div className="kebab-item danger" onClick={() => hideAuthor(p.author)}><i className="fa-solid fa-eye-slash"></i> 이 회원의 글 모두 숨기기</div>
+                        <div className="kebab-item danger" onClick={() => hideAuthor(p.author, p.id)}><i className="fa-solid fa-eye-slash"></i> 이 회원의 글 모두 숨기기</div>
                       </div>
                     )}
                   </div>
                 </div>
                 <p className="quote">"{p.body.length > 64 ? p.body.slice(0, 64) + '…' : p.body}" <span className="link-more" onClick={(e) => { e.stopPropagation(); nav('post', { post: p }) }}>더보기</span></p>
                 <div className="reactions" onClick={e => e.stopPropagation()}>
-                  <span className={isLiked ? 'like' : ''} style={{ cursor: 'pointer' }} onClick={() => setLiked(s => ({ ...s, [p.id]: !s[p.id] }))}>
+                  <span className={isLiked ? 'like' : ''} style={{ cursor: 'pointer' }} onClick={() => { empathyPost(p.id).catch(() => {}); setLiked(s => ({ ...s, [p.id]: !s[p.id] })) }}>
                     <i className={`${isLiked ? 'fa-solid' : 'fa-regular'} fa-heart`}></i> 공감 {p.empathy + (isLiked ? 1 : 0)}
                   </span>
-                  <span style={{ cursor: 'pointer', color: isComf ? 'var(--warm-text)' : '' }} onClick={() => setComforted(s => ({ ...s, [p.id]: !s[p.id] }))}>
+                  <span style={{ cursor: 'pointer', color: isComf ? 'var(--warm-text)' : '' }} onClick={() => { comfortPost(p.id).catch(() => {}); setComforted(s => ({ ...s, [p.id]: !s[p.id] })) }}>
                     <i className={`${isComf ? 'fa-solid' : 'fa-regular'} fa-hand`}></i> 위로 {p.comfort + (isComf ? 1 : 0)}
                   </span>
                   <span style={{ cursor: 'pointer' }} onClick={() => nav('post', { post: p })}><i className="fa-regular fa-comment"></i> 댓글 {p.comments}</span>

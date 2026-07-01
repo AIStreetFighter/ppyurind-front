@@ -48,7 +48,7 @@ export const deleteMe = ()        => api.delete('/users/me')
 // 온보딩 (camelCase body) — /auth/onboarding
 // payload: { nickname, birthDate, gender, relationshipStatus[], relationshipYears,
 //   relationshipStartDate, anniversaryDate, childrenCount, mainConcernTopics[], concernEtc, aiTone }
-export const saveOnboarding = (payload) => api.post('/auth/onboarding', payload)
+export const saveOnboarding = (payload) => api.post('/users/me/onboarding', payload)
 
 // 알림 설정 — PATCH /users/me/notification-settings
 // payload: { notify_empathy, notify_comment, notify_anniversary }
@@ -59,10 +59,9 @@ export const updateNotificationSettings = (payload) =>
 export const setPin = (pin) => api.put('/users/me/pin', { pin })
 
 // ── 4. 감정 기록 ──────────────────────────────
-// 분석만 — 응답: { primary_emotion, secondary_emotion, conflict_cause, hidden_need,
-//   new_self_insight, sentiment_score, gaslight_score, risk_level, recommended_action, ... }
-export const analyzeEmotion = ({ rawContent, inputType = 'text' }) =>
-  api.post('/emotions/analyze', { raw_content: rawContent, input_type: inputType })
+// 분석만 (저장 없음) — POST /emotions/analyze
+export const analyzeEmotion = ({ rawContent }) =>
+  api.post('/emotions/analyze', { raw_content: rawContent })
 
 // 저장
 export const createEmotion = ({ inputType = 'text', rawContent, mediaUrl, isSecretExcluded = false }) =>

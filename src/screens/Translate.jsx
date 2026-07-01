@@ -1,6 +1,9 @@
 import { useState } from 'react'
 import BottomNav from '../components/BottomNav'
 import ThemeToggle from '../components/ThemeToggle'
+import { convertText } from '../api/ppyurindApi'
+
+const TONE_TO_MODE = { '부드럽게': 'soft', '솔직하게': 'honest', '카톡용 짧게': 'short', '요청형': 'request' }
 
 const SITUATIONS = [
   { key: '사과하기',    emoji: '🙏', label: '사과하기' },
@@ -145,19 +148,34 @@ export default function Translate({ nav, isDark, toggleTheme, initialText = '' }
   const [copied,      setCopied]      = useState(false)
   const [copiedPhrase, setCopiedPhrase] = useState(null)
   const [variant,     setVariant]     = useState(0)
+  const [converting,  setConverting]  = useState(false)
 
-  const handleConvert = () => {
+  const handleConvert = async () => {
     if (!inputText.trim()) return
     setVariant(0)
-    setConverted(mockConvert(inputText, tone, 0))
+    setConverting(true)
+    try {
+      const res = await convertText({ originalText: inputText.trim(), filterMode: TONE_TO_MODE[tone] || 'soft' })
+      setConverted(res.converted_text || res.convertedText || mockConvert(inputText, tone, 0))
+    } catch {
+      setConverted(mockConvert(inputText, tone, 0))
+    }
+    setConverting(false)
     setShowResult(true)
     setCopied(false)
   }
 
-  const handleRegenerate = () => {
+  const handleRegenerate = async () => {
     const next = variant + 1
     setVariant(next)
-    setConverted(mockConvert(inputText, tone, next))
+    setConverting(true)
+    try {
+      const res = await convertText({ originalText: inputText.trim(), filterMode: TONE_TO_MODE[tone] || 'soft' })
+      setConverted(res.converted_text || res.convertedText || mockConvert(inputText, tone, next))
+    } catch {
+      setConverted(mockConvert(inputText, tone, next))
+    }
+    setConverting(false)
     setCopied(false)
   }
 
@@ -249,10 +267,10 @@ export default function Translate({ nav, isDark, toggleTheme, initialText = '' }
 
       <button
         className="cta"
-        style={{ marginTop: 16, opacity: inputText.trim() ? 1 : 0.45 }}
+        style={{ marginTop: 16, opacity: (inputText.trim() && !converting) ? 1 : 0.45 }}
         onClick={handleConvert}
       >
-        변환하기
+        {converting ? '변환 중…' : '변환하기'}
       </button>
 
       {/* 변환 결과 */}
@@ -275,8 +293,8 @@ export default function Translate({ nav, isDark, toggleTheme, initialText = '' }
             />
           </div>
           <div style={{ display: 'flex', gap: 10 }}>
-            <button className="cta cta--ghost" style={{ flex: 1 }} onClick={handleRegenerate}>
-              <i className="fa-solid fa-rotate" style={{ marginRight: 6 }}></i>다시 변환
+            <button className="cta cta--ghost" style={{ flex: 1, opacity: converting ? 0.5 : 1 }} onClick={handleRegenerate} disabled={converting}>
+              <i className="fa-solid fa-rotate" style={{ marginRight: 6 }}></i>{converting ? '변환 중…' : '다시 변환'}
             </button>
             <button className="cta" style={{ flex: 1.4 }} onClick={handleCopy}>
               <i className="fa-regular fa-copy" style={{ marginRight: 6 }}></i>복사하기
