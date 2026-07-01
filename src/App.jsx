@@ -18,9 +18,11 @@ import MyPage from "./screens/MyPage";
 import MyCommunityPosts from "./screens/MyCommunityPosts";
 import NotFound from "./screens/NotFound";
 import Chat from "./screens/Chat";
+import EmailAuth from "./screens/EmailAuth";
 
 const SCREEN_PATHS = {
   kakaoLogin: "/",
+  emailAuth: "/login/email",
   onboarding: "/onboarding",
   home: "/home",
   record: "/record",
@@ -70,6 +72,7 @@ function AppContent() {
 
   const screens = {
     kakaoLogin: <KakaoLogin {...props} />,
+    emailAuth: <EmailAuth nav={nav} />,
     onboarding: <Onboarding {...props} />,
     home: <Home {...props} />,
     record: <Record {...props} />,

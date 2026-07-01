@@ -119,7 +119,7 @@ export default function KakaoLogin({ nav, isDark, toggleTheme }) {
         </button>
 
         {/* 이메일 */}
-        <button onClick={() => nav('onboarding')} style={{
+        <button onClick={() => nav('emailAuth')} style={{
           width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
           background: 'transparent', border: '1px solid var(--surface-line)', borderRadius: 15, padding: '16px', cursor: 'pointer',
           fontFamily: 'Pretendard, sans-serif', fontSize: 16, fontWeight: 600, color: 'var(--ink-soft)',
