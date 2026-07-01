@@ -1,14 +1,5 @@
 import ThemeToggle from '../components/ThemeToggle'
-// [API] OAuth 연결 시 아래 import 활성화
-// import { getOAuthUrl, handleOAuthSuccess } from '../api/ppyurindApi'
-// [API] /auth/success 콜백 처리 예시:
-//   useEffect(() => {
-//     const params = new URLSearchParams(window.location.search)
-//     if (params.get('token')) {
-//       const { isNew } = handleOAuthSuccess(params)
-//       nav(isNew ? 'onboarding' : 'home')
-//     }
-//   }, [])
+import { getOAuthUrl } from '../api/ppyurindApi'
 
 export default function KakaoLogin({ nav, isDark, toggleTheme }) {
   return (
@@ -74,8 +65,7 @@ export default function KakaoLogin({ nav, isDark, toggleTheme }) {
       {/* 하단 버튼 */}
       <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 11, marginTop: 32 }}>
         {/* 카카오 */}
-        {/* [API] onClick={() => window.location.href = getOAuthUrl('kakao')} */}
-        <button onClick={() => nav('onboarding')} style={{
+        <button onClick={() => window.location.href = getOAuthUrl('kakao')} style={{
           width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
           background: '#FEE500', border: 'none', borderRadius: 15, padding: '17px', cursor: 'pointer',
           fontFamily: 'Pretendard, sans-serif', fontSize: 16, fontWeight: 600, color: 'rgba(0,0,0,0.85)',
@@ -88,8 +78,7 @@ export default function KakaoLogin({ nav, isDark, toggleTheme }) {
         </button>
 
         {/* 네이버 */}
-        {/* [API] onClick={() => window.location.href = getOAuthUrl('naver')} */}
-        <button onClick={() => nav('onboarding')} style={{
+        <button onClick={() => window.location.href = getOAuthUrl('naver')} style={{
           width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
           background: '#03C75A', border: 'none', borderRadius: 15, padding: '17px', cursor: 'pointer',
           fontFamily: 'Pretendard, sans-serif', fontSize: 16, fontWeight: 600, color: '#fff',
@@ -102,8 +91,7 @@ export default function KakaoLogin({ nav, isDark, toggleTheme }) {
         </button>
 
         {/* 구글 */}
-        {/* [API] onClick={() => window.location.href = getOAuthUrl('google')} */}
-        <button onClick={() => nav('onboarding')} style={{
+        <button onClick={() => window.location.href = getOAuthUrl('google')} style={{
           width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
           background: '#fff', border: '1px solid #DADCE0', borderRadius: 15, padding: '16px', cursor: 'pointer',
           fontFamily: 'Pretendard, sans-serif', fontSize: 16, fontWeight: 600, color: 'rgba(0,0,0,0.75)',

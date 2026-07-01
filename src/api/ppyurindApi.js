@@ -12,10 +12,10 @@ export const checkHealthDb  = ()  => api.get('/health/db')
 export const checkHealthAi  = ()  => api.get('/health/ai')
 
 // ── 2. 인증 / OAuth ───────────────────────────
-// 🆕 미구현 (백엔드에 OAuth 라우트 없음 — 현재 이메일 로그인만 동작)
 // 소셜 로그인: 버튼 클릭 시 window.location.href = getOAuthUrl('kakao') 형태로 사용
+// 백엔드 신버전 경로: /auth/oauth/{provider}/login
 export const getOAuthUrl = (provider) =>
-  `${import.meta.env.VITE_API_BASE_URL ?? '/api/v1'}/auth/${provider}/login`
+  `${import.meta.env.VITE_API_BASE_URL ?? '/api/v1'}/auth/oauth/${provider}/login`
 
 // OAuth 콜백 후 /auth/success?token=...&isNew=... 에서 토큰 추출 (🆕 미구현)
 export function handleOAuthSuccess(searchParams) {

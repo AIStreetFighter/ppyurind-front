@@ -19,10 +19,12 @@ import MyCommunityPosts from "./screens/MyCommunityPosts";
 import NotFound from "./screens/NotFound";
 import Chat from "./screens/Chat";
 import EmailAuth from "./screens/EmailAuth";
+import OAuthCallback from "./screens/OAuthCallback";
 
 const SCREEN_PATHS = {
   kakaoLogin: "/",
   emailAuth: "/login/email",
+  oauthCallback: "/auth/success",
   onboarding: "/onboarding",
   home: "/home",
   record: "/record",
@@ -73,6 +75,7 @@ function AppContent() {
   const screens = {
     kakaoLogin: <KakaoLogin {...props} />,
     emailAuth: <EmailAuth nav={nav} />,
+    oauthCallback: <OAuthCallback nav={nav} />,
     onboarding: <Onboarding {...props} />,
     home: <Home {...props} />,
     record: <Record {...props} />,
