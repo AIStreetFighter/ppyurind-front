@@ -33,7 +33,9 @@ export default function Onboarding({ nav, isDark, toggleTheme, onNicknameSave, o
   const yearLabel = isDating ? '연애 연차' : '결혼 연차'
   const yearOptions = isDating
     ? ['1년 미만', '1년 차', '2~3년', '3년 이상', '선택안함']
-    : ['1년 미만', '1~2년', '3~5년', '6~10년', '11~20년', '20년 이상', '선택안함']
+    : relation === '신혼'
+      ? ['1년 미만', '1~2년', '2~3년', '3~5년', '선택안함']
+      : ['1년 미만', '1~2년', '3~5년', '6~10년', '11~20년', '20년 이상', '선택안함']
 
   const CONCERN_OPTIONS = {
     '연애':    ['대화 단절', '서운함', '성격·가치관 차이', '스킨십·친밀감', '경제·소비 갈등', '신뢰 문제', '미래 계획', '양가 가족 문제', '기타'],

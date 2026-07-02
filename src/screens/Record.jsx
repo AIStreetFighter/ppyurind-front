@@ -115,9 +115,17 @@ export default function Record({ nav, isDark, toggleTheme }) {
     try {
       result = await analyzeEmotion({ rawContent: trimmed, inputType })
       if (result?.id) saveLastEmotion(result.id, trimmed)
-    } catch {
-      setError('분석 서버에 연결하지 못했어요. 예시 결과를 보여드릴게요.')
-      setTimeout(() => { setAnalyzing(false); nav('analysisResult', { rawContent: trimmed }) }, 1200)
+    } catch (err) {
+      const status = err?.status
+      const msg = status === 401
+        ? '로그인이 필요해요. 다시 로그인해주세요.'
+        : status === 422
+          ? '입력 형식 오류예요. 내용을 확인해주세요.'
+          : status >= 500
+            ? `서버 오류가 발생했어요 (${status}). 잠시 후 다시 시도해주세요.`
+            : '분석 서버에 연결하지 못했어요. 예시 결과를 보여드릴게요.'
+      setError(msg)
+      setTimeout(() => { setAnalyzing(false); nav('analysisResult', { rawContent: trimmed }) }, 1800)
       return
     }
 
