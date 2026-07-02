@@ -57,6 +57,7 @@ export default function MyPage({ nav, isDark, toggleTheme, nickname }) {
   const [withdrawStep, setWithdrawStep] = useState(1) // 1: 사유 선택, 2: 최종 확인
   const [withdrawReason, setWithdrawReason] = useState('')
   const WITHDRAW_REASONS = ['서비스가 필요 없어졌어요', '사용하기 불편해요', '개인정보가 걱정돼요', '다른 서비스를 이용할게요', '기타']
+  const [editingKey, setEditingKey] = useState(null) // 편집모드 중인 도감 key
   const [pinOpen, setPinOpen] = useState(false)
   const [pinDone, setPinDone] = useState(() => isLockEnabled())
   const [toast, setToast] = useState('')
@@ -232,12 +233,29 @@ export default function MyPage({ nav, isDark, toggleTheme, nickname }) {
                 <div className="acc-body">
                   {d.body.map((line, j) => (
                     <div key={j} className="acc-line-row" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <p className="acc-line-item" style={{ flex: 1, margin: '5px 0' }}>· {line.content}</p>
-                      <i className="fa-solid fa-pen" style={{ fontSize: 12, color: 'var(--ink-muted)', cursor: 'pointer', padding: 4 }} onClick={() => openDexEdit(d.key, j)}></i>
-                      <i className="fa-solid fa-xmark" style={{ fontSize: 15, color: 'var(--ink-muted)', cursor: 'pointer', padding: 4 }} onClick={() => deleteDexItem(d.key, j)}></i>
+                      <p
+                        className="acc-line-item"
+                        style={{ flex: 1, margin: '5px 0', cursor: editingKey === d.key ? 'pointer' : 'default' }}
+                        onClick={() => editingKey === d.key && openDexEdit(d.key, j)}
+                      >· {line.content}</p>
+                      {editingKey === d.key && (
+                        <i className="fa-solid fa-xmark" style={{ fontSize: 15, color: 'var(--ink-muted)', cursor: 'pointer', padding: 4 }} onClick={() => deleteDexItem(d.key, j)}></i>
+                      )}
                     </div>
                   ))}
-                  <button className="acc-add" onClick={() => openDexAdd(d.key)}><i className="fa-solid fa-plus"></i> 추가하기</button>
+                  <div style={{ display: 'flex', gap: 8, marginTop: 6 }}>
+                    {editingKey === d.key ? (
+                      <>
+                        <button className="acc-add" onClick={() => openDexAdd(d.key)}><i className="fa-solid fa-plus"></i> 추가하기</button>
+                        <button className="acc-add" style={{ marginLeft: 'auto' }} onClick={() => setEditingKey(null)}>완료</button>
+                      </>
+                    ) : (
+                      <>
+                        <button className="acc-add" onClick={() => openDexAdd(d.key)}><i className="fa-solid fa-plus"></i> 추가하기</button>
+                        <button className="acc-add" style={{ marginLeft: 'auto' }} onClick={() => setEditingKey(d.key)}>편집</button>
+                      </>
+                    )}
+                  </div>
                 </div>
               )}
             </div>

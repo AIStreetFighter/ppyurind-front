@@ -226,6 +226,7 @@ body {
 .page-sub { margin: 0; font-size: 15px; line-height: 1.6; color: var(--ink-soft); }
 .header-art { position: absolute; top: -8px; right: -6px; width: 128px; height: 124px; }
 .header-art img { width: 100%; height: 100%; object-fit: contain; object-position: right bottom; display: block; filter: drop-shadow(0 6px 14px rgba(0,0,0,0.25)); }
+.phone.is-light .header-art img { filter: drop-shadow(0 4px 10px rgba(100,80,160,0.15)); }
 
 /* Section label */
 .section-label {
