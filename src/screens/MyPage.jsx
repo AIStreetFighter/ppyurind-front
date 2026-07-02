@@ -200,7 +200,7 @@ export default function MyPage({ nav, isDark, toggleTheme, nickname }) {
       {toast && <div className="toast">{toast}</div>}
       <div className="phone-body">
         <div className="topbar">
-          <p className="eyebrow">마이</p>
+          <p className="eyebrow">마이페이지</p>
           <div className="topbar__icons">
             <ThemeToggle isDark={isDark} toggleTheme={toggleTheme} />
             <i className="fa-solid fa-gear" style={{ cursor: 'pointer' }} onClick={() => setSettings(true)}></i>

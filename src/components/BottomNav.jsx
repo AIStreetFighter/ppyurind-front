@@ -3,7 +3,7 @@ const tabs = [
   { label: '분석',    icon: 'fa-solid fa-chart-pie',    screen: 'analysis'  },
   { label: '홈',      icon: 'fa-solid fa-house',         screen: 'home'      },
   { label: '커뮤니티', icon: 'fa-solid fa-comment-dots', screen: 'community' },
-  { label: '마이',    icon: 'fa-regular fa-user',        screen: 'mypage'    },
+  { label: 'MY',     icon: 'fa-regular fa-user',        screen: 'mypage'    },
 ]
 
 export default function BottomNav({ active, nav }) {
