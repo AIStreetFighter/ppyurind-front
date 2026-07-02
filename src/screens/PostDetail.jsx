@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { getCommunityPost, empathyPost, comfortPost, listComments, createComment, createReply, likeComment, reportPost, muteAuthor } from '../api/ppyurindApi'
 import { avatarSrc } from '../data/nicknames'
+import { getReaction, setReaction, setCommentCount } from '../utils/reactions'
 
 // 로컬 저장 글(id가 'u'로 시작)인지 판별
 const isLocalPost = (id) => typeof id === 'string' && id.startsWith('u')
@@ -73,8 +74,9 @@ function mapComment(c) {
 
 export default function PostDetail({ nav, post }) {
   const [detail, setDetail]   = useState(post)
-  const [liked, setLiked]     = useState(false)
-  const [comforted, setComforted] = useState(false)
+  // 피드에서 누른 공감/위로 상태를 localStorage에서 이어받음 → 상세 진입 시 아이콘 유지
+  const [liked, setLiked]     = useState(() => getReaction(post?.id).liked)
+  const [comforted, setComforted] = useState(() => getReaction(post?.id).comforted)
   const [menuOpen, setMenuOpen] = useState(false)
   const [draft, setDraft]     = useState('')
   const [replyTo, setReplyTo] = useState(null)
@@ -108,6 +110,17 @@ export default function PostDetail({ nav, post }) {
       .catch(() => { setCommentsLoaded(true) })
   }, [post?.id])
 
+  // 삭제 제외 댓글+대댓 수를 캐시 → 피드가 재사용해 "댓글 0" 불일치 제거
+  useEffect(() => {
+    if (!commentsLoaded || !post?.id) return
+    const n = comments.reduce((acc, c) => {
+      const top = (c.deleted || deletedCommentIds.has(String(c.id))) ? 0 : 1
+      const reps = (c.replies || []).filter(r => !(r.deleted || deletedCommentIds.has(String(r.id)))).length
+      return acc + top + reps
+    }, 0)
+    setCommentCount(post.id, n)
+  }, [commentsLoaded, comments, deletedCommentIds, post?.id])
+
   if (!post) {
     return (
       <div className="phone-body phone-body--flat">
@@ -118,17 +131,17 @@ export default function PostDetail({ nav, post }) {
   }
 
   const handleEmpathy = () => {
-    empathyPost(post.id).then(d => {
-      if (d?.liked != null) setLiked(d.liked)
-    }).catch(() => {})
-    setLiked(v => !v)
+    empathyPost(post.id).catch(() => {})
+    const next = !liked
+    setReaction(post.id, { liked: next })   // 피드와 공유되는 단일 소스에 저장
+    setLiked(next)
   }
 
   const handleComfort = () => {
-    comfortPost(post.id).then(d => {
-      if (d?.comforted != null) setComforted(d.comforted)
-    }).catch(() => {})
-    setComforted(v => !v)
+    comfortPost(post.id).catch(() => {})
+    const next = !comforted
+    setReaction(post.id, { comforted: next })
+    setComforted(next)
   }
 
   const toggleLike = (cid, rid) => {
@@ -219,6 +232,12 @@ export default function PostDetail({ nav, post }) {
   const d = detail || post
   const empathyCount = (d.empathy_count ?? d.empathy ?? 0) + (liked ? 1 : 0)
   const comfortCount = (d.comfort_count ?? d.comfort ?? 0) + (comforted ? 1 : 0)
+  // 삭제 제외 댓글+대댓 수 (피드 캐시와 동일 공식)
+  const visibleCommentCount = comments.reduce((acc, c) => {
+    const top = isDeleted(c) ? 0 : 1
+    const reps = (c.replies || []).filter(r => !isDeleted(r)).length
+    return acc + top + reps
+  }, 0)
 
   return (
     <div className="pd" onClick={() => commentMenuOpen && setCommentMenuOpen(null)}>
@@ -277,7 +296,7 @@ export default function PostDetail({ nav, post }) {
           <span style={{ color: comforted ? 'var(--warm-text)' : '' }} onClick={handleComfort}>
             <i className={`${comforted ? 'fa-solid' : 'fa-regular'} fa-hand`}></i> 위로 {comfortCount}
           </span>
-          <span><i className="fa-regular fa-comment"></i> 댓글 {commentsLoaded ? comments.length : (d.comment_count || d.comments || 0)}</span>
+          <span><i className="fa-regular fa-comment"></i> 댓글 {commentsLoaded ? visibleCommentCount : (d.comment_count || d.comments || 0)}</span>
         </div>
 
         <div className="pd-comments">

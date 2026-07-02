@@ -4,6 +4,7 @@ import ThemeToggle from '../components/ThemeToggle'
 import NotifBell from '../components/NotifBell'
 import { nickFromId, avatarSrc } from '../data/nicknames'
 import { BANNER_DARK, BANNER_LIGHT, CAT_SHARE } from '../data/images'
+import { likedMap, comfortedMap, setReaction, getCommentCount } from '../utils/reactions'
 import { listCommunityPosts, empathyPost, comfortPost, reportPost, muteAuthor, deleteCommunityPost } from '../api/ppyurindApi'
 
 const MY_POSTS_STORAGE_KEY = 'ppyurind:myCommunityPosts'
@@ -87,8 +88,9 @@ export default function Community({ nav, isDark, toggleTheme, concerns = [] }) {
   const [filter, setFilter] = useState('전체')
   const [query, setQuery] = useState('')
   const [showSearch, setShowSearch] = useState(false)
-  const [liked, setLiked] = useState({})
-  const [comforted, setComforted] = useState({})
+  // 공감/위로 상태는 localStorage에서 로드 → 뒤로가기/리마운트해도 유지
+  const [liked, setLiked] = useState(() => likedMap())
+  const [comforted, setComforted] = useState(() => comfortedMap())
   const [menuOpen, setMenuOpen] = useState(null)
   const [toast, setToast] = useState('')
   const [reportFor, setReportFor] = useState(null)
@@ -114,26 +116,31 @@ export default function Community({ nav, isDark, toggleTheme, concerns = [] }) {
 
   const flash = (msg) => { setToast(msg); setTimeout(() => setToast(''), 1900) }
 
-  // 공감/위로 클릭 시 post 객체의 count를 직접 갱신 → 상세 화면에 넘길 때 최신값 유지
-  const updatePostCount = (id, field, delta) => {
-    setApiPosts(prev => prev?.map(p => p.id === id ? { ...p, [field]: Math.max(0, (p[field] || 0) + delta) } : p))
-    setUserPosts(prev => prev.map(p => p.id === id ? { ...p, [field]: Math.max(0, (p[field] || 0) + delta) } : p))
-  }
-
+  // 공감/위로: 원본 카운트는 건드리지 않고 localStorage 반응 상태만 토글.
+  // 표시 카운트는 렌더 시 "원본 + (liked?1:0)"으로 계산 → 이중 카운트/초기화 없음.
   const handleEmpathy = (p, e) => {
     e.stopPropagation()
     empathyPost(p.id).catch(() => {})
     const wasLiked = !!liked[p.id]
+    setReaction(p.id, { liked: !wasLiked })
     setLiked(s => ({ ...s, [p.id]: !wasLiked }))
-    updatePostCount(p.id, 'empathy', wasLiked ? -1 : 1)
   }
 
   const handleComfort = (p, e) => {
     e.stopPropagation()
     comfortPost(p.id).catch(() => {})
     const wasComforted = !!comforted[p.id]
+    setReaction(p.id, { comforted: !wasComforted })
     setComforted(s => ({ ...s, [p.id]: !wasComforted }))
-    updatePostCount(p.id, 'comfort', wasComforted ? -1 : 1)
+  }
+
+  // 표시용 카운트 (원본 불변 + 반응 상태 반영)
+  const empathyOf = (p) => (p.empathy || 0) + (liked[p.id] ? 1 : 0)
+  const comfortOf = (p) => (p.comfort || 0) + (comforted[p.id] ? 1 : 0)
+  // 댓글 수: 상세에서 계산해 캐시한 실제 수가 있으면 그걸, 없으면 원본 comment_count
+  const commentsOf = (p) => {
+    const cached = getCommentCount(p.id)
+    return cached != null ? cached : (p.comments || 0)
   }
 
   const submitReport = (reason) => {
@@ -318,12 +325,12 @@ export default function Community({ nav, isDark, toggleTheme, concerns = [] }) {
                 <p className="quote">{p.body.length > 64 ? p.body.slice(0, 64) + '…' : p.body} <span className="link-more" onClick={(e) => { e.stopPropagation(); nav('post', { post: p }) }}>더보기</span></p>
                 <div className="reactions" onClick={e => e.stopPropagation()}>
                   <span className={isLiked ? 'like' : ''} style={{ cursor: 'pointer' }} onClick={e => handleEmpathy(p, e)}>
-                    <i className={`${isLiked ? 'fa-solid' : 'fa-regular'} fa-heart`}></i> 공감 {p.empathy}
+                    <i className={`${isLiked ? 'fa-solid' : 'fa-regular'} fa-heart`}></i> 공감 {empathyOf(p)}
                   </span>
                   <span style={{ cursor: 'pointer', color: isComf ? 'var(--warm-text)' : '' }} onClick={e => handleComfort(p, e)}>
-                    <i className={`${isComf ? 'fa-solid' : 'fa-regular'} fa-hand`}></i> 위로 {p.comfort}
+                    <i className={`${isComf ? 'fa-solid' : 'fa-regular'} fa-hand`}></i> 위로 {comfortOf(p)}
                   </span>
-                  <span style={{ cursor: 'pointer' }} onClick={() => nav('post', { post: p })}><i className="fa-regular fa-comment"></i> 댓글 {p.comments}</span>
+                  <span style={{ cursor: 'pointer' }} onClick={() => nav('post', { post: p })}><i className="fa-regular fa-comment"></i> 댓글 {commentsOf(p)}</span>
                 </div>
               </div>
             )
