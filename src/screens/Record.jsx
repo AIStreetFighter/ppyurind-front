@@ -5,6 +5,32 @@ import SafetyCard from '../components/SafetyCard'
 import { analyzeEmotion, createCommunityPost, getSpeechToken, uploadOcrImage } from '../api/ppyurindApi'
 import { mapCommunityPostToLocal, saveMyCommunityPost } from '../utils/myCommunityPosts'
 
+const LAST_EMOTION_KEY = 'ppyurind:lastEmotion'
+
+function jaccardSimilarity(a, b) {
+  const setA = new Set(a.split(''))
+  const setB = new Set(b.split(''))
+  const intersection = [...setA].filter(c => setB.has(c)).length
+  const union = new Set([...setA, ...setB]).size
+  return union === 0 ? 1 : intersection / union
+}
+
+function getLastEmotion() {
+  try { return JSON.parse(localStorage.getItem(LAST_EMOTION_KEY) || 'null') } catch { return null }
+}
+
+function saveLastEmotion(id, text) {
+  localStorage.setItem(LAST_EMOTION_KEY, JSON.stringify({ id, text, ts: Date.now() }))
+}
+
+function isDuplicate(text) {
+  const last = getLastEmotion()
+  if (!last) return false
+  const elapsed = (Date.now() - last.ts) / 60000 // 분
+  if (elapsed > 5) return false
+  return jaccardSimilarity(text, last.text) >= 0.8
+}
+
 export default function Record({ nav, isDark, toggleTheme }) {
   const [tab, setTab] = useState('텍스트')
   const [text, setText] = useState('')
@@ -74,23 +100,34 @@ export default function Record({ nav, isDark, toggleTheme }) {
     setAnalyzing(true)
     setError('')
     const inputType = tab === '음성' ? 'voice' : tab === '대화 캡처' ? 'image' : 'text'
+    const trimmed = text.trim()
+
+    // 5분 이내 + 유사도 80% 이상이면 재분석 없이 결과 화면으로
+    if (isDuplicate(trimmed)) {
+      const last = getLastEmotion()
+      setAnalyzing(false)
+      nav('analysisResult', { result: { id: last.id }, rawContent: trimmed })
+      return
+    }
+
     try {
       // PR#16 이후 analyzeEmotion이 DB 저장까지 처리 → createEmotion 이중 호출 제거
-      const result = await analyzeEmotion({ rawContent: text.trim(), inputType })
+      const result = await analyzeEmotion({ rawContent: trimmed, inputType })
+      if (result?.id) saveLastEmotion(result.id, trimmed)
       if (share && result?.id) {
         const emotion = result?.primary_emotion || result?.primaryEmotion || ''
-        const autoTitle = emotion ? `${emotion}을(를) 느낀 이야기` : text.trim().split(/[\n.?!]/)[0].slice(0, 30) || '오늘의 이야기'
-        const post = await createCommunityPost({ content: text.trim(), title: autoTitle, isAnonymous: true, sourceRecordId: result.id })
+        const autoTitle = emotion ? `${emotion}을(를) 느낀 이야기` : '속마음 기록'
+        const post = await createCommunityPost({ content: trimmed, title: autoTitle, isAnonymous: true, sourceRecordId: result.id })
         saveMyCommunityPost(mapCommunityPostToLocal(post, {
           title: autoTitle,
-          body: text.trim(),
+          body: trimmed,
           tag: emotion ? `AI 태그: ${emotion}` : '',
         }))
       }
-      nav('analysisResult', { result, shared: share, rawContent: text.trim() })
+      nav('analysisResult', { result, shared: share, rawContent: trimmed })
     } catch {
       setError('분석 서버에 연결하지 못했어요. 예시 결과를 보여드릴게요.')
-      setTimeout(() => { setAnalyzing(false); nav('analysisResult', { rawContent: text.trim() }) }, 1200)
+      setTimeout(() => { setAnalyzing(false); nav('analysisResult', { rawContent: trimmed }) }, 1200)
     }
   }
 
@@ -139,15 +176,19 @@ export default function Record({ nav, isDark, toggleTheme }) {
           {recording && (
             <div className="wave">{[...Array(9)].map((_, i) => <span key={i} style={{ animationDelay: `${i * 0.09}s` }} />)}</div>
           )}
-          {liveText && (
-            <p style={{ margin: 0, fontSize: 13, color: 'var(--ink-muted)', fontStyle: 'italic', textAlign: 'center', maxWidth: '90%' }}>
-              {liveText}
-            </p>
-          )}
-          {text && !recording && (
-            <p style={{ margin: '4px 0 0', fontSize: 13, color: 'var(--ink-soft)', textAlign: 'center', maxWidth: '90%', lineHeight: 1.55 }}>
-              인식된 내용: {text}
-            </p>
+          {(recording || text) && (
+            <div style={{
+              margin: '4px 0 0', width: '90%', minHeight: 48,
+              background: 'var(--bg-2)', borderRadius: 10, padding: '10px 14px',
+              fontSize: 13.5, color: 'var(--ink)', lineHeight: 1.65, textAlign: 'left',
+              border: recording ? '1.5px solid var(--brand)' : '1px solid var(--surface-line)',
+            }}>
+              {text && <span>{text}</span>}
+              {liveText && <span style={{ color: 'var(--ink-muted)', fontStyle: 'italic' }}>{text ? ' ' : ''}{liveText}</span>}
+              {!text && !liveText && recording && (
+                <span style={{ color: 'var(--ink-muted)', fontStyle: 'italic' }}>말하면 여기에 실시간으로 받아써줄게요…</span>
+              )}
+            </div>
           )}
           {mediaError && <p style={{ margin: 0, fontSize: 12.5, color: 'var(--like)', textAlign: 'center' }}>{mediaError}</p>}
         </div>

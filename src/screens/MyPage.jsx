@@ -3,6 +3,7 @@ import BottomNav from '../components/BottomNav'
 import ThemeToggle from '../components/ThemeToggle'
 import PinPad from '../components/PinPad'
 import { logout, deleteMe, updateMe, getDex, addDex, deleteDex, updateNotificationSettings, getMe } from '../api/ppyurindApi'
+import { SUPPORT_PROGRAMS } from '../data/supportPrograms'
 
 const DEX_STORAGE_KEY = 'ppyurind:dexItems'
 
@@ -48,6 +49,46 @@ export default function MyPage({ nav, isDark, toggleTheme, nickname }) {
   const [confirm, setConfirm] = useState(null) // 'logout' | 'withdraw'
   const [pinOpen, setPinOpen] = useState(false)
   const [pinDone, setPinDone] = useState(false)
+  // 맞춤정보 수정 모달
+  const [editInfo, setEditInfo] = useState(false)
+  const [editRelation, setEditRelation] = useState('신혼')
+  const [editYear, setEditYear] = useState('1~2년')
+  const [editConcerns, setEditConcerns] = useState([])
+
+  const RELATION_OPTIONS = ['연애', '신혼', '기혼', '자녀 있음']
+  const YEAR_OPTIONS_MAP = {
+    '연애': ['1년 미만', '1년 차', '2~3년', '3년 이상', '선택안함'],
+    '신혼': ['1년 미만', '1~2년', '3~5년', '6~10년', '11~20년', '20년 이상', '선택안함'],
+    '기혼': ['1년 미만', '1~2년', '3~5년', '6~10년', '11~20년', '20년 이상', '선택안함'],
+    '자녀 있음': ['1년 미만', '1~2년', '3~5년', '6~10년', '11~20년', '20년 이상', '선택안함'],
+  }
+  const CONCERN_OPTIONS_MAP = {
+    '연애': ['대화 단절', '서운함', '성격·가치관 차이', '스킨십·친밀감', '경제·소비 갈등', '신뢰 문제', '미래 계획', '양가 가족 문제', '기타'],
+    '신혼': ['대화 단절', '서운함', '가사 분담', '아이 계획', '시댁·처가 갈등', '경제·소비 갈등', '스킨십·친밀감', '기타'],
+    '기혼': ['대화 단절', '서운함', '가사 분담', '아이 계획', '시댁·처가 갈등', '경제·소비 갈등', '스킨십·친밀감', '성격·가치관 차이', '기타'],
+    '자녀 있음': ['육아 분담', '대화 단절', '서운함', '가사 분담', '경제·소비 갈등', '시댁·처가 갈등', '스킨십·친밀감', '성격·가치관 차이', '기타'],
+  }
+  const YEAR_TO_NUM = { '1년 미만': 0, '1~2년': 1, '3~5년': 3, '6~10년': 6, '11~20년': 11, '20년 이상': 20, '1년 차': 1, '2~3년': 2, '3년 이상': 3, '선택안함': null }
+
+  const openEditInfo = () => {
+    setEditRelation(relationLabel.split(' · ')[0] || '신혼')
+    setEditYear(relationLabel.split(' · ')[1]?.replace('결혼 ', '').replace('연애 ', '') || '1~2년')
+    setEditConcerns(concernLabel.split(' · '))
+    setEditInfo(true)
+  }
+
+  const saveEditInfo = async () => {
+    const yearsNum = YEAR_TO_NUM[editYear] ?? null
+    const yearStr = editYear === '선택안함' ? '' : (editRelation === '연애' ? `연애 ${editYear}` : `결혼 ${editYear}`)
+    setRelationLabel(`${editRelation}${yearStr ? ' · ' + yearStr : ''}`)
+    setConcernLabel(editConcerns.slice(0, 3).join(' · ') || '설정 안됨')
+    updateMe({
+      relationship_status: [editRelation],
+      relationship_years: yearsNum,
+      main_concern_topics: editConcerns,
+    }).catch(() => {})
+    setEditInfo(false)
+  }
 
   const toggleDex = (k) => setOpen(prev => prev === k ? null : k)
   const targetDex = dexItems.find(d => d.key === addTarget)
@@ -170,6 +211,26 @@ export default function MyPage({ nav, isDark, toggleTheme, nickname }) {
           <i className="fa-solid fa-chevron-right chev" style={{ color: 'var(--ink-muted)' }}></i>
         </div>
 
+        {/* 마음건강사업 안내 */}
+        <div className="section-label"><i className="fa-solid fa-hand-holding-heart"></i>마음건강 지원사업 안내</div>
+        <div className="card" style={{ padding: '4px 0' }}>
+          {SUPPORT_PROGRAMS.map((p, i) => (
+            <div key={p.name} className={i > 0 ? 'acc acc--line' : 'acc'}>
+              <div style={{ padding: '12px 18px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+                  <span className="badge badge--match" style={{ fontSize: 11 }}>{p.tag}</span>
+                  <span style={{ fontWeight: 600, fontSize: 14, color: 'var(--ink)' }}>{p.name}</span>
+                </div>
+                <p style={{ margin: '0 0 6px', fontSize: 12.5, color: 'var(--ink-soft)', lineHeight: 1.55 }}>{p.desc}</p>
+                <a href={p.link} target="_blank" rel="noopener noreferrer"
+                   style={{ fontSize: 12, color: 'var(--brand)', textDecoration: 'none', fontWeight: 500 }}>
+                  {p.linkLabel} <i className="fa-solid fa-arrow-up-right-from-square" style={{ fontSize: 10 }}></i>
+                </a>
+              </div>
+            </div>
+          ))}
+        </div>
+
         {/* 기록 & 리포트 (병합) */}
         <div className="section-label"><i className="fa-solid fa-folder-open"></i>기록 &amp; 리포트</div>
         <div className="card" style={{ padding: '6px 18px' }}>
@@ -198,7 +259,10 @@ export default function MyPage({ nav, isDark, toggleTheme, nickname }) {
             <div className="sheet-handle" />
             <h2 style={{ margin: '0 0 18px', fontSize: 19, color: 'var(--ink)' }}>설정</h2>
 
-            <div className="section-label" style={{ marginTop: 0 }}><i className="fa-solid fa-sliders"></i>맞춤정보 설정</div>
+            <div className="section-label" style={{ marginTop: 0, justifyContent: 'space-between' }}>
+              <span><i className="fa-solid fa-sliders"></i>맞춤정보 설정</span>
+              <button style={{ fontSize: 12, color: 'var(--brand)', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600, padding: 0 }} onClick={openEditInfo}><i className="fa-solid fa-pen" style={{ fontSize: 11, marginRight: 3 }}></i>수정</button>
+            </div>
             <p style={{ margin: '0 0 10px', fontSize: 12.5, color: 'var(--ink-muted)' }}>가입 시 입력한 정보를 언제든 수정할 수 있어요.</p>
             <div className="setrow"><span>관계 상태</span><b>{relationLabel}</b></div>
             <div className="setrow"><span>주요 고민</span><b>{concernLabel}</b></div>
@@ -296,6 +360,43 @@ export default function MyPage({ nav, isDark, toggleTheme, nickname }) {
           <div className="modal" onClick={e => e.stopPropagation()}>
             <h3 style={{ margin: '0 0 16px', fontSize: 18, color: 'var(--ink)' }}>앱 잠금 비밀번호</h3>
             <PinPad onDone={() => { setPinDone(true); setPinOpen(false) }} onCancel={() => setPinOpen(false)} />
+          </div>
+        </div>
+      )}
+
+      {/* 맞춤정보 수정 모달 */}
+      {editInfo && (
+        <div className="sheet-backdrop" onClick={() => setEditInfo(false)} style={{ alignItems: 'flex-end' }}>
+          <div className="sheet" onClick={e => e.stopPropagation()}>
+            <div className="sheet-handle" />
+            <h2 style={{ margin: '0 0 16px', fontSize: 18, color: 'var(--ink)' }}>맞춤정보 수정</h2>
+
+            <div className="section-label" style={{ marginTop: 0 }}>관계 상태</div>
+            <div className="chip-row" style={{ marginBottom: 12 }}>
+              {RELATION_OPTIONS.map(v => (
+                <span key={v} className={`chip${editRelation === v ? ' selected' : ''}`} onClick={() => { setEditRelation(v); setEditConcerns([]) }}>{v}</span>
+              ))}
+            </div>
+
+            <div className="section-label">연차</div>
+            <div className="chip-row" style={{ marginBottom: 12 }}>
+              {(YEAR_OPTIONS_MAP[editRelation] || YEAR_OPTIONS_MAP['기혼']).map(v => (
+                <span key={v} className={`chip chip--sm${editYear === v ? ' selected' : ''}`} onClick={() => setEditYear(v)}>{v}</span>
+              ))}
+            </div>
+
+            <div className="section-label">주요 고민 <span style={{ fontWeight: 400, fontSize: 12, color: 'var(--ink-muted)' }}>(복수 선택)</span></div>
+            <div className="chip-row" style={{ flexWrap: 'wrap', marginBottom: 18 }}>
+              {(CONCERN_OPTIONS_MAP[editRelation] || CONCERN_OPTIONS_MAP['기혼']).map(v => (
+                <span key={v} className={`chip chip--sm${editConcerns.includes(v) ? ' selected' : ''}`}
+                  onClick={() => setEditConcerns(prev => prev.includes(v) ? prev.filter(c => c !== v) : [...prev, v])}>{v}</span>
+              ))}
+            </div>
+
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button className="cta cta--ghost" style={{ flex: 1 }} onClick={() => setEditInfo(false)}>취소</button>
+              <button className="cta" style={{ flex: 1 }} onClick={saveEditInfo}>저장</button>
+            </div>
           </div>
         </div>
       )}

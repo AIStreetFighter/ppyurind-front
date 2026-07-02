@@ -222,7 +222,7 @@ export default function PostDetail({ nav, post }) {
           <span style={{ color: comforted ? 'var(--warm-text)' : '' }} onClick={handleComfort}>
             <i className={`${comforted ? 'fa-solid' : 'fa-regular'} fa-hand`}></i> 위로 {comfortCount}
           </span>
-          <span><i className="fa-regular fa-comment"></i> 댓글 {comments.length}</span>
+          <span><i className="fa-regular fa-comment"></i> 댓글 {d.comment_count ?? d.comments ?? comments.length}</span>
         </div>
 
         <div className="pd-comments">
