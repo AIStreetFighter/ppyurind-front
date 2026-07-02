@@ -4,6 +4,9 @@ import ThemeToggle from '../components/ThemeToggle'
 import NotifBell from '../components/NotifBell'
 import { nickFromId, avatarSrc } from '../data/nicknames'
 import { CAT_SHARE } from '../data/images'
+
+const CHAT_DARK = '/assets/cats/chat_dark.png'
+const CHAT_LIGHT = '/assets/cats/chat_light.png'
 import { likedMap, comfortedMap, setReaction, getCommentCount } from '../utils/reactions'
 import { listCommunityPosts, empathyPost, comfortPost, reportPost, muteAuthor, deleteCommunityPost, getSimilarPosts } from '../api/ppyurindApi'
 
@@ -245,8 +248,8 @@ export default function Community({ nav, isDark, toggleTheme, concerns = [] }) {
           <div style={{
             position: 'absolute', inset: 0, zIndex: 2,
             background: isDark
-              ? 'linear-gradient(to right, rgba(10,10,30,0.72) 52%, transparent)'
-              : 'linear-gradient(to right, rgba(255,248,240,0.80) 52%, transparent)',
+              ? 'linear-gradient(to right, rgba(10,10,30,0.80) 22%, rgba(10,10,30,0) 54%)'
+              : 'linear-gradient(to right, rgba(255,248,240,0.88) 22%, rgba(255,248,240,0) 54%)',
             padding: '56px 22px 18px',
             display: 'flex', flexDirection: 'column', justifyContent: 'flex-end',
           }}>
@@ -439,7 +442,12 @@ export default function Community({ nav, isDark, toggleTheme, concerns = [] }) {
 
       <div className="fab-wrap">
         <div className="fab-bubble">익명으로 글 남기기 ✍️</div>
-        <button className="fab-write" aria-label="글쓰기" onClick={() => nav('communityWrite')}><i className="fa-solid fa-pen"></i></button>
+        <div className="fab-row">
+          <button className="fab-chat" aria-label="AI 상담" onClick={() => nav('chat')}>
+            <img src={isDark ? CHAT_DARK : CHAT_LIGHT} alt="" />
+          </button>
+          <button className="fab-write" aria-label="글쓰기" onClick={() => nav('communityWrite')}><i className="fa-solid fa-pen"></i></button>
+        </div>
       </div>
 
       {/* 게시글 삭제 확인 다이얼로그 */}
