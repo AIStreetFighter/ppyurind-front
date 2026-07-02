@@ -3,7 +3,10 @@ import BottomNav from '../components/BottomNav'
 import ThemeToggle from '../components/ThemeToggle'
 import NotifBell from '../components/NotifBell'
 import { nickFromId, avatarSrc } from '../data/nicknames'
-import { BANNER_DARK, BANNER_LIGHT, CAT_SHARE } from '../data/images'
+import { CAT_SHARE } from '../data/images'
+
+const HEADER_DARK = '/assets/cats/header_dark.png'
+const HEADER_LIGHT = '/assets/cats/header_light.png'
 import { likedMap, comfortedMap, setReaction, getCommentCount } from '../utils/reactions'
 import { listCommunityPosts, empathyPost, comfortPost, reportPost, muteAuthor, deleteCommunityPost, getSimilarPosts } from '../api/ppyurindApi'
 
@@ -239,20 +242,18 @@ export default function Community({ nav, isDark, toggleTheme, concerns = [] }) {
   return (
     <>
       <div className="phone-body">
-        {/* 배너 + 상단바 통합 — 상단바가 배너 이미지 위에 얹힘 */}
-        <div style={{ position: 'relative', margin: '-20px -20px 0', overflow: 'hidden' }}>
-          <img
-            src={isDark ? BANNER_DARK : BANNER_LIGHT}
-            alt=""
-            style={{ width: '100%', height: 210, objectFit: 'cover', objectPosition: 'center top', display: 'block' }}
-          />
+        {/* 배너 + 상단바 통합 — CSS background-image, aspect-ratio 2.4:1 */}
+        <div
+          className="community-banner"
+          style={{ backgroundImage: `url(${isDark ? HEADER_DARK : HEADER_LIGHT})` }}
+        >
           {/* 좌측 텍스트 그라디언트 오버레이 */}
           <div style={{
-            position: 'absolute', inset: 0,
+            position: 'absolute', inset: 0, zIndex: 2,
             background: isDark
-              ? 'linear-gradient(to right, rgba(10,10,30,0.75) 55%, transparent)'
-              : 'linear-gradient(to right, rgba(255,245,235,0.82) 55%, transparent)',
-            padding: '70px 22px 22px',
+              ? 'linear-gradient(to right, rgba(10,10,30,0.72) 52%, transparent)'
+              : 'linear-gradient(to right, rgba(255,248,240,0.80) 52%, transparent)',
+            padding: '56px 22px 18px',
             display: 'flex', flexDirection: 'column', justifyContent: 'flex-end',
           }}>
             <h1 style={{ margin: 0, fontSize: 26, fontWeight: 800, color: 'var(--ink)', letterSpacing: '-0.02em', lineHeight: 1.2 }}>
@@ -262,17 +263,9 @@ export default function Community({ nav, isDark, toggleTheme, concerns = [] }) {
               결혼 2년 차, 비슷한 고민을 가진<br />사람들의 이야기
             </p>
           </div>
-          {/* 하단 페이드 아웃 */}
-          <div style={{
-            position: 'absolute', bottom: 0, left: 0, right: 0, height: 48,
-            background: isDark
-              ? 'linear-gradient(to bottom, transparent, var(--bg))'
-              : 'linear-gradient(to bottom, transparent, var(--bg))',
-            pointerEvents: 'none',
-          }} />
           {/* 상단바 — 배너 위에 절대 위치 */}
           <div style={{
-            position: 'absolute', top: 0, left: 0, right: 0, zIndex: 2,
+            position: 'absolute', top: 0, left: 0, right: 0, zIndex: 3,
             display: 'flex', justifyContent: 'space-between', alignItems: 'center',
             padding: '28px 20px 12px',
           }}>

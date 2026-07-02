@@ -221,6 +221,29 @@ body {
 .header { position: relative; padding: 6px 150px 6px 0; }
 .community-header { min-height: 136px; margin-bottom: 12px; }
 .community-header .header-art { top: -20px; right: -2px; width: 126px; height: 136px; }
+
+/* 커뮤니티 배너 — 2.4:1 비율, 고양이 하단 고정, 하단 25%만 페이드 */
+.community-banner {
+  --comm-fade: #1B2240;
+  position: relative;
+  margin: -20px -20px 0;
+  overflow: hidden;
+  aspect-ratio: 2.4 / 1;
+  background-size: cover;
+  background-position: center bottom;
+}
+.community-banner::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 25%;
+  background: linear-gradient(to bottom, transparent, var(--comm-fade));
+  pointer-events: none;
+  z-index: 1;
+}
+.phone.is-light .community-banner { --comm-fade: #FFFFFF; }
 .header--full { padding-right: 0; }
 .page-title { margin: 6px 0 8px; font-size: 27px; font-weight: 600; color: var(--ink); line-height: 1.3; letter-spacing: -0.01em; }
 .page-sub { margin: 0; font-size: 15px; line-height: 1.6; color: var(--ink-soft); }
