@@ -5,6 +5,26 @@ import { avatarSrc } from '../data/nicknames'
 // 로컬 저장 글(id가 'u'로 시작)인지 판별
 const isLocalPost = (id) => typeof id === 'string' && id.startsWith('u')
 const localCommentKey = (postId) => `ppyurind:comments:${postId}`
+const MY_COMMENT_IDS_KEY = 'ppyurind:myCommentIds'
+const DELETED_COMMENT_IDS_KEY = 'ppyurind:deletedCommentIds'
+
+function getMyCommentIds() {
+  try { return new Set(JSON.parse(localStorage.getItem(MY_COMMENT_IDS_KEY) || '[]')) } catch { return new Set() }
+}
+function addMyCommentId(id) {
+  const ids = getMyCommentIds()
+  ids.add(String(id))
+  localStorage.setItem(MY_COMMENT_IDS_KEY, JSON.stringify([...ids]))
+}
+
+function getDeletedCommentIds() {
+  try { return new Set(JSON.parse(localStorage.getItem(DELETED_COMMENT_IDS_KEY) || '[]')) } catch { return new Set() }
+}
+function addDeletedCommentId(id) {
+  const ids = getDeletedCommentIds()
+  ids.add(String(id))
+  localStorage.setItem(DELETED_COMMENT_IDS_KEY, JSON.stringify([...ids]))
+}
 
 function getLocalComments(postId) {
   try { return JSON.parse(localStorage.getItem(localCommentKey(postId)) || '[]') } catch { return [] }
@@ -16,6 +36,17 @@ function saveLocalComment(postId, comment) {
 function saveLocalReply(postId, commentId, reply) {
   const prev = getLocalComments(postId)
   const next = prev.map(c => c.id === commentId ? { ...c, replies: [...(c.replies || []), reply] } : c)
+  localStorage.setItem(localCommentKey(postId), JSON.stringify(next))
+}
+function softDeleteLocalComment(postId, commentId, replyId) {
+  const prev = getLocalComments(postId)
+  const next = prev.map(c => {
+    if (replyId != null) {
+      if (c.id !== commentId) return c
+      return { ...c, replies: c.replies.map(r => r.id === replyId ? { ...r, deleted: true } : r) }
+    }
+    return c.id === commentId ? { ...c, deleted: true } : c
+  })
   localStorage.setItem(localCommentKey(postId), JSON.stringify(next))
 }
 
@@ -51,13 +82,18 @@ export default function PostDetail({ nav, post }) {
   const [comments, setComments] = useState([])
   const [reportOpen, setReportOpen] = useState(false)
   const [commentToast, setCommentToast] = useState('')
+  const [commentMenuOpen, setCommentMenuOpen] = useState(null) // commentId or `r:${commentId}:${replyId}`
+  const [myCommentIds, setMyCommentIds] = useState(() => getMyCommentIds())
+  const [deletedCommentIds, setDeletedCommentIds] = useState(() => getDeletedCommentIds())
 
   const flashComment = (msg) => { setCommentToast(msg); setTimeout(() => setCommentToast(''), 2500) }
+
+  const refreshMyCommentIds = () => setMyCommentIds(getMyCommentIds())
+  const refreshDeletedIds = () => setDeletedCommentIds(getDeletedCommentIds())
 
   useEffect(() => {
     if (!post?.id) return
     if (isLocalPost(post.id)) {
-      // 로컬 저장 글: localStorage에서 댓글 로드
       setComments(getLocalComments(post.id))
       return
     }
@@ -100,13 +136,25 @@ export default function PostDetail({ nav, post }) {
     }))
   }
 
+  const isMyComment = (c) => c.nick === '나' || myCommentIds.has(String(c.id))
+  const isDeleted = (c) => c.deleted || deletedCommentIds.has(String(c.id))
+
+  const deleteComment = (commentId, replyId) => {
+    setCommentMenuOpen(null)
+    addDeletedCommentId(replyId ?? commentId)
+    refreshDeletedIds()
+    if (isLocalPost(post.id)) {
+      softDeleteLocalComment(post.id, commentId, replyId ?? null)
+    }
+    flashComment('댓글을 삭제했어요.')
+  }
+
   const addComment = async () => {
     if (!draft.trim()) return
     const text = draft.trim()
     setDraft('')
 
     if (isLocalPost(post.id)) {
-      // 로컬 글: localStorage에 저장해서 새로고침해도 유지
       const local = { id: Date.now(), nick: '나', body: text, time: '방금', likes: 0, liked: false, replies: [] }
       saveLocalComment(post.id, local)
       setComments(c => [...c, local])
@@ -115,9 +163,10 @@ export default function PostDetail({ nav, post }) {
 
     try {
       const created = await createComment({ postId: post.id, content: text, isAnonymous: true })
+      addMyCommentId(created.id)
+      refreshMyCommentIds()
       setComments(c => [...c, mapComment(created)])
     } catch {
-      // API 실패해도 댓글은 화면에 표시 (세션 내 유지)
       setComments(c => [...c, { id: Date.now(), nick: '나', body: text, time: '방금', likes: 0, liked: false, replies: [] }])
       flashComment('댓글이 임시 저장됐어요 · 새로고침하면 사라질 수 있어요')
     }
@@ -137,6 +186,8 @@ export default function PostDetail({ nav, post }) {
 
     try {
       const created = await createReply({ commentId: cid, content: text, isAnonymous: true })
+      addMyCommentId(created.id)
+      refreshMyCommentIds()
       setComments(cs => cs.map(c => c.id === cid
         ? { ...c, replies: [...c.replies, mapComment(created)] }
         : c))
@@ -165,7 +216,7 @@ export default function PostDetail({ nav, post }) {
   const comfortCount = (d.comfort_count ?? d.comfort ?? 0) + (comforted ? 1 : 0)
 
   return (
-    <div className="pd">
+    <div className="pd" onClick={() => commentMenuOpen && setCommentMenuOpen(null)}>
       {commentToast && <div className="toast">{commentToast}</div>}
       <div className="pd-top">
         <i className="fa-solid fa-arrow-left pd-top-ic" onClick={() => nav('community')}></i>
@@ -199,7 +250,6 @@ export default function PostDetail({ nav, post }) {
         {(() => {
           const pdBody = d.content || d.body || ''
           const pdTitle = d.title || ''
-          // 제목이 본문과 동일하면(짧은 글 자동 제목 등) 제목 줄 생략해 중복 표시 방지
           const showTitle = pdTitle && pdTitle.trim() !== pdBody.trim()
           return (
             <>
@@ -232,28 +282,83 @@ export default function PostDetail({ nav, post }) {
                 <div className="avatar avatar--sm"><img className="pfp" src={avatarSrc(c.id)} alt="" /></div>
                 <div className="pd-c-main">
                   <p className="pd-c-nick">{c.nick}</p>
-                  <p className="pd-c-body">{c.body}</p>
-                  <div className="pd-c-meta">
-                    <span>{c.time}</span>
-                    {c.likes > 0 && <span className="static">좋아요 {c.likes}</span>}
-                    <span onClick={() => setReplyTo(replyTo === c.id ? null : c.id)}>답글</span>
-                  </div>
+                  {isDeleted(c) ? (
+                    <p className="pd-c-body" style={{ color: 'var(--ink-muted)', fontStyle: 'italic' }}>삭제된 댓글입니다.</p>
+                  ) : c.body == null ? (
+                    <p className="pd-c-body" style={{ color: 'var(--ink-muted)', fontStyle: 'italic' }}>관리자에 의해 처리된 댓글입니다.</p>
+                  ) : (
+                    <p className="pd-c-body">{c.body}</p>
+                  )}
+                  {!isDeleted(c) && c.body != null && (
+                    <div className="pd-c-meta">
+                      <span>{c.time}</span>
+                      {c.likes > 0 && <span className="static">좋아요 {c.likes}</span>}
+                      <span onClick={() => setReplyTo(replyTo === c.id ? null : c.id)}>답글</span>
+                    </div>
+                  )}
                 </div>
-                <i className={`${c.liked ? 'fa-solid' : 'fa-regular'} fa-heart pd-c-heart${c.liked ? ' on' : ''}`} onClick={() => toggleLike(c.id)}></i>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+                  {!isDeleted(c) && c.body != null && (
+                    <i className={`${c.liked ? 'fa-solid' : 'fa-regular'} fa-heart pd-c-heart${c.liked ? ' on' : ''}`} onClick={() => toggleLike(c.id)}></i>
+                  )}
+                  {isMyComment(c) && !isDeleted(c) && (
+                    <div style={{ position: 'relative' }} onClick={e => e.stopPropagation()}>
+                      <i className="fa-solid fa-ellipsis-vertical"
+                         style={{ color: 'var(--ink-muted)', cursor: 'pointer', padding: '4px 6px', fontSize: 13 }}
+                         onClick={() => setCommentMenuOpen(commentMenuOpen === c.id ? null : c.id)} />
+                      {commentMenuOpen === c.id && (
+                        <div className="kebab-menu" style={{ right: 0, top: 22, minWidth: 120 }}>
+                          <div className="kebab-item danger" onClick={() => deleteComment(c.id, undefined)}>
+                            <i className="fa-solid fa-trash"></i> 삭제
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
 
-              {c.replies.map(r => (
+              {(c.replies || []).map(r => (
                 <div key={r.id} className="pd-c-row pd-reply">
                   <div className="avatar avatar--sm"><img className="pfp" src={avatarSrc(r.id)} alt="" /></div>
                   <div className="pd-c-main">
                     <p className="pd-c-nick">{r.nick}</p>
-                    <p className="pd-c-body">{r.body}</p>
-                    <div className="pd-c-meta">
-                      <span>{r.time}</span>
-                      {r.likes > 0 && <span className="static">좋아요 {r.likes}</span>}
-                    </div>
+                    {isDeleted(r) ? (
+                      <p className="pd-c-body" style={{ color: 'var(--ink-muted)', fontStyle: 'italic' }}>삭제된 댓글입니다.</p>
+                    ) : r.body == null ? (
+                      <p className="pd-c-body" style={{ color: 'var(--ink-muted)', fontStyle: 'italic' }}>관리자에 의해 처리된 댓글입니다.</p>
+                    ) : (
+                      <p className="pd-c-body">{r.body}</p>
+                    )}
+                    {!isDeleted(r) && r.body != null && (
+                      <div className="pd-c-meta">
+                        <span>{r.time}</span>
+                        {r.likes > 0 && <span className="static">좋아요 {r.likes}</span>}
+                      </div>
+                    )}
                   </div>
-                  <i className={`${r.liked ? 'fa-solid' : 'fa-regular'} fa-heart pd-c-heart${r.liked ? ' on' : ''}`} onClick={() => toggleLike(c.id, r.id)}></i>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+                    {!isDeleted(r) && r.body != null && (
+                      <i className={`${r.liked ? 'fa-solid' : 'fa-regular'} fa-heart pd-c-heart${r.liked ? ' on' : ''}`} onClick={() => toggleLike(c.id, r.id)}></i>
+                    )}
+                    {isMyComment(r) && !isDeleted(r) && (
+                      <div style={{ position: 'relative' }} onClick={e => e.stopPropagation()}>
+                        <i className="fa-solid fa-ellipsis-vertical"
+                           style={{ color: 'var(--ink-muted)', cursor: 'pointer', padding: '4px 6px', fontSize: 13 }}
+                           onClick={() => {
+                             const key = `r:${c.id}:${r.id}`
+                             setCommentMenuOpen(commentMenuOpen === key ? null : key)
+                           }} />
+                        {commentMenuOpen === `r:${c.id}:${r.id}` && (
+                          <div className="kebab-menu" style={{ right: 0, top: 22, minWidth: 120 }}>
+                            <div className="kebab-item danger" onClick={() => deleteComment(c.id, r.id)}>
+                              <i className="fa-solid fa-trash"></i> 삭제
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 </div>
               ))}
 

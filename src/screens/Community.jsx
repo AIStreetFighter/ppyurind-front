@@ -3,7 +3,7 @@ import BottomNav from '../components/BottomNav'
 import ThemeToggle from '../components/ThemeToggle'
 import NotifBell from '../components/NotifBell'
 import { nickFromId, avatarSrc } from '../data/nicknames'
-import { listCommunityPosts, empathyPost, comfortPost, reportPost, muteAuthor } from '../api/ppyurindApi'
+import { listCommunityPosts, empathyPost, comfortPost, reportPost, muteAuthor, deleteCommunityPost } from '../api/ppyurindApi'
 
 const MY_POSTS_STORAGE_KEY = 'ppyurind:myCommunityPosts'
 
@@ -91,6 +91,7 @@ export default function Community({ nav, isDark, toggleTheme, concerns = [] }) {
   const [menuOpen, setMenuOpen] = useState(null)
   const [toast, setToast] = useState('')
   const [reportFor, setReportFor] = useState(null)
+  const [confirmDeleteId, setConfirmDeleteId] = useState(null)
   const [hiddenAuthors, setHiddenAuthors] = useState([])
   const [apiPosts, setApiPosts] = useState(null) // null = 로딩 중, [] = 빈 결과
   const [userPosts, setUserPosts] = useState(() => {
@@ -125,15 +126,24 @@ export default function Community({ nav, isDark, toggleTheme, concerns = [] }) {
     flash('이 회원의 글을 모두 숨겼어요.')
   }
 
-  const deleteMyPost = (id) => {
+  const requestDeletePost = (id) => {
+    setMenuOpen(null)
+    setConfirmDeleteId(id)
+  }
+
+  const doDeletePost = async (id) => {
+    setConfirmDeleteId(null)
+    try { await deleteCommunityPost(id) } catch {}
     setUserPosts(posts => posts.filter(p => p.id !== id))
+    setApiPosts(prev => prev ? prev.filter(p => p.id !== id) : prev)
     try {
       const stored = JSON.parse(localStorage.getItem(MY_POSTS_STORAGE_KEY) || '[]')
-      localStorage.setItem(MY_POSTS_STORAGE_KEY, JSON.stringify(stored.filter(p => p.id !== id)))
+      localStorage.setItem(MY_POSTS_STORAGE_KEY, JSON.stringify(stored.filter(p => String(p.id) !== String(id))))
     } catch {}
-    setMenuOpen(null)
     flash('게시글을 삭제했어요.')
   }
+
+  const myPostIds = new Set(userPosts.map(p => String(p.id)))
 
   const seedPosts = apiPosts !== null ? apiPosts : ALL_POSTS
   // API에 이미 올라간 글은 API 버전(최신 카운트)을 사용, 로컬에만 있는 글만 앞에 추가
@@ -250,8 +260,8 @@ export default function Community({ nav, isDark, toggleTheme, concerns = [] }) {
                        onClick={() => setMenuOpen(menuOpen === p.id ? null : p.id)}></i>
                     {menuOpen === p.id && (
                       <div className="kebab-menu">
-                        {p.author === 'me' ? (
-                          <div className="kebab-item danger" onClick={() => deleteMyPost(p.id)}><i className="fa-solid fa-trash"></i> 게시글 삭제</div>
+                        {(p.author === 'me' || myPostIds.has(String(p.id))) ? (
+                          <div className="kebab-item danger" onClick={() => requestDeletePost(p.id)}><i className="fa-solid fa-trash"></i> 게시글 삭제</div>
                         ) : (
                           <>
                             <div className="kebab-item" onClick={() => { setMenuOpen(null); flash('1:1 대화는 곧 열려요.') }}><i className="fa-solid fa-comment"></i> 대화하기</div>
@@ -335,6 +345,21 @@ export default function Community({ nav, isDark, toggleTheme, concerns = [] }) {
         <div className="fab-bubble">익명으로 글 남기기 ✍️</div>
         <button className="fab-write" aria-label="글쓰기" onClick={() => nav('communityWrite')}><i className="fa-solid fa-pen"></i></button>
       </div>
+
+      {/* 게시글 삭제 확인 다이얼로그 */}
+      {confirmDeleteId !== null && (
+        <div className="sheet-backdrop" onClick={() => setConfirmDeleteId(null)} style={{ alignItems: 'center', padding: 22 }}>
+          <div className="modal" onClick={e => e.stopPropagation()} style={{ textAlign: 'center', padding: '22px 20px' }}>
+            <i className="fa-solid fa-trash" style={{ fontSize: 22, color: 'var(--like)', marginBottom: 10 }}></i>
+            <h3 style={{ margin: '0 0 6px', fontSize: 17, color: 'var(--ink)' }}>게시글을 삭제할까요?</h3>
+            <p style={{ margin: '0 0 18px', fontSize: 13, color: 'var(--ink-muted)' }}>삭제한 글은 복구할 수 없어요.</p>
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button className="cta cta--ghost" style={{ flex: 1, padding: '10px 0' }} onClick={() => setConfirmDeleteId(null)}>취소</button>
+              <button className="cta" style={{ flex: 1, padding: '10px 0', background: 'var(--like)' }} onClick={() => doDeletePost(confirmDeleteId)}>삭제</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* 신고 사유 모달 */}
       {reportFor && (

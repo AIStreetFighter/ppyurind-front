@@ -1,11 +1,18 @@
 import { useEffect, useState } from 'react'
 import BottomNav from '../components/BottomNav'
-import { listMyCommunityPosts } from '../api/ppyurindApi'
-import { loadMyCommunityPosts, mapCommunityPostToLocal } from '../utils/myCommunityPosts'
+import { listMyCommunityPosts, deleteCommunityPost } from '../api/ppyurindApi'
+import { loadMyCommunityPosts, saveMyCommunityPost, mapCommunityPostToLocal } from '../utils/myCommunityPosts'
 import { avatarSrc } from '../data/nicknames'
+
+const MY_POSTS_STORAGE_KEY = 'ppyurind:myCommunityPosts'
 
 export default function MyCommunityPosts({ nav }) {
   const [posts, setPosts] = useState([])
+  const [menuOpen, setMenuOpen] = useState(null)
+  const [confirmDeleteId, setConfirmDeleteId] = useState(null)
+  const [toast, setToast] = useState('')
+
+  const flash = (msg) => { setToast(msg); setTimeout(() => setToast(''), 2000) }
 
   useEffect(() => {
     const localPosts = loadMyCommunityPosts()
@@ -13,14 +20,32 @@ export default function MyCommunityPosts({ nav }) {
 
     listMyCommunityPosts({ offset: 0, limit: 50 }).then(data => {
       const items = Array.isArray(data) ? data : (data.items || [])
-      const apiPosts = items.map(item => mapCommunityPostToLocal(item))
-      const merged = [
-        ...apiPosts,
-        ...localPosts.filter(local => !apiPosts.some(apiPost => apiPost.id === local.id)),
-      ]
-      setPosts(merged)
-    }).catch(() => {})
+      if (items.length > 0) {
+        // API 성공 시 API 결과가 source of truth (내 글만 반환됨)
+        const apiPosts = items.map(item => mapCommunityPostToLocal(item))
+        setPosts(apiPosts)
+      }
+      // API가 빈 배열 반환하면 localStorage 폴백 유지
+    }).catch(() => {
+      // API 실패 시 localStorage 그대로 유지
+    })
   }, [])
+
+  const requestDelete = (id) => {
+    setMenuOpen(null)
+    setConfirmDeleteId(id)
+  }
+
+  const doDelete = async (id) => {
+    setConfirmDeleteId(null)
+    try { await deleteCommunityPost(id) } catch {}
+    setPosts(prev => prev.filter(p => String(p.id) !== String(id)))
+    try {
+      const stored = JSON.parse(localStorage.getItem(MY_POSTS_STORAGE_KEY) || '[]')
+      localStorage.setItem(MY_POSTS_STORAGE_KEY, JSON.stringify(stored.filter(p => String(p.id) !== String(id))))
+    } catch {}
+    flash('게시글을 삭제했어요.')
+  }
 
   return (
     <>
@@ -38,18 +63,31 @@ export default function MyCommunityPosts({ nav }) {
         {posts.length > 0 ? (
           <div className="stack" style={{ marginTop: 22 }}>
             {posts.map(post => (
-              <article key={post.id} className="card my-post-card" onClick={() => nav('post', { post })}>
-                <div className="post-head">
+              <article key={post.id} className="card my-post-card" style={{ cursor: 'pointer' }}>
+                <div className="post-head" onClick={() => nav('post', { post })}>
                   <div className="avatar"><img className="pfp" src={avatarSrc(post.id)} alt="" /></div>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <p className="post-name">{post.nick || '익명'} · {post.createdAt ? new Date(post.createdAt).toLocaleDateString('ko-KR') : '방금'}</p>
                     {post.title && post.title.trim() !== (post.body || '').trim() && <p className="post-title">{post.title}</p>}
                     <p className="post-tag">{post.tag}</p>
                   </div>
-                  <i className="fa-solid fa-chevron-right chev"></i>
+                  <div style={{ position: 'relative' }} onClick={e => e.stopPropagation()}>
+                    <i className="fa-solid fa-ellipsis-vertical"
+                       style={{ color: 'var(--ink-muted)', cursor: 'pointer', padding: '4px 8px' }}
+                       onClick={() => setMenuOpen(menuOpen === post.id ? null : post.id)} />
+                    {menuOpen === post.id && (
+                      <div className="kebab-menu">
+                        <div className="kebab-item danger" onClick={() => requestDelete(post.id)}>
+                          <i className="fa-solid fa-trash"></i> 게시글 삭제
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
-                <p className="quote">{post.body.length > 96 ? `${post.body.slice(0, 96)}...` : post.body}</p>
-                <div className="reactions">
+                <p className="quote" onClick={() => nav('post', { post })}>
+                  {post.body.length > 96 ? `${post.body.slice(0, 96)}...` : post.body}
+                </p>
+                <div className="reactions" onClick={() => nav('post', { post })}>
                   <span><i className="fa-regular fa-heart"></i> 공감 {post.empathy}</span>
                   <span><i className="fa-regular fa-hand"></i> 위로 {post.comfort}</span>
                   <span><i className="fa-regular fa-comment"></i> 댓글 {post.comments}</span>
@@ -66,6 +104,22 @@ export default function MyCommunityPosts({ nav }) {
           </div>
         )}
       </div>
+
+      {toast && <div className="toast">{toast}</div>}
+
+      {confirmDeleteId !== null && (
+        <div className="sheet-backdrop" onClick={() => setConfirmDeleteId(null)} style={{ alignItems: 'center', padding: 22, zIndex: 9999 }}>
+          <div className="modal" onClick={e => e.stopPropagation()} style={{ textAlign: 'center', padding: '22px 20px' }}>
+            <i className="fa-solid fa-trash" style={{ fontSize: 22, color: 'var(--like)', marginBottom: 10 }}></i>
+            <h3 style={{ margin: '0 0 6px', fontSize: 17, color: 'var(--ink)' }}>게시글을 삭제할까요?</h3>
+            <p style={{ margin: '0 0 18px', fontSize: 13, color: 'var(--ink-muted)' }}>삭제한 글은 복구할 수 없어요.</p>
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button className="cta cta--ghost" style={{ flex: 1, padding: '10px 0' }} onClick={() => setConfirmDeleteId(null)}>취소</button>
+              <button className="cta" style={{ flex: 1, padding: '10px 0', background: 'var(--like)' }} onClick={() => doDelete(confirmDeleteId)}>삭제</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <BottomNav active="마이" nav={nav} />
     </>
