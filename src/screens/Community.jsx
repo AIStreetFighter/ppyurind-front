@@ -113,6 +113,28 @@ export default function Community({ nav, isDark, toggleTheme, concerns = [] }) {
 
   const flash = (msg) => { setToast(msg); setTimeout(() => setToast(''), 1900) }
 
+  // 공감/위로 클릭 시 post 객체의 count를 직접 갱신 → 상세 화면에 넘길 때 최신값 유지
+  const updatePostCount = (id, field, delta) => {
+    setApiPosts(prev => prev?.map(p => p.id === id ? { ...p, [field]: Math.max(0, (p[field] || 0) + delta) } : p))
+    setUserPosts(prev => prev.map(p => p.id === id ? { ...p, [field]: Math.max(0, (p[field] || 0) + delta) } : p))
+  }
+
+  const handleEmpathy = (p, e) => {
+    e.stopPropagation()
+    empathyPost(p.id).catch(() => {})
+    const wasLiked = !!liked[p.id]
+    setLiked(s => ({ ...s, [p.id]: !wasLiked }))
+    updatePostCount(p.id, 'empathy', wasLiked ? -1 : 1)
+  }
+
+  const handleComfort = (p, e) => {
+    e.stopPropagation()
+    comfortPost(p.id).catch(() => {})
+    const wasComforted = !!comforted[p.id]
+    setComforted(s => ({ ...s, [p.id]: !wasComforted }))
+    updatePostCount(p.id, 'comfort', wasComforted ? -1 : 1)
+  }
+
   const submitReport = (reason) => {
     reportPost(reportFor?.id, reason).catch(() => {})
     setReportFor(null)
@@ -245,6 +267,7 @@ export default function Community({ nav, isDark, toggleTheme, concerns = [] }) {
             const isLiked = !!liked[p.id], isComf = !!comforted[p.id]
             const card = (
               <div key={p.id} className="card" onClick={() => nav('post', { post: p })} style={{ cursor: 'pointer' }}>
+
                 <div className="post-head">
                   <div className="avatar"><img className="pfp" src={avatarSrc(p.id)} alt="" /></div>
                   <div style={{ flex: 1, minWidth: 0 }}>
@@ -275,11 +298,11 @@ export default function Community({ nav, isDark, toggleTheme, concerns = [] }) {
                 </div>
                 <p className="quote">{p.body.length > 64 ? p.body.slice(0, 64) + '…' : p.body} <span className="link-more" onClick={(e) => { e.stopPropagation(); nav('post', { post: p }) }}>더보기</span></p>
                 <div className="reactions" onClick={e => e.stopPropagation()}>
-                  <span className={isLiked ? 'like' : ''} style={{ cursor: 'pointer' }} onClick={() => { empathyPost(p.id).catch(() => {}); setLiked(s => ({ ...s, [p.id]: !s[p.id] })) }}>
-                    <i className={`${isLiked ? 'fa-solid' : 'fa-regular'} fa-heart`}></i> 공감 {p.empathy + (isLiked ? 1 : 0)}
+                  <span className={isLiked ? 'like' : ''} style={{ cursor: 'pointer' }} onClick={e => handleEmpathy(p, e)}>
+                    <i className={`${isLiked ? 'fa-solid' : 'fa-regular'} fa-heart`}></i> 공감 {p.empathy}
                   </span>
-                  <span style={{ cursor: 'pointer', color: isComf ? 'var(--warm-text)' : '' }} onClick={() => { comfortPost(p.id).catch(() => {}); setComforted(s => ({ ...s, [p.id]: !s[p.id] })) }}>
-                    <i className={`${isComf ? 'fa-solid' : 'fa-regular'} fa-hand`}></i> 위로 {p.comfort + (isComf ? 1 : 0)}
+                  <span style={{ cursor: 'pointer', color: isComf ? 'var(--warm-text)' : '' }} onClick={e => handleComfort(p, e)}>
+                    <i className={`${isComf ? 'fa-solid' : 'fa-regular'} fa-hand`}></i> 위로 {p.comfort}
                   </span>
                   <span style={{ cursor: 'pointer' }} onClick={() => nav('post', { post: p })}><i className="fa-regular fa-comment"></i> 댓글 {p.comments}</span>
                 </div>

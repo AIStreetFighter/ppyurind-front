@@ -85,6 +85,7 @@ export default function PostDetail({ nav, post }) {
   const [commentMenuOpen, setCommentMenuOpen] = useState(null) // commentId or `r:${commentId}:${replyId}`
   const [myCommentIds, setMyCommentIds] = useState(() => getMyCommentIds())
   const [deletedCommentIds, setDeletedCommentIds] = useState(() => getDeletedCommentIds())
+  const [commentsLoaded, setCommentsLoaded] = useState(false)
 
   const flashComment = (msg) => { setCommentToast(msg); setTimeout(() => setCommentToast(''), 2500) }
 
@@ -95,12 +96,16 @@ export default function PostDetail({ nav, post }) {
     if (!post?.id) return
     if (isLocalPost(post.id)) {
       setComments(getLocalComments(post.id))
+      setCommentsLoaded(true)
       return
     }
     getCommunityPost(post.id).then(d => setDetail(d)).catch(() => {})
     listComments(post.id)
-      .then(data => setComments((data.comments || data.items || []).map(mapComment)))
-      .catch(() => {})
+      .then(data => {
+        setComments((data.comments || data.items || []).map(mapComment))
+        setCommentsLoaded(true)
+      })
+      .catch(() => { setCommentsLoaded(true) })
   }, [post?.id])
 
   if (!post) {
@@ -272,7 +277,7 @@ export default function PostDetail({ nav, post }) {
           <span style={{ color: comforted ? 'var(--warm-text)' : '' }} onClick={handleComfort}>
             <i className={`${comforted ? 'fa-solid' : 'fa-regular'} fa-hand`}></i> 위로 {comfortCount}
           </span>
-          <span><i className="fa-regular fa-comment"></i> 댓글 {d.comment_count ?? d.comments ?? comments.length}</span>
+          <span><i className="fa-regular fa-comment"></i> 댓글 {commentsLoaded ? comments.length : (d.comment_count || d.comments || 0)}</span>
         </div>
 
         <div className="pd-comments">
