@@ -1,7 +1,7 @@
 // ─────────────────────────────────────────────
 // 쀼라인드 API 함수 모음 (신버전 백엔드 정렬 기준)
 // ─────────────────────────────────────────────
-import { api, uploadFile, setAccessToken, clearAccessToken, getAccessToken } from './client'
+import { api, uploadFile, setAccessToken, setTokens, setRefreshToken, clearAccessToken, getAccessToken } from './client'
 
 // ── 1. 헬스체크 ──────────────────────────────
 export const checkHealth   = () => api.get('/health')
@@ -18,14 +18,20 @@ export async function register({ nickname, email, password }) {
   const data = await api.post('/auth/register', { nickname, email, password })
   // 회원가입 후 자동 로그인
   const loginData = await api.post('/auth/login', { email, password })
-  setAccessToken(loginData.accessToken || loginData.access_token)
+  setTokens({
+    access: loginData.accessToken || loginData.access_token,
+    refresh: loginData.refreshToken || loginData.refresh_token,
+  })
   return loginData
 }
 
-// 이메일 로그인 — 응답: { accessToken, tokenType, user }
+// 이메일 로그인 — 응답: { accessToken, refreshToken, tokenType, user }
 export async function login({ email, password }) {
   const data = await api.post('/auth/login', { email, password })
-  setAccessToken(data.accessToken || data.access_token)
+  setTokens({
+    access: data.accessToken || data.access_token,
+    refresh: data.refreshToken || data.refresh_token,
+  })
   return data
 }
 
@@ -33,6 +39,7 @@ export async function login({ email, password }) {
 export async function logout() {
   try { await api.post('/auth/logout', {}) } catch (_) {}
   clearAccessToken()
+  setRefreshToken(null)
 }
 
 // ── 3. 사용자 ─────────────────────────────────

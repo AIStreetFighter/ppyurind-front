@@ -1,17 +1,18 @@
 import { useEffect, useState } from 'react'
-import { setAccessToken } from '../api/client'
+import { setTokens } from '../api/client'
 
-// 백엔드가 /auth/success?token=...&isNew=true 로 리다이렉트해줌
+// 백엔드가 /auth/success?token=...&refresh=...&isNew=true 로 리다이렉트해줌
 export default function OAuthCallback({ nav }) {
   const [error, setError] = useState('')
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
     const token = params.get('token')
+    const refresh = params.get('refresh')
     const isNew = params.get('isNew') === 'true'
 
     if (token) {
-      setAccessToken(token)
+      setTokens({ access: token, refresh })
       nav(isNew ? 'onboarding' : 'home')
     } else {
       setError('로그인에 실패했어요. 다시 시도해주세요.')
