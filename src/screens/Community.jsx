@@ -4,9 +4,6 @@ import ThemeToggle from '../components/ThemeToggle'
 import NotifBell from '../components/NotifBell'
 import { nickFromId, avatarSrc } from '../data/nicknames'
 import { CAT_SHARE } from '../data/images'
-
-const CHAT_DARK = '/assets/cats/chat_dark.png'
-const CHAT_LIGHT = '/assets/cats/chat_light.png'
 import { likedMap, comfortedMap, setReaction, getCommentCount } from '../utils/reactions'
 import { listCommunityPosts, empathyPost, comfortPost, reportPost, muteAuthor, deleteCommunityPost, getSimilarPosts } from '../api/ppyurindApi'
 
@@ -442,12 +439,7 @@ export default function Community({ nav, isDark, toggleTheme, concerns = [] }) {
 
       <div className="fab-wrap">
         <div className="fab-bubble">익명으로 글 남기기 ✍️</div>
-        <div className="fab-row">
-          <button className="fab-chat" aria-label="AI 상담" onClick={() => nav('chat')}>
-            <img src={isDark ? CHAT_DARK : CHAT_LIGHT} alt="" />
-          </button>
-          <button className="fab-write" aria-label="글쓰기" onClick={() => nav('communityWrite')}><i className="fa-solid fa-pen"></i></button>
-        </div>
+        <button className="fab-write" aria-label="글쓰기" onClick={() => nav('communityWrite')}><i className="fa-solid fa-pen"></i></button>
       </div>
 
       {/* 게시글 삭제 확인 다이얼로그 */}
