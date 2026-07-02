@@ -2,6 +2,7 @@
 // 쀼라인드 API 함수 모음 (신버전 백엔드 정렬 기준)
 // ─────────────────────────────────────────────
 import { api, uploadFile, setAccessToken, setTokens, setRefreshToken, clearAccessToken, getAccessToken } from './client'
+import { disableDemo } from '../utils/demo'
 
 // ── 1. 헬스체크 ──────────────────────────────
 export const checkHealth   = () => api.get('/health')
@@ -40,6 +41,7 @@ export async function logout() {
   try { await api.post('/auth/logout', {}) } catch (_) {}
   clearAccessToken()
   setRefreshToken(null)
+  disableDemo()
 }
 
 // ── 3. 사용자 ─────────────────────────────────

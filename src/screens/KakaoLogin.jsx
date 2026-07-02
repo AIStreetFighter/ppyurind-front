@@ -2,8 +2,10 @@ import { useState, useEffect } from 'react'
 import ThemeToggle from '../components/ThemeToggle'
 import { getOAuthUrl } from '../api/ppyurindApi'
 import { LOGO } from '../data/images'
+import { enableDemo } from '../utils/demo'
 
 export default function KakaoLogin({ nav, isDark, toggleTheme }) {
+  const startDemo = () => { enableDemo(); nav('home') }
   // 세션 만료로 튕겨 나온 경우 안내 (한 번만 표시).
   // 플래그 소비(side effect)는 useEffect에서 — StrictMode 이중 렌더에도 안전.
   const [sessionExpired, setSessionExpired] = useState(false)
@@ -151,6 +153,15 @@ export default function KakaoLogin({ nav, isDark, toggleTheme }) {
           <span style={{ color: 'var(--brand)', fontWeight: 500, cursor: 'pointer', textDecoration: 'underline' }}
             onClick={() => nav('legal', { doc: 'terms', from: 'kakaoLogin' })}>서비스 이용약관</span>에 동의하게 됩니다
         </p>
+
+        {/* 시연용 — 로그인 없이 데모 데이터로 둘러보기 */}
+        <button onClick={startDemo} style={{
+          width: '100%', marginTop: 6, background: 'transparent', border: 'none', cursor: 'pointer',
+          fontFamily: 'Pretendard, sans-serif', fontSize: 13, fontWeight: 600, color: 'var(--brand)',
+          textDecoration: 'underline', textUnderlineOffset: 3,
+        }}>
+          로그인 없이 둘러보기 (데모)
+        </button>
       </div>
     </div>
   )

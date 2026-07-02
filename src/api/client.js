@@ -1,3 +1,6 @@
+import { isDemo } from '../utils/demo'
+import { resolveDemo, DEMO_UNHANDLED } from '../data/demoData'
+
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || '/api/v1').replace(/\/$/, '')
 const TOKEN_KEY = 'ppyurind.accessToken'
 const REFRESH_KEY = 'ppyurind.refreshToken'
@@ -103,6 +106,16 @@ async function refreshAccessToken() {
 }
 
 export async function apiRequest(path, options = {}, _retried = false) {
+  // 데모 모드: 네트워크 없이 목데이터로 응답 (미정의 경로는 조용히 null → 화면 자체 폴백)
+  if (isDemo()) {
+    const method = (options.method || 'GET').toUpperCase()
+    let body = null
+    try { body = options.body ? JSON.parse(options.body) : null } catch {}
+    const demoRes = resolveDemo(method, path, body)
+    await new Promise(r => setTimeout(r, 150)) // 자연스러운 로딩 느낌
+    return demoRes === DEMO_UNHANDLED ? null : demoRes
+  }
+
   const token = getAccessToken()
   const headers = new Headers(options.headers || {})
 
@@ -145,6 +158,11 @@ export const api = {
 }
 
 export async function uploadFile(path, file, _retried = false) {
+  if (isDemo()) {
+    await new Promise(r => setTimeout(r, 200))
+    // OCR은 masked_text, 미디어 업로드는 media_url 형태를 기대 — 둘 다 채워 안전하게 반환
+    return { masked_text: '(데모) 캡처에서 인식된 대화 내용이에요.', media_url: '', url: '' }
+  }
   const token = getAccessToken()
   const headers = new Headers()
   if (token) headers.set('Authorization', `Bearer ${token}`)
