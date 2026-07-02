@@ -81,9 +81,35 @@ function mapApiPost(p) {
     comments: p.comment_count || 0,
     author: `user_${p.id}`,
     daysAgo: p.created_at ? Math.round((Date.now() - new Date(p.created_at)) / 86400000) : 0,
+    createdAt: p.created_at || null,
   }
 }
 
+
+function postTime(p) {
+  const value = p.createdAt || p.created_at
+  if (value) {
+    const time = new Date(value).getTime()
+    if (!Number.isNaN(time)) return time
+  }
+  return Date.now() - ((p.daysAgo || 0) * 86400000)
+}
+
+function postIdentity(p) {
+  const compact = `${p.title || ''}|${p.body || ''}`.replace(/\s/g, '').toLowerCase()
+  if (compact.length > 8) return `content:${compact}`
+  return `id:${String(p.id)}`
+}
+
+function uniquePosts(posts) {
+  const seen = new Set()
+  return posts.filter(post => {
+    const key = postIdentity(post)
+    if (seen.has(key)) return false
+    seen.add(key)
+    return true
+  })
+}
 export default function Community({ nav, isDark, toggleTheme, concerns = [] }) {
   const [filter, setFilter] = useState('전체')
   const [query, setQuery] = useState('')
@@ -198,15 +224,15 @@ export default function Community({ nav, isDark, toggleTheme, concerns = [] }) {
     return filter.split('·').some(part => haystack.includes(normStr(part)))
   }
 
-  const base = [...localOnlyPosts, ...seedPosts]
+  const base = uniquePosts([...localOnlyPosts, ...seedPosts])
     .filter(p => !hiddenAuthors.includes(p.author))
     .filter(p => matchesFilter(p))
     .filter(p => !query.trim() || p.nick.includes(query) || p.title.includes(query) || p.body.includes(query) || p.tag.includes(query))
 
   // 정렬: 최신순(작성 시점) / 공감순(최근 30일 내 공감 많은 순)
   const feed = sort === 'empathy'
-    ? base.filter(p => p.daysAgo <= 30).sort((a, b) => b.empathy - a.empathy)
-    : [...base].sort((a, b) => a.daysAgo - b.daysAgo)
+    ? base.filter(p => p.daysAgo <= 30).sort((a, b) => empathyOf(b) - empathyOf(a) || postTime(b) - postTime(a))
+    : [...base].sort((a, b) => postTime(b) - postTime(a))
 
   const shown = feed.slice(0, count)
 
@@ -281,7 +307,7 @@ export default function Community({ nav, isDark, toggleTheme, concerns = [] }) {
         <div className="section-label"><i className="fa-solid fa-wand-magic-sparkles"></i>나와 비슷한 고민 <span className="muted">· AI 추천</span></div>
         <div className="stack">
           {(similar && similar.length > 0) ? (
-            similar.map(s => {
+            similar.filter((s, idx, arr) => arr.findIndex(item => String(item.postId) === String(s.postId)) === idx).map(s => {
               const found = base.find(p => String(p.id) === String(s.postId))
               const title = found?.title || (s.content || '').slice(0, 26)
               return (
