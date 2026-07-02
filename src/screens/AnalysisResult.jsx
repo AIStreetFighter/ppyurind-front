@@ -3,11 +3,25 @@ import ThemeToggle from '../components/ThemeToggle'
 import BottomNav from '../components/BottomNav'
 import SafetyCard from '../components/SafetyCard'
 import { exportReportPdf } from '../utils/exportPdf'
+import { displayAnalysisLabel } from '../data/analysisLabels'
 
 export default function AnalysisResult({ nav, isDark, toggleTheme, nickname, result, rawContent, shared }) {
   const [menuOpen, setMenuOpen] = useState(false)
   const who = nickname || '지우'
   const r = result // 실제 AI 분석 결과 (없으면 예시)
+  const meta = r?.meta && typeof r.meta === 'object' ? r.meta : {}
+  const safety = r?.safety && typeof r.safety === 'object' ? r.safety : {}
+  const legacyRiskLevel = r?.risk_level || r?.riskLevel
+  const metaRiskLevel = meta.risk_level || meta.riskLevel
+  const showEmergencySafety = safety.show_safety_card === true || safety.showSafetyCard === true || safety.level === 'emergency' || metaRiskLevel === 'emergency'
+  const safetyContacts = Array.isArray(safety.contacts) ? safety.contacts : []
+  const emotions = Array.isArray(r?.emotions)
+    ? r.emotions.map(value => displayAnalysisLabel('emotions', value)).filter(Boolean)
+    : [r?.primary_emotion || r?.primaryEmotion, r?.secondary_emotion || r?.secondaryEmotion]
+        .map(value => displayAnalysisLabel('emotions', value)).filter(Boolean)
+  const conflictTopic = displayAnalysisLabel('conflictTopics', r?.conflict_cause || r?.conflictTopic)
+  const hiddenNeed = displayAnalysisLabel('hiddenNeeds', r?.hidden_need || r?.hiddenNeed)
+  const recommendedAction = r?.recommended_action || r?.recommendedMessage || r?.suggestedAction
   return (
     <div className="phone-body report-print">
       <div className="topbar">
@@ -36,12 +50,11 @@ export default function AnalysisResult({ nav, isDark, toggleTheme, nickname, res
       </div>
 
       {/* 감지된 감정 (실제 분석 결과일 때) */}
-      {r && (r.primary_emotion || r.secondary_emotion) && (
+      {r && emotions.length > 0 && (
         <>
           <div className="section-label"><i className="fa-solid fa-heart"></i>지금 느끼는 감정</div>
           <div className="card" style={{ padding: 17, display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-            {r.primary_emotion && <span className="badge badge--match">{r.primary_emotion}</span>}
-            {r.secondary_emotion && <span className="badge badge--warm">{r.secondary_emotion}</span>}
+            {emotions.map((emotion, index) => <span key={`${emotion}-${index}`} className={`badge ${index === 0 ? 'badge--match' : 'badge--warm'}`}>{emotion}</span>)}
           </div>
         </>
       )}
@@ -49,8 +62,8 @@ export default function AnalysisResult({ nav, isDark, toggleTheme, nickname, res
       <div className="section-label"><i className="fa-solid fa-circle-dot"></i>갈등의 원인</div>
       <div className="card" style={{ padding: 17 }}>
         <p style={{ margin: 0, fontSize: 15, lineHeight: 1.65, color: 'var(--ink)' }}>
-          {r?.conflict_cause
-            ? <><b>{r.conflict_cause}</b>에서 비롯된 마음으로 보여요. 충분히 그럴 만한 상황이에요.</>
+          {conflictTopic
+            ? <><b>{conflictTopic}</b>에서 비롯된 마음으로 보여요. 충분히 그럴 만한 상황이에요.</>
             : <>대화의 <b>방식 차이</b>예요. {who}님은 공감을, 배우자는 해결을 먼저 떠올리는 경향이 보여요.</>}
         </p>
       </div>
@@ -58,20 +71,27 @@ export default function AnalysisResult({ nav, isDark, toggleTheme, nickname, res
       <div className="section-label"><i className="fa-solid fa-lightbulb"></i>숨은 욕구</div>
       <div className="card" style={{ padding: 17 }}>
         <p style={{ margin: 0, fontSize: 15, lineHeight: 1.65, color: 'var(--ink)' }}>
-          {r?.hidden_need
-            ? <>"<b>{r.hidden_need}</b>"는 마음이 가장 컸어요.</>
+          {hiddenNeed
+            ? <>"<b>{hiddenNeed}</b>"는 마음이 가장 컸어요.</>
             : <>"내 감정을 <b>있는 그대로 인정받고 싶다</b>"는 마음이 가장 컸어요.</>}
         </p>
       </div>
 
       {/* 추천 행동 (실제 분석 결과일 때) */}
-      {r?.recommended_action && (
+      {recommendedAction && (
         <>
           <div className="section-label"><i className="fa-solid fa-comment-dots"></i>이렇게 전해보면 어때요</div>
           <div className="card" style={{ padding: 17 }}>
-            <p style={{ margin: 0, fontSize: 15, lineHeight: 1.65, color: 'var(--ink)' }}>{r.recommended_action}</p>
+            <p style={{ margin: 0, fontSize: 15, lineHeight: 1.65, color: 'var(--ink)' }}>{recommendedAction}</p>
           </div>
         </>
+      )}
+
+      {(meta.fallback_used === true || meta.fallbackUsed === true) && (
+        <div role="status" style={{ marginTop: 16, padding: '11px 14px', borderRadius: 12, background: 'rgba(232,143,168,0.10)', color: 'var(--ink-soft)', fontSize: 13, lineHeight: 1.55 }}>
+          <i className="fa-solid fa-circle-info" style={{ marginRight: 7, color: 'var(--brand)' }}></i>
+          일부 결과는 기본 안내 기준으로 표시되었어요.
+        </div>
       )}
 
       <div className="insight" style={{ marginTop: 16 }}>
@@ -97,15 +117,15 @@ export default function AnalysisResult({ nav, isDark, toggleTheme, nickname, res
       {r?.safety_action && (
         <div style={{
           marginTop: 16, padding: '14px 16px', borderRadius: 14,
-          background: r.risk_level === 'danger' ? 'rgba(232,80,80,0.10)' : 'rgba(232,143,80,0.10)',
-          border: `1.5px solid ${r.risk_level === 'danger' ? 'rgba(232,80,80,0.35)' : 'rgba(232,143,80,0.35)'}`,
+          background: legacyRiskLevel === 'danger' ? 'rgba(232,80,80,0.10)' : 'rgba(232,143,80,0.10)',
+          border: `1.5px solid ${legacyRiskLevel === 'danger' ? 'rgba(232,80,80,0.35)' : 'rgba(232,143,80,0.35)'}`,
           display: 'flex', gap: 12, alignItems: 'flex-start',
         }}>
-          <i className={`fa-solid ${r.risk_level === 'danger' ? 'fa-triangle-exclamation' : 'fa-circle-info'}`}
-             style={{ color: r.risk_level === 'danger' ? '#e85050' : '#e88f50', marginTop: 2, flexShrink: 0 }}></i>
+          <i className={`fa-solid ${legacyRiskLevel === 'danger' ? 'fa-triangle-exclamation' : 'fa-circle-info'}`}
+             style={{ color: legacyRiskLevel === 'danger' ? '#e85050' : '#e88f50', marginTop: 2, flexShrink: 0 }}></i>
           <div>
             <p style={{ margin: '0 0 4px', fontSize: 14, fontWeight: 700, color: 'var(--ink)' }}>
-              {r.risk_level === 'danger' ? '지금 많이 힘드신 것 같아요' : '마음이 많이 지쳐있는 것 같아요'}
+              {legacyRiskLevel === 'danger' ? '지금 많이 힘드신 것 같아요' : '마음이 많이 지쳐있는 것 같아요'}
             </p>
             <p style={{ margin: 0, fontSize: 13, lineHeight: 1.6, color: 'var(--ink-soft)' }}>{r.safety_action}</p>
             {Array.isArray(r.safety_categories) && r.safety_categories.length > 0 && (
@@ -119,8 +139,14 @@ export default function AnalysisResult({ nav, isDark, toggleTheme, nickname, res
         </div>
       )}
 
+      {showEmergencySafety && (
+        <div style={{ marginTop: 16 }}>
+          <SafetyCard emergency message={safety.message} contacts={safetyContacts} />
+        </div>
+      )}
+
       {/* risk_level에 따라 SafetyCard 표시 방식 결정 */}
-      {(r?.risk_level === 'danger' || r?.risk_level === 'caution') ? (
+      {(legacyRiskLevel === 'danger' || legacyRiskLevel === 'caution') ? (
         <div style={{ marginTop: 16 }}><SafetyCard nav={nav} signal={r.safety_reason || '우울 무기력'} /></div>
       ) : (
         <div style={{ marginTop: 16 }}><SafetyCard collapsible nav={nav} signal="우울 무기력" /></div>
