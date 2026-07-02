@@ -190,34 +190,75 @@ export default function Record({ nav, isDark, toggleTheme }) {
 
       {/* 음성 탭 */}
       {tab === '음성' && (
-        <div className="field" style={{ marginTop: 14, minHeight: 148, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 14 }}>
-          <button
-            className={`mic-btn${recording ? ' rec' : ''}`}
-            onClick={() => recording ? stopRecording() : startRecording()}
-          >
-            <i className="fa-solid fa-microphone"></i>
-          </button>
-          <p style={{ margin: 0, fontSize: 14, color: 'var(--ink-soft)', textAlign: 'center' }}>
-            {recording ? '듣고 있어요… 편하게 말해보세요' : '눌러서 음성으로 기록하기'}
-          </p>
+        <div style={{ marginTop: 14, display: 'flex', flexDirection: 'column', gap: 12 }}>
+          {/* 마이크 컨트롤 */}
+          <div className="field" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, padding: '20px 16px' }}>
+            <button
+              className={`mic-btn${recording ? ' rec' : ''}`}
+              onClick={() => recording ? stopRecording() : startRecording()}
+            >
+              <i className="fa-solid fa-microphone"></i>
+            </button>
+            <p style={{ margin: 0, fontSize: 14, color: 'var(--ink-soft)', textAlign: 'center' }}>
+              {recording ? '듣고 있어요… 편하게 말해보세요' : '눌러서 음성으로 기록하기'}
+            </p>
+            {recording && (
+              <div className="wave">{[...Array(9)].map((_, i) => <span key={i} style={{ animationDelay: `${i * 0.09}s` }} />)}</div>
+            )}
+            {mediaError && <p style={{ margin: 0, fontSize: 12.5, color: 'var(--like)', textAlign: 'center' }}>{mediaError}</p>}
+          </div>
+
+          {/* 실시간 STT 자막 영역 */}
           {recording && (
-            <div className="wave">{[...Array(9)].map((_, i) => <span key={i} style={{ animationDelay: `${i * 0.09}s` }} />)}</div>
-          )}
-          {(recording || text) && (
             <div style={{
-              margin: '4px 0 0', width: '90%', minHeight: 48,
-              background: 'var(--bg-2)', borderRadius: 10, padding: '10px 14px',
-              fontSize: 13.5, color: 'var(--ink)', lineHeight: 1.65, textAlign: 'left',
-              border: recording ? '1.5px solid var(--brand)' : '1px solid var(--surface-line)',
+              borderRadius: 14, overflow: 'hidden',
+              border: '1.5px solid var(--brand)',
+              background: 'var(--surface)',
             }}>
-              {text && <span>{text}</span>}
-              {liveText && <span style={{ color: 'var(--ink-muted)', fontStyle: 'italic' }}>{text ? ' ' : ''}{liveText}</span>}
-              {!text && !liveText && recording && (
-                <span style={{ color: 'var(--ink-muted)', fontStyle: 'italic' }}>말하면 여기에 실시간으로 받아써줄게요…</span>
-              )}
+              {/* 헤더 */}
+              <div style={{
+                display: 'flex', alignItems: 'center', gap: 7,
+                padding: '8px 14px', background: 'var(--brand)',
+              }}>
+                <span style={{
+                  display: 'inline-block', width: 7, height: 7, borderRadius: '50%',
+                  background: '#fff', animation: 'pulse 1.2s ease-in-out infinite',
+                }} />
+                <span style={{ fontSize: 12, fontWeight: 600, color: '#fff', letterSpacing: '0.02em' }}>
+                  실시간 받아쓰기
+                </span>
+              </div>
+              {/* 자막 */}
+              <div style={{ padding: '12px 16px', minHeight: 52 }}>
+                {liveText ? (
+                  <p style={{
+                    margin: 0, fontSize: 15.5, color: 'var(--ink)', lineHeight: 1.7,
+                    fontStyle: 'italic', opacity: 0.85,
+                  }}>
+                    {liveText}
+                    <span style={{ display: 'inline-block', width: 2, height: '1em', background: 'var(--brand)', marginLeft: 3, verticalAlign: 'middle', animation: 'pulse 0.9s step-start infinite' }} />
+                  </p>
+                ) : (
+                  <p style={{ margin: 0, fontSize: 14, color: 'var(--ink-muted)', fontStyle: 'italic' }}>
+                    말하면 여기에 실시간으로 표시돼요…
+                  </p>
+                )}
+              </div>
             </div>
           )}
-          {mediaError && <p style={{ margin: 0, fontSize: 12.5, color: 'var(--like)', textAlign: 'center' }}>{mediaError}</p>}
+
+          {/* 인식 완료된 텍스트 */}
+          {text && (
+            <div style={{
+              borderRadius: 14, border: '1px solid var(--surface-line)',
+              background: 'var(--bg-2)', padding: '12px 16px',
+            }}>
+              <p style={{ margin: '0 0 6px', fontSize: 11.5, fontWeight: 600, color: 'var(--ink-muted)', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
+                기록된 내용
+              </p>
+              <p style={{ margin: 0, fontSize: 14, color: 'var(--ink)', lineHeight: 1.7 }}>{text}</p>
+            </div>
+          )}
         </div>
       )}
 

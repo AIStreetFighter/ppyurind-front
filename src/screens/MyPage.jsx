@@ -47,6 +47,9 @@ export default function MyPage({ nav, isDark, toggleTheme, nickname }) {
   const [concernLabel, setConcernLabel] = useState('대화 단절 · 서운함')
   const [push, setPush] = useState({ empathy: true, comment: true, anniv: true })
   const [confirm, setConfirm] = useState(null) // 'logout' | 'withdraw'
+  const [withdrawStep, setWithdrawStep] = useState(1) // 1: 사유 선택, 2: 최종 확인
+  const [withdrawReason, setWithdrawReason] = useState('')
+  const WITHDRAW_REASONS = ['서비스가 필요 없어졌어요', '사용하기 불편해요', '개인정보가 걱정돼요', '다른 서비스를 이용할게요', '기타']
   const [pinOpen, setPinOpen] = useState(false)
   const [pinDone, setPinDone] = useState(false)
   // 맞춤정보 수정 모달
@@ -328,28 +331,101 @@ export default function MyPage({ nav, isDark, toggleTheme, nickname }) {
         </div>
       )}
 
-      {/* 로그아웃/탈퇴 확인 */}
-      {confirm && (
+      {/* 로그아웃 확인 */}
+      {confirm === 'logout' && (
         <div className="sheet-backdrop" onClick={() => setConfirm(null)} style={{ alignItems: 'center', padding: 22 }}>
           <div className="modal" onClick={e => e.stopPropagation()}>
-            <i className={`fa-solid ${confirm === 'withdraw' ? 'fa-heart-crack' : 'fa-right-from-bracket'}`} style={{ fontSize: 24, color: confirm === 'withdraw' ? 'var(--danger-text)' : 'var(--brand)' }}></i>
-            <h3 style={{ margin: '12px 0 6px', fontSize: 18, color: 'var(--ink)' }}>
-              {confirm === 'withdraw' ? '정말 탈퇴하시겠어요?' : '로그아웃 할까요?'}
-            </h3>
+            <i className="fa-solid fa-right-from-bracket" style={{ fontSize: 24, color: 'var(--brand)' }}></i>
+            <h3 style={{ margin: '12px 0 6px', fontSize: 18, color: 'var(--ink)' }}>로그아웃 할까요?</h3>
             <p style={{ margin: '0 0 18px', fontSize: 13.5, lineHeight: 1.6, color: 'var(--ink-soft)' }}>
-              {confirm === 'withdraw' ? '모든 기록과 도감이 삭제되며 되돌릴 수 없어요.' : '다시 로그인하면 기록을 이어서 볼 수 있어요.'}
+              다시 로그인하면 기록을 이어서 볼 수 있어요.
             </p>
             <div style={{ display: 'flex', gap: 10 }}>
               <button className="cta cta--ghost" style={{ flex: 1 }} onClick={() => setConfirm(null)}>취소</button>
-              <button className="cta" style={{ flex: 1, background: confirm === 'withdraw' ? 'var(--like)' : 'var(--brand)' }} onClick={async () => {
-                const action = confirm
+              <button className="cta" style={{ flex: 1 }} onClick={async () => {
                 setConfirm(null); setSettings(false)
-                if (action === 'withdraw') { await deleteMe().catch(() => {}); nav('kakaoLogin') }
-                else { await logout().catch(() => {}); nav('kakaoLogin') }
-              }}>
-                {confirm === 'withdraw' ? '탈퇴하기' : '로그아웃'}
-              </button>
+                await logout().catch(() => {})
+                nav('kakaoLogin')
+              }}>로그아웃</button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* 회원 탈퇴 — 2단계 */}
+      {confirm === 'withdraw' && (
+        <div className="sheet-backdrop" onClick={() => { setConfirm(null); setWithdrawStep(1); setWithdrawReason('') }} style={{ alignItems: 'flex-end', padding: 0 }}>
+          <div onClick={e => e.stopPropagation()} style={{
+            background: 'var(--surface)', borderRadius: '20px 20px 0 0',
+            padding: '24px 22px 36px', width: '100%', boxSizing: 'border-box',
+          }}>
+            {withdrawStep === 1 ? (
+              <>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 18 }}>
+                  <h3 style={{ margin: 0, fontSize: 17, fontWeight: 700, color: 'var(--ink)' }}>탈퇴 사유를 알려주세요</h3>
+                  <i className="fa-solid fa-xmark" style={{ cursor: 'pointer', color: 'var(--ink-muted)', fontSize: 16 }}
+                    onClick={() => { setConfirm(null); setWithdrawStep(1); setWithdrawReason('') }} />
+                </div>
+                <p style={{ margin: '0 0 16px', fontSize: 13, color: 'var(--ink-muted)' }}>
+                  더 나은 서비스를 위해 사용할게요.
+                </p>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  {WITHDRAW_REASONS.map(r => (
+                    <div key={r} onClick={() => setWithdrawReason(r)} style={{
+                      display: 'flex', alignItems: 'center', gap: 10,
+                      padding: '12px 14px', borderRadius: 12, cursor: 'pointer',
+                      border: `1.5px solid ${withdrawReason === r ? 'var(--brand)' : 'var(--surface-line)'}`,
+                      background: withdrawReason === r ? 'color-mix(in srgb, var(--brand) 10%, transparent)' : 'var(--bg-2)',
+                    }}>
+                      <div style={{
+                        width: 18, height: 18, borderRadius: '50%', border: '2px solid',
+                        borderColor: withdrawReason === r ? 'var(--brand)' : 'var(--ink-muted)',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+                      }}>
+                        {withdrawReason === r && <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--brand)' }} />}
+                      </div>
+                      <span style={{ fontSize: 14, color: 'var(--ink)' }}>{r}</span>
+                    </div>
+                  ))}
+                </div>
+                <button
+                  className="cta"
+                  style={{ marginTop: 20, width: '100%', opacity: withdrawReason ? 1 : 0.4 }}
+                  disabled={!withdrawReason}
+                  onClick={() => setWithdrawStep(2)}
+                >
+                  다음
+                </button>
+              </>
+            ) : (
+              <>
+                <i className="fa-solid fa-heart-crack" style={{ fontSize: 28, color: 'var(--like)', display: 'block', marginBottom: 14 }}></i>
+                <h3 style={{ margin: '0 0 8px', fontSize: 18, fontWeight: 700, color: 'var(--ink)' }}>
+                  정말 탈퇴할까요?
+                </h3>
+                <p style={{ margin: '0 0 6px', fontSize: 13.5, lineHeight: 1.65, color: 'var(--ink-soft)' }}>
+                  감정 기록, 도감, 커뮤니티 글이 <b style={{ color: 'var(--ink)' }}>모두 삭제</b>되고<br />되돌릴 수 없어요.
+                </p>
+                <p style={{ margin: '0 0 20px', fontSize: 12.5, color: 'var(--ink-muted)', padding: '8px 12px', background: 'var(--bg-2)', borderRadius: 8 }}>
+                  사유: {withdrawReason}
+                </p>
+                <div style={{ display: 'flex', gap: 10 }}>
+                  <button className="cta cta--ghost" style={{ flex: 1 }} onClick={() => setWithdrawStep(1)}>← 이전</button>
+                  <button
+                    className="cta"
+                    style={{ flex: 1, background: 'var(--like)' }}
+                    onClick={async () => {
+                      setConfirm(null); setSettings(false); setWithdrawStep(1); setWithdrawReason('')
+                      await deleteMe().catch(() => {})
+                      localStorage.clear()
+                      nav('kakaoLogin')
+                    }}
+                  >
+                    탈퇴하기
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         </div>
       )}

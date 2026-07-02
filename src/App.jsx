@@ -93,7 +93,7 @@ function AppContent() {
 
   const screens = {
     kakaoLogin: <KakaoLogin {...props} />,
-    emailAuth: <EmailAuth nav={nav} />,
+    emailAuth: <EmailAuth nav={nav} isDark={isDark} />,
     oauthCallback: <OAuthCallback nav={nav} />,
     onboarding: <Onboarding {...props} />,
     home: <Home {...props} />,
