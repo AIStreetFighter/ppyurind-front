@@ -128,7 +128,7 @@ export default function Analysis({ nav, isDark, toggleTheme, nickname }) {
           <h1 className="page-title" style={{ fontSize: 23, margin: '0 0 5px' }}>관계 마음 리포트</h1>
           <p className="page-sub" style={{ fontSize: 13.5 }}>{r.range} · 닉네임 '{nickname || '들풀'}'</p>
         </div>
-        <span className="rp-lock"><i className="fa-solid fa-lock"></i> 나만 보는 리포트</span>
+        <span className="rp-lock-caption"><i className="fa-solid fa-lock"></i> 나만 볼 수 있어요 · 안전하게 보호 중</span>
       </div>
 
       <div className="seg" style={{ marginTop: 14 }}>
