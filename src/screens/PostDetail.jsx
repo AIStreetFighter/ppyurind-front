@@ -188,7 +188,9 @@ export default function PostDetail({ nav, post }) {
       addMyCommentId(created.id)
       refreshMyCommentIds()
       setComments(c => [...c, mapComment(created)])
-    } catch {
+    } catch (err) {
+      // 401(세션 만료)은 전역 핸들러가 로그인으로 유도 → 임시저장 안 함
+      if (err?.status === 401) { setDraft(text); return }
       setComments(c => [...c, { id: Date.now(), nick: '나', body: text, time: '방금', likes: 0, liked: false, replies: [] }])
       flashComment('댓글이 임시 저장됐어요 · 새로고침하면 사라질 수 있어요')
     }
@@ -213,7 +215,8 @@ export default function PostDetail({ nav, post }) {
       setComments(cs => cs.map(c => c.id === cid
         ? { ...c, replies: [...c.replies, mapComment(created)] }
         : c))
-    } catch {
+    } catch (err) {
+      if (err?.status === 401) { setReplyDraft(text); setReplyTo(cid); return }
       setComments(cs => cs.map(c => c.id === cid
         ? { ...c, replies: [...c.replies, { id: Date.now(), nick: '나', body: text, time: '방금', likes: 0, liked: false }] }
         : c))

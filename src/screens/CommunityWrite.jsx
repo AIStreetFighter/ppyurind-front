@@ -67,7 +67,9 @@ export default function CommunityWrite({ nav }) {
       const created = await createCommunityPost({ content: masked.text, title: title.trim(), isAnonymous: true, isAdultOnly: adult })
       saveMyCommunityPost(mapCommunityPostToLocal(created, nextPost))
       nav('community')
-    } catch {
+    } catch (err) {
+      // 401(세션 만료)는 전역 핸들러가 로그인으로 보내므로 로컬 저장/이동하지 않음
+      if (err?.status === 401) { setIsSaving(false); return }
       saveMyCommunityPost(nextPost)
       setIsSaving(false)
       setToast('서버 저장 실패 · 내 글에서 확인 가능해요')
@@ -149,9 +151,7 @@ export default function CommunityWrite({ nav }) {
       </main>
 
       <footer className="compose-tools">
-        <button type="button" aria-label="이미지 첨부"><i className="fa-regular fa-image"></i></button>
-        <button type="button" aria-label="검사 연결"><i className="fa-regular fa-square-check"></i></button>
-        <button type="button" aria-label="태그"><i className="fa-solid fa-hashtag"></i></button>
+        {/* 이미지 첨부·설문 연결·태그 아이콘은 기능 구현 후 노출 예정 (현재 숨김) */}
         <span>{body.length}/1200</span>
       </footer>
 

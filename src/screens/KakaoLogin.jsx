@@ -1,8 +1,21 @@
+import { useState, useEffect } from 'react'
 import ThemeToggle from '../components/ThemeToggle'
 import { getOAuthUrl } from '../api/ppyurindApi'
 import { LOGO } from '../data/images'
 
 export default function KakaoLogin({ nav, isDark, toggleTheme }) {
+  // 세션 만료로 튕겨 나온 경우 안내 (한 번만 표시).
+  // 플래그 소비(side effect)는 useEffect에서 — StrictMode 이중 렌더에도 안전.
+  const [sessionExpired, setSessionExpired] = useState(false)
+  useEffect(() => {
+    try {
+      if (sessionStorage.getItem('ppyurind:sessionExpired')) {
+        sessionStorage.removeItem('ppyurind:sessionExpired')
+        setSessionExpired(true)
+      }
+    } catch {}
+  }, [])
+
   return (
     <div style={{
       flex: 1,
@@ -17,6 +30,20 @@ export default function KakaoLogin({ nav, isDark, toggleTheme }) {
       <div style={{ width: '100%', display: 'flex', justifyContent: 'flex-end', padding: '20px 0 0' }}>
         <ThemeToggle isDark={isDark} toggleTheme={toggleTheme} />
       </div>
+
+      {sessionExpired && (
+        <div style={{
+          width: '100%', marginTop: 12, padding: '12px 16px', borderRadius: 12,
+          background: 'color-mix(in srgb, var(--brand) 12%, var(--surface))',
+          border: '1px solid color-mix(in srgb, var(--brand) 30%, transparent)',
+          display: 'flex', alignItems: 'center', gap: 9,
+        }}>
+          <i className="fa-solid fa-circle-info" style={{ color: 'var(--brand)', fontSize: 14 }}></i>
+          <span style={{ fontSize: 13.5, color: 'var(--ink-soft)', lineHeight: 1.5 }}>
+            로그인 세션이 만료됐어요. 다시 로그인하면 이어서 이용할 수 있어요.
+          </span>
+        </div>
+      )}
 
       {/* 중앙 브랜딩 */}
       <div style={{

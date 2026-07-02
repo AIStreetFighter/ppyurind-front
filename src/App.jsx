@@ -76,6 +76,16 @@ function AppContent() {
     if (screen === 'post' && !activePost) navigate(SCREEN_PATHS['community'])
   }, [screen, activePost])
 
+  // 토큰 만료(401) 전역 처리 — 조용한 저장 실패 대신 재로그인으로 유도
+  useEffect(() => {
+    const onUnauthorized = () => {
+      try { sessionStorage.setItem('ppyurind:sessionExpired', '1') } catch {}
+      navigate(SCREEN_PATHS['kakaoLogin'])
+    }
+    window.addEventListener('ppyurind:unauthorized', onUnauthorized)
+    return () => window.removeEventListener('ppyurind:unauthorized', onUnauthorized)
+  }, [])
+
   const nav = (to, payload) => {
     if (to === "checkup") setCheckupSignal(payload?.signal || "");
     if (to === "legal") setLegal({ doc: payload?.doc || "privacy", from: payload?.from || "kakaoLogin" });
