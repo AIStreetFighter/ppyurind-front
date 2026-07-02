@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import ThemeToggle from '../components/ThemeToggle'
 import BottomNav from '../components/BottomNav'
 import { EVENT_TYPES, ymd } from '../data/events'
-import { listEvents, createEvent, deleteEvent } from '../api/ppyurindApi'
+import { listEvents, createEvent, deleteEvent, updateEvent } from '../api/ppyurindApi'
 
 const WEEK = ['일', '월', '화', '수', '목', '금', '토']
 
@@ -14,6 +14,7 @@ export default function Calendar({ nav, isDark, toggleTheme }) {
   const [newTitle, setNewTitle] = useState('')
   const [newDate, setNewDate] = useState('')
   const [newType, setNewType] = useState('anniv')
+  const [editing, setEditing] = useState(null) // 수정 중인 일정(null이면 추가 모드)
 
   useEffect(() => {
     listEvents().then(data => {
@@ -33,19 +34,32 @@ export default function Calendar({ nav, isDark, toggleTheme }) {
     .filter(e => e.date.startsWith(`${year}-${String(month + 1).padStart(2, '0')}`))
     .sort((a, b) => a.date.localeCompare(b.date))
 
-  const openAdd = () => { setNewTitle(''); setNewDate(selected || todayStr); setNewType('anniv'); setAdding(true) }
+  const openAdd = () => { setEditing(null); setNewTitle(''); setNewDate(selected || todayStr); setNewType('anniv'); setAdding(true) }
+  const openEdit = (e) => { setEditing(e); setNewTitle(e.title); setNewDate(e.date); setNewType(e.type || 'anniv'); setAdding(true) }
 
   const submitEvent = async () => {
     if (!newTitle.trim() || !newDate) return
-    try {
-      const created = await createEvent({ eventType: newType, eventDate: newDate, title: newTitle.trim() })
-      setEvents(prev => [...prev, { ...created, date: created.date || newDate, type: created.type || newType }])
-    } catch {
-      setEvents(prev => [...prev, { date: newDate, type: newType, title: newTitle.trim() }])
+    if (editing) {
+      // 수정
+      if (editing.id) {
+        updateEvent(editing.id, { event_type: newType, event_date: newDate, title: newTitle.trim() }).catch(() => {})
+      }
+      setEvents(prev => prev.map(ev => ev === editing
+        ? { ...ev, title: newTitle.trim(), date: newDate, type: newType }
+        : ev))
+    } else {
+      // 추가
+      try {
+        const created = await createEvent({ eventType: newType, eventDate: newDate, title: newTitle.trim() })
+        setEvents(prev => [...prev, { ...created, date: created.date || newDate, type: created.type || newType }])
+      } catch {
+        setEvents(prev => [...prev, { date: newDate, type: newType, title: newTitle.trim() }])
+      }
     }
     setView(new Date(Number(newDate.slice(0, 4)), Number(newDate.slice(5, 7)) - 1, 1))
     setSelected(newDate)
     setAdding(false)
+    setEditing(null)
   }
 
   const removeEvent = async (e) => {
@@ -122,7 +136,9 @@ export default function Calendar({ nav, isDark, toggleTheme }) {
                 <p className="row__sub">{e.date.slice(5).replace('-', '월 ')}일 · {t.label}</p>
               </div>
               {dday >= 0 && <span className="badge badge--match">D-{dday}</span>}
-              <i className="fa-solid fa-trash" style={{ color: 'var(--ink-muted)', fontSize: 13, marginLeft: 8, cursor: 'pointer' }}
+              <i className="fa-solid fa-pen" style={{ color: 'var(--ink-muted)', fontSize: 12.5, marginLeft: 8, cursor: 'pointer' }}
+                onClick={ev => { ev.stopPropagation(); openEdit(e) }} />
+              <i className="fa-solid fa-trash" style={{ color: 'var(--ink-muted)', fontSize: 13, marginLeft: 6, cursor: 'pointer' }}
                 onClick={ev => { ev.stopPropagation(); removeEvent(e) }} />
             </div>
           )
@@ -137,9 +153,9 @@ export default function Calendar({ nav, isDark, toggleTheme }) {
       </button>
 
       {adding && (
-        <div className="sheet-backdrop" onClick={() => setAdding(false)} style={{ alignItems: 'center', padding: 22 }}>
+        <div className="sheet-backdrop" onClick={() => { setAdding(false); setEditing(null) }} style={{ alignItems: 'center', padding: 22 }}>
           <div className="modal" onClick={e => e.stopPropagation()} style={{ textAlign: 'left' }}>
-            <h3 style={{ margin: '0 0 16px', fontSize: 18, color: 'var(--ink)' }}>일정 추가</h3>
+            <h3 style={{ margin: '0 0 16px', fontSize: 18, color: 'var(--ink)' }}>{editing ? '일정 수정' : '일정 추가'}</h3>
             <input className="field" style={{ width: '100%', marginBottom: 10 }} placeholder="일정 이름 (예: 결혼기념일)"
               value={newTitle} onChange={e => setNewTitle(e.target.value)} autoFocus />
             <input className="field" type="date" style={{ width: '100%', marginBottom: 10 }}
@@ -150,8 +166,8 @@ export default function Calendar({ nav, isDark, toggleTheme }) {
               ))}
             </div>
             <div style={{ display: 'flex', gap: 10 }}>
-              <button className="cta cta--ghost" style={{ flex: 1 }} onClick={() => setAdding(false)}>취소</button>
-              <button className="cta" style={{ flex: 1, opacity: newTitle.trim() && newDate ? 1 : 0.5 }} onClick={submitEvent}>추가하기</button>
+              <button className="cta cta--ghost" style={{ flex: 1 }} onClick={() => { setAdding(false); setEditing(null) }}>취소</button>
+              <button className="cta" style={{ flex: 1, opacity: newTitle.trim() && newDate ? 1 : 0.5 }} onClick={submitEvent}>{editing ? '수정하기' : '추가하기'}</button>
             </div>
           </div>
         </div>

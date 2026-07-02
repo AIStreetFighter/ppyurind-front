@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import BottomNav from '../components/BottomNav'
 import ThemeToggle from '../components/ThemeToggle'
 import PinPad from '../components/PinPad'
-import { logout, deleteMe, updateMe, getDex, addDex, deleteDex, updateNotificationSettings, getMe, setPin as apiSetPin, removePin as apiRemovePin } from '../api/ppyurindApi'
+import { logout, deleteMe, updateMe, getDex, addDex, deleteDex, updateDex, updateNotificationSettings, getMe, setPin as apiSetPin, removePin as apiRemovePin } from '../api/ppyurindApi'
 import { enableLock, disableLock, isLockEnabled } from '../utils/appLock'
 import { CAT_MYPAGE } from '../data/images'
 import { SUPPORT_PROGRAMS } from '../data/supportPrograms'
@@ -32,16 +32,21 @@ const DEX = [
   },
 ]
 
+// 도감 본문 항목을 { content, id } 형태로 정규화 (문자열/객체 혼용 대응)
+const normBody = (arr) => (arr || []).map(x => (typeof x === 'string' ? { content: x, id: null } : x))
+const normDex = (list) => (list || []).map(d => ({ ...d, body: normBody(d.body) }))
+
 export default function MyPage({ nav, isDark, toggleTheme, nickname }) {
   const [dexItems, setDexItems] = useState(() => {
     try {
-      return JSON.parse(localStorage.getItem(DEX_STORAGE_KEY) || 'null') || DEX
+      return normDex(JSON.parse(localStorage.getItem(DEX_STORAGE_KEY) || 'null') || DEX)
     } catch {
-      return DEX
+      return normDex(DEX)
     }
   })
   const [open, setOpen] = useState(null)
   const [addTarget, setAddTarget] = useState(null)
+  const [editTarget, setEditTarget] = useState(null)
   const [dexDraft, setDexDraft] = useState('')
   const [settings, setSettings] = useState(false)
   const [tone, setTone] = useState('부드럽게')
@@ -122,7 +127,7 @@ export default function MyPage({ nav, isDark, toggleTheme, nickname }) {
       setDexItems(prev => prev.map(d => {
         const apiItems = items.filter(i => i.category === d.key)
         if (!apiItems.length) return d
-        return { ...d, body: apiItems.map(i => i.content) }
+        return { ...d, body: apiItems.map(i => ({ content: i.content, id: i.id })) }
       }))
     }).catch(() => {})
   }, [])
@@ -140,17 +145,53 @@ export default function MyPage({ nav, isDark, toggleTheme, nickname }) {
   const submitDexAdd = async () => {
     const value = dexDraft.trim()
     if (!value || !addTarget) return
-    addDex({ category: addTarget, content: value }).catch(() => {})
+    let newId = null
+    try { const created = await addDex({ category: addTarget, content: value }); newId = created?.id ?? null } catch {}
     setDexItems(items => items.map(item => {
       if (item.key !== addTarget) return item
       return {
         ...item,
         count: item.count == null ? undefined : item.count + 1,
-        body: [...item.body, value],
+        body: [...item.body, { content: value, id: newId }],
       }
     }))
     setDexDraft('')
     setAddTarget(null)
+  }
+
+  // 도감 항목 수정
+  const openDexEdit = (key, index) => {
+    const item = dexItems.find(d => d.key === key)?.body[index]
+    if (!item) return
+    setEditTarget({ key, index, id: item.id })
+    setDexDraft(item.content)
+  }
+  const submitDexEdit = async () => {
+    const value = dexDraft.trim()
+    if (!value || !editTarget) return
+    const { key, index, id } = editTarget
+    if (id) updateDex(id, { content: value }).catch(() => {})
+    setDexItems(items => items.map(item => {
+      if (item.key !== key) return item
+      const body = item.body.map((b, j) => (j === index ? { ...b, content: value } : b))
+      return { ...item, body }
+    }))
+    setDexDraft('')
+    setEditTarget(null)
+  }
+  // 도감 항목 삭제
+  const deleteDexItem = (key, index) => {
+    const target = dexItems.find(d => d.key === key)?.body[index]
+    if (target?.id) deleteDex(target.id).catch(() => {})
+    setDexItems(items => items.map(item => {
+      if (item.key !== key) return item
+      return {
+        ...item,
+        count: item.count == null ? undefined : Math.max(0, item.count - 1),
+        body: item.body.filter((_, j) => j !== index),
+      }
+    }))
+    flash('항목을 삭제했어요.')
   }
 
   return (
@@ -189,7 +230,13 @@ export default function MyPage({ nav, isDark, toggleTheme, nickname }) {
               </div>
               {open === d.key && (
                 <div className="acc-body">
-                  {d.body.map((line, j) => <p key={j} className="acc-line-item">· {line}</p>)}
+                  {d.body.map((line, j) => (
+                    <div key={j} className="acc-line-row" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <p className="acc-line-item" style={{ flex: 1, margin: '5px 0' }}>· {line.content}</p>
+                      <i className="fa-solid fa-pen" style={{ fontSize: 12, color: 'var(--ink-muted)', cursor: 'pointer', padding: 4 }} onClick={() => openDexEdit(d.key, j)}></i>
+                      <i className="fa-solid fa-xmark" style={{ fontSize: 15, color: 'var(--ink-muted)', cursor: 'pointer', padding: 4 }} onClick={() => deleteDexItem(d.key, j)}></i>
+                    </div>
+                  ))}
                   <button className="acc-add" onClick={() => openDexAdd(d.key)}><i className="fa-solid fa-plus"></i> 추가하기</button>
                 </div>
               )}
@@ -336,6 +383,29 @@ export default function MyPage({ nav, isDark, toggleTheme, nickname }) {
             <div style={{ display: 'flex', gap: 10, marginTop: 14 }}>
               <button className="cta cta--ghost" style={{ flex: 1 }} onClick={() => setAddTarget(null)}>취소</button>
               <button className="cta" style={{ flex: 1, opacity: dexDraft.trim() ? 1 : 0.5 }} onClick={submitDexAdd}>저장</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 도감 항목 수정 */}
+      {editTarget && (
+        <div className="sheet-backdrop" onClick={() => { setEditTarget(null); setDexDraft('') }} style={{ alignItems: 'center', padding: 22 }}>
+          <div className="modal modal--wide" onClick={e => e.stopPropagation()} style={{ textAlign: 'left' }}>
+            <h3 style={{ margin: '0 0 6px', fontSize: 18, color: 'var(--ink)' }}>항목 수정</h3>
+            <p style={{ margin: '0 0 14px', fontSize: 12.5, lineHeight: 1.6, color: 'var(--ink-muted)' }}>
+              내용을 수정한 뒤 저장하세요.
+            </p>
+            <textarea
+              className="field"
+              value={dexDraft}
+              onChange={e => setDexDraft(e.target.value)}
+              style={{ width: '100%', minHeight: 110, resize: 'none', fontFamily: 'inherit' }}
+              autoFocus
+            />
+            <div style={{ display: 'flex', gap: 10, marginTop: 14 }}>
+              <button className="cta cta--ghost" style={{ flex: 1 }} onClick={() => { setEditTarget(null); setDexDraft('') }}>취소</button>
+              <button className="cta" style={{ flex: 1, opacity: dexDraft.trim() ? 1 : 0.5 }} onClick={submitDexEdit}>저장</button>
             </div>
           </div>
         </div>

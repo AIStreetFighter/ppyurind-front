@@ -32,7 +32,7 @@ export default function LockScreen({ onUnlock }) {
       alignItems: 'center', justifyContent: 'center', padding: '0 28px 40px', gap: 6,
     }}>
       <div style={{ width: 72, height: 72, borderRadius: 20, overflow: 'hidden', marginBottom: 14, boxShadow: '0 8px 24px rgba(0,0,0,0.2)' }}>
-        <img src={LOGO} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', transform: 'scale(1.12)' }} />
+        <img src={LOGO} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', transform: 'scale(1.35)' }} />
       </div>
       <h1 style={{ margin: 0, fontSize: 20, fontWeight: 800, color: 'var(--ink)' }}>잠금 해제</h1>
       <p className="pinpad__label" style={{ marginTop: 6 }}>

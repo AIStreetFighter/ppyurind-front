@@ -62,14 +62,14 @@ export default function KakaoLogin({ nav, isDark, toggleTheme }) {
           marginBottom: 32,
           boxShadow: '0 10px 30px rgba(0,0,0,0.25)',
         }}>
-          <img src={LOGO} alt="쀼라인드" style={{ width: '100%', height: '100%', objectFit: 'cover', transform: 'scale(1.12)' }} />
+          <img src={LOGO} alt="쀼라인드" style={{ width: '100%', height: '100%', objectFit: 'cover', transform: 'scale(1.35)' }} />
         </div>
 
         <h1 style={{ margin: '0 0 12px', fontSize: 34, fontWeight: 800, color: 'var(--ink)', letterSpacing: '-0.02em' }}>
           쀼라인드
         </h1>
         <p style={{ margin: 0, fontSize: 15.5, lineHeight: 1.65, color: 'var(--ink-soft)', textAlign: 'center' }}>
-          속마음을 기록하면<br />AI가 내 마음을 들여다봐 줘요
+          오늘의 마음을 적어두면<br />우리 사이가 조금씩 선명해져요
         </p>
 
         <div style={{ display: 'flex', gap: 10, marginTop: 32, flexWrap: 'wrap', justifyContent: 'center' }}>

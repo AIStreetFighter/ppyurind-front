@@ -52,7 +52,7 @@ export default function EmailAuth({ nav, isDark, onNicknameSave }) {
         <img
           src={CATS_LOGIN_FAIL}
           alt="로그인 실패"
-          style={{ width: 270, marginBottom: 0, userSelect: 'none' }}
+          style={{ width: 324, marginBottom: 0, userSelect: 'none' }}
         />
         <h2 style={{ margin: '4px 0 10px', fontSize: 22, fontWeight: 800, color: 'var(--ink)' }}>
           앗, 로그인에 실패했어요
@@ -100,7 +100,7 @@ export default function EmailAuth({ nav, isDark, onNicknameSave }) {
           <img
             src={CATS_REGISTER}
             alt="쀼라인드 캐릭터"
-            style={{ width: 200, userSelect: 'none' }}
+            style={{ width: 240, userSelect: 'none' }}
           />
           <img
             src={isDark ? HELLO_DARK : HELLO_LIGHT}
