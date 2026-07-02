@@ -179,8 +179,18 @@ export default function Community({ nav, isDark, toggleTheme, concerns = [] }) {
   // API에 이미 올라간 글은 API 버전(최신 카운트)을 사용, 로컬에만 있는 글만 앞에 추가
   const apiPostIds = new Set(seedPosts.map(p => String(p.id)))
   const localOnlyPosts = userPosts.filter(p => !apiPostIds.has(String(p.id)))
+
+  // 태그 필터: 공백 제거 후 포함 여부 검사. '시댁·처가' 같은 복합 태그는 · 기준 분리해 하나라도 매칭되면 통과
+  const normStr = (s) => (s || '').replace(/\s/g, '').toLowerCase()
+  const matchesFilter = (p) => {
+    if (filter === '전체') return true
+    const haystack = normStr(p.tag + p.title + p.body)
+    return filter.split('·').some(part => haystack.includes(normStr(part)))
+  }
+
   const base = [...localOnlyPosts, ...seedPosts]
     .filter(p => !hiddenAuthors.includes(p.author))
+    .filter(p => matchesFilter(p))
     .filter(p => !query.trim() || p.nick.includes(query) || p.title.includes(query) || p.body.includes(query) || p.tag.includes(query))
 
   // 정렬: 최신순(작성 시점) / 공감순(최근 30일 내 공감 많은 순)
