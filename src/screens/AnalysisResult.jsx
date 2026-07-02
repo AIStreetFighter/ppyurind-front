@@ -4,7 +4,7 @@ import BottomNav from '../components/BottomNav'
 import SafetyCard from '../components/SafetyCard'
 import { exportReportPdf } from '../utils/exportPdf'
 
-export default function AnalysisResult({ nav, isDark, toggleTheme, nickname, result, rawContent }) {
+export default function AnalysisResult({ nav, isDark, toggleTheme, nickname, result, rawContent, shared }) {
   const [menuOpen, setMenuOpen] = useState(false)
   const who = nickname || '지우'
   const r = result // 실제 AI 분석 결과 (없으면 예시)
@@ -79,6 +79,20 @@ export default function AnalysisResult({ nav, isDark, toggleTheme, nickname, res
         <p>"{r?.new_self_insight || `${who}님은 해결보다 공감을 먼저 원해요.`}"</p>
       </div>
 
+      {/* 공유 완료 / 공유 실패 표시 */}
+      {shared === true && (
+        <div style={{ marginTop: 16, padding: '10px 14px', borderRadius: 12, background: 'rgba(80,180,120,0.10)', border: '1.5px solid rgba(80,180,120,0.35)', display: 'flex', alignItems: 'center', gap: 10 }}>
+          <i className="fa-solid fa-check-circle" style={{ color: '#50b478' }}></i>
+          <span style={{ fontSize: 13.5, color: 'var(--ink)' }}>커뮤니티에 익명으로 공유됐어요.</span>
+        </div>
+      )}
+      {shared === false && result && (
+        <div style={{ marginTop: 16, padding: '10px 14px', borderRadius: 12, background: 'rgba(200,100,100,0.08)', border: '1.5px solid rgba(200,100,100,0.25)', display: 'flex', alignItems: 'center', gap: 10 }}>
+          <i className="fa-solid fa-circle-xmark" style={{ color: '#c46464' }}></i>
+          <span style={{ fontSize: 13.5, color: 'var(--ink)' }}>공유에 실패했어요. 커뮤니티 탭에서 다시 시도해보세요.</span>
+        </div>
+      )}
+
       {/* 위험 신호 감지 시 safety_action 안내 배너 */}
       {r?.safety_action && (
         <div style={{
@@ -94,6 +108,13 @@ export default function AnalysisResult({ nav, isDark, toggleTheme, nickname, res
               {r.risk_level === 'danger' ? '지금 많이 힘드신 것 같아요' : '마음이 많이 지쳐있는 것 같아요'}
             </p>
             <p style={{ margin: 0, fontSize: 13, lineHeight: 1.6, color: 'var(--ink-soft)' }}>{r.safety_action}</p>
+            {Array.isArray(r.safety_categories) && r.safety_categories.length > 0 && (
+              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 8 }}>
+                {r.safety_categories.map(cat => (
+                  <span key={cat} style={{ fontSize: 11, padding: '2px 8px', borderRadius: 99, background: 'rgba(0,0,0,0.08)', color: 'var(--ink-soft)' }}>{cat}</span>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       )}

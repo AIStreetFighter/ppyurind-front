@@ -68,6 +68,7 @@ function AppContent() {
     try { return JSON.parse(sessionStorage.getItem('ppyurind:activePost') || 'null') } catch { return null }
   });
   const [analysisResult, setAnalysisResult] = useState(null);
+  const [analysisShared, setAnalysisShared] = useState(undefined);
   const [translateInitialText, setTranslateInitialText] = useState('');
 
   // post 없이 /community/post 직접 접근 또는 새로고침 시 커뮤니티로 복귀
@@ -82,7 +83,7 @@ function AppContent() {
       setActivePost(payload.post);
       try { sessionStorage.setItem('ppyurind:activePost', JSON.stringify(payload.post)) } catch {}
     }
-    if (to === "analysisResult") { setAnalysisResult(payload?.result || null); setTranslateInitialText(payload?.rawContent || ''); }
+    if (to === "analysisResult") { setAnalysisResult(payload?.result || null); setAnalysisShared(payload?.shared); setTranslateInitialText(payload?.rawContent || ''); }
     if (to === "translate" && payload?.initialText) setTranslateInitialText(payload.initialText);
     navigate(SCREEN_PATHS[to] || "/");
   };
@@ -98,7 +99,7 @@ function AppContent() {
     home: <Home {...props} />,
     record: <Record {...props} />,
     analysis: <Analysis {...props} />,
-    analysisResult: <AnalysisResult {...props} result={analysisResult} rawContent={translateInitialText} />,
+    analysisResult: <AnalysisResult {...props} result={analysisResult} rawContent={translateInitialText} shared={analysisShared} />,
     translate: <Translate {...props} initialText={translateInitialText} />,
     calendar: <Calendar {...props} />,
     checkup: <MindCheckup {...props} signal={checkupSignal} />,

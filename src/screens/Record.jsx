@@ -110,25 +110,44 @@ export default function Record({ nav, isDark, toggleTheme }) {
       return
     }
 
+    // ── 1단계: 감정 분석 ─────────────────────────────────────────
+    let result
     try {
-      // PR#16 이후 analyzeEmotion이 DB 저장까지 처리 → createEmotion 이중 호출 제거
-      const result = await analyzeEmotion({ rawContent: trimmed, inputType })
+      result = await analyzeEmotion({ rawContent: trimmed, inputType })
       if (result?.id) saveLastEmotion(result.id, trimmed)
-      if (share && result?.id) {
-        const emotion = result?.primary_emotion || result?.primaryEmotion || ''
-        const autoTitle = emotion ? `${emotion}을(를) 느낀 이야기` : '속마음 기록'
-        const post = await createCommunityPost({ content: trimmed, title: autoTitle, isAnonymous: true, sourceRecordId: result.id })
-        saveMyCommunityPost(mapCommunityPostToLocal(post, {
-          title: autoTitle,
-          body: trimmed,
-          tag: emotion ? `AI 태그: ${emotion}` : '',
-        }))
-      }
-      nav('analysisResult', { result, shared: share, rawContent: trimmed })
     } catch {
       setError('분석 서버에 연결하지 못했어요. 예시 결과를 보여드릴게요.')
       setTimeout(() => { setAnalyzing(false); nav('analysisResult', { rawContent: trimmed }) }, 1200)
+      return
     }
+
+    // ── 2단계: 커뮤니티 공유 (선택, 실패해도 분석 결과는 표시) ──────
+    let shareSuccess = false
+    if (share) {
+      const recordId = result?.id ?? result?.record_id
+      if (recordId) {
+        try {
+          const emotion = result?.primary_emotion || result?.primaryEmotion || ''
+          const autoTitle = emotion ? `${emotion}을(를) 느낀 이야기` : '속마음 기록'
+          const post = await createCommunityPost({
+            content: trimmed,
+            title: autoTitle,
+            isAnonymous: true,
+            sourceRecordId: recordId,
+          })
+          saveMyCommunityPost(mapCommunityPostToLocal(post, {
+            title: autoTitle,
+            body: trimmed,
+            tag: emotion ? `AI 태그: ${emotion}` : '',
+          }))
+          shareSuccess = true
+        } catch {
+          // 공유 실패 — 분석 결과 화면에서 shareSuccess=false로 표시
+        }
+      }
+    }
+
+    nav('analysisResult', { result, shared: share ? shareSuccess : false, rawContent: trimmed })
   }
 
   return (
