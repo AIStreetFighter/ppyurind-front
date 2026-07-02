@@ -4,9 +4,6 @@ import ThemeToggle from '../components/ThemeToggle'
 import NotifBell from '../components/NotifBell'
 import { nickFromId, avatarSrc } from '../data/nicknames'
 import { CAT_SHARE } from '../data/images'
-
-const HEADER_DARK = '/assets/cats/header_dark.png'
-const HEADER_LIGHT = '/assets/cats/header_light.png'
 import { likedMap, comfortedMap, setReaction, getCommentCount } from '../utils/reactions'
 import { listCommunityPosts, empathyPost, comfortPost, reportPost, muteAuthor, deleteCommunityPost, getSimilarPosts } from '../api/ppyurindApi'
 
@@ -242,11 +239,8 @@ export default function Community({ nav, isDark, toggleTheme, concerns = [] }) {
   return (
     <>
       <div className="phone-body">
-        {/* 배너 + 상단바 통합 — CSS background-image, aspect-ratio 2.4:1 */}
-        <div
-          className="community-banner"
-          style={{ backgroundImage: `url(${isDark ? HEADER_DARK : HEADER_LIGHT})` }}
-        >
+        {/* 배너 + 상단바 통합 — 배경/비율은 CSS에서 테마·화면폭별로 처리 */}
+        <div className="community-banner">
           {/* 좌측 텍스트 그라디언트 오버레이 */}
           <div style={{
             position: 'absolute', inset: 0, zIndex: 2,
