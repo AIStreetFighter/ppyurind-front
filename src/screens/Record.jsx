@@ -102,15 +102,8 @@ export default function Record({ nav, isDark, toggleTheme }) {
     const inputType = tab === '음성' ? 'voice' : tab === '대화 캡처' ? 'image' : 'text'
     const trimmed = text.trim()
 
-    // 5분 이내 + 유사도 80% 이상이면 재분석 없이 결과 화면으로
-    if (isDuplicate(trimmed)) {
-      const last = getLastEmotion()
-      setAnalyzing(false)
-      nav('analysisResult', { result: { id: last.id }, rawContent: trimmed })
-      return
-    }
-
     // ── 1단계: 감정 분석 ─────────────────────────────────────────
+    // 중복 판단은 백엔드 /emotions/analyze 에서 처리 (dedup_window 5분, similarity 80%)
     let result
     try {
       result = await analyzeEmotion({ rawContent: trimmed, inputType })
