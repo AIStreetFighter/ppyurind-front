@@ -246,7 +246,7 @@ export default function Community({ nav, isDark, toggleTheme, concerns = [] }) {
               <span key={v} className={`chip${filter === v ? ' selected' : ''}`} onClick={() => setFilter(v)}>{v}</span>
             ))
           })()}
-          <span className="chip chip--age"><i className="fa-solid fa-lock" style={{ fontSize: 11 }}></i> 19+</span>
+          <span className="chip chip--age" style={{ cursor: 'pointer' }} onClick={() => flash('성인 인증은 시연용이에요. 실제 연동 예정.')}><i className="fa-solid fa-lock" style={{ fontSize: 11 }}></i> 19+</span>
         </div>
 
         {/* 나와 비슷한 고민 (AI 추천) */}

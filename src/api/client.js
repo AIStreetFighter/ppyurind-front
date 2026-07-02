@@ -52,10 +52,12 @@ export async function apiRequest(path, options = {}) {
   const payload = await parseResponse(response)
 
   if (!response.ok) {
-    const message =
-      typeof payload === 'object' && payload?.detail
-        ? payload.detail
-        : `API request failed with ${response.status}`
+    const detail = typeof payload === 'object' ? payload?.detail : null
+    const message = detail
+      ? Array.isArray(detail)
+        ? detail.map(e => (typeof e === 'string' ? e : e?.msg || '입력 오류')).join(', ')
+        : String(detail)
+      : `오류가 발생했어요 (${response.status})`
     throw new ApiError(message, { status: response.status, payload })
   }
 
