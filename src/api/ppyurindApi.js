@@ -76,6 +76,7 @@ export const updateNotificationSettings = (payload) =>
 
 // PIN 설정 — PUT /users/me/pin
 export const setPin = (pin) => api.put('/users/me/pin', { pin })
+export const removePin = () => api.delete('/users/me/pin')
 
 // ── 4. 감정 기록 ──────────────────────────────
 // 분석 + DB 저장 — POST /emotions/analyze (PR#16 이후 저장까지 처리)

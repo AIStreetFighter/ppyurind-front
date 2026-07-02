@@ -5,7 +5,7 @@ import NotifBell from '../components/NotifBell'
 import { nickFromId, avatarSrc } from '../data/nicknames'
 import { BANNER_DARK, BANNER_LIGHT, CAT_SHARE } from '../data/images'
 import { likedMap, comfortedMap, setReaction, getCommentCount } from '../utils/reactions'
-import { listCommunityPosts, empathyPost, comfortPost, reportPost, muteAuthor, deleteCommunityPost } from '../api/ppyurindApi'
+import { listCommunityPosts, empathyPost, comfortPost, reportPost, muteAuthor, deleteCommunityPost, getSimilarPosts } from '../api/ppyurindApi'
 
 const MY_POSTS_STORAGE_KEY = 'ppyurind:myCommunityPosts'
 
@@ -106,6 +106,7 @@ export default function Community({ nav, isDark, toggleTheme, concerns = [] }) {
   })
   const [count, setCount] = useState(5)
   const [sort, setSort] = useState('latest')
+  const [similar, setSimilar] = useState(null) // null=로딩, []=없음, [items]=실제 유사글
 
   useEffect(() => {
     listCommunityPosts({ offset: 0, limit: 50 }).then(data => {
@@ -113,6 +114,15 @@ export default function Community({ nav, isDark, toggleTheme, concerns = [] }) {
       setApiPosts(items.map(mapApiPost))
     }).catch(() => setApiPosts(null))
   }, [])
+
+  // "나와 비슷한 고민": 내 최근 글(없으면 최신 실제 글)을 기준으로 벡터 유사도 추천.
+  useEffect(() => {
+    const seedId = userPosts[0]?.id ?? (apiPosts && apiPosts[0]?.id)
+    if (!seedId) return
+    getSimilarPosts(seedId)
+      .then(rows => setSimilar((Array.isArray(rows) ? rows : []).slice(0, 3)))
+      .catch(() => setSimilar([]))
+  }, [apiPosts, userPosts])
 
   const flash = (msg) => { setToast(msg); setTimeout(() => setToast(''), 1900) }
 
@@ -267,40 +277,41 @@ export default function Community({ nav, isDark, toggleTheme, concerns = [] }) {
           <span className="chip chip--age" style={{ cursor: 'pointer' }} onClick={() => flash('성인 인증은 시연용이에요. 실제 연동 예정.')}><i className="fa-solid fa-lock" style={{ fontSize: 11 }}></i> 19+</span>
         </div>
 
-        {/* 나와 비슷한 고민 (AI 추천) */}
+        {/* 나와 비슷한 고민 — 벡터 유사도 API(getSimilarPosts) 실데이터. 없으면 최신 실제 글로 폴백 */}
         <div className="section-label"><i className="fa-solid fa-wand-magic-sparkles"></i>나와 비슷한 고민 <span className="muted">· AI 추천</span></div>
         <div className="stack">
-          <div className="card" style={{ padding: 15, cursor: 'pointer' }} onClick={() => nav('post', { post: ALL_POSTS[0] })}>
-            <div className="row">
-              <div className="avatar"><img className="pfp" src={avatarSrc(ALL_POSTS[0].id)} alt="" /></div>
-              <div style={{ flex: 1 }}>
-                <p className="row__title">"기념일을 매번 제가 챙겨요"</p>
-                <p className="row__sub">유사도 92% · 결혼 3년 차</p>
+          {(similar && similar.length > 0) ? (
+            similar.map(s => {
+              const found = base.find(p => String(p.id) === String(s.postId))
+              const title = found?.title || (s.content || '').slice(0, 26)
+              return (
+                <div key={s.postId} className="card" style={{ padding: 15, cursor: 'pointer' }}
+                  onClick={() => nav('post', { post: found || { id: s.postId, nick: nickFromId(s.postId), title, body: s.content || '', tag: '', empathy: 0, comfort: 0, comments: 0, author: '', daysAgo: 0 } })}>
+                  <div className="row">
+                    <div className="avatar"><img className="pfp" src={avatarSrc(s.postId)} alt="" /></div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <p className="row__title">"{title}"</p>
+                      <p className="row__sub">유사도 {Math.round(s.similarityScore)}%</p>
+                    </div>
+                    <span className="badge badge--match">매칭</span>
+                  </div>
+                </div>
+              )
+            })
+          ) : (
+            base.slice(0, 2).map(p => (
+              <div key={p.id} className="card" style={{ padding: 15, cursor: 'pointer' }} onClick={() => nav('post', { post: p })}>
+                <div className="row">
+                  <div className="avatar"><img className="pfp" src={avatarSrc(p.id)} alt="" /></div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <p className="row__title">"{p.title}"</p>
+                    <p className="row__sub">비슷한 고민 이야기</p>
+                  </div>
+                  <span className="badge badge--match">추천</span>
+                </div>
               </div>
-              <span className="badge badge--match">매칭</span>
-            </div>
-          </div>
-          <div className="card" style={{ padding: 15, cursor: 'pointer' }} onClick={() => nav('post', { post: ALL_POSTS[1] })}>
-            <div className="row">
-              <div className="avatar"><img className="pfp" src={avatarSrc(ALL_POSTS[1].id)} alt="" /></div>
-              <div style={{ flex: 1 }}>
-                <p className="row__title">"싸우고 나면 며칠씩 말을 안 해요"</p>
-                <p className="row__sub">유사도 87% · 연애 4년 차</p>
-              </div>
-              <span className="badge badge--match">매칭</span>
-            </div>
-          </div>
-          <div className="card match-locked" style={{ padding: 15 }}>
-            <div className="row">
-              <span className="badge badge--age" style={{ flexShrink: 0 }}>19+</span>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <p className="row__title match-blur">친밀감 부족이 너무 힘들어요</p>
-                <p className="row__sub">유사도 81% · 결혼 5년 차</p>
-              </div>
-              <button className="badge badge--age" style={{ border: 'none', cursor: 'pointer' }}
-                onClick={() => flash('성인 인증은 시연용이에요. 실제 연동 예정.')}>인증 필요</button>
-            </div>
-          </div>
+            ))
+          )}
         </div>
 
         <div className="section-label" style={{ justifyContent: 'space-between' }}>

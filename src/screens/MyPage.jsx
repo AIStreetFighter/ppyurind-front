@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react'
 import BottomNav from '../components/BottomNav'
 import ThemeToggle from '../components/ThemeToggle'
 import PinPad from '../components/PinPad'
-import { logout, deleteMe, updateMe, getDex, addDex, deleteDex, updateNotificationSettings, getMe } from '../api/ppyurindApi'
+import { logout, deleteMe, updateMe, getDex, addDex, deleteDex, updateNotificationSettings, getMe, setPin as apiSetPin, removePin as apiRemovePin } from '../api/ppyurindApi'
+import { enableLock, disableLock, isLockEnabled } from '../utils/appLock'
 import { CAT_MYPAGE } from '../data/images'
 import { SUPPORT_PROGRAMS } from '../data/supportPrograms'
 
@@ -52,7 +53,9 @@ export default function MyPage({ nav, isDark, toggleTheme, nickname }) {
   const [withdrawReason, setWithdrawReason] = useState('')
   const WITHDRAW_REASONS = ['서비스가 필요 없어졌어요', '사용하기 불편해요', '개인정보가 걱정돼요', '다른 서비스를 이용할게요', '기타']
   const [pinOpen, setPinOpen] = useState(false)
-  const [pinDone, setPinDone] = useState(false)
+  const [pinDone, setPinDone] = useState(() => isLockEnabled())
+  const [toast, setToast] = useState('')
+  const flash = (msg) => { setToast(msg); setTimeout(() => setToast(''), 1900) }
   // 맞춤정보 수정 모달
   const [editInfo, setEditInfo] = useState(false)
   const [editRelation, setEditRelation] = useState('신혼')
@@ -152,6 +155,7 @@ export default function MyPage({ nav, isDark, toggleTheme, nickname }) {
 
   return (
     <>
+      {toast && <div className="toast">{toast}</div>}
       <div className="phone-body">
         <div className="topbar">
           <p className="eyebrow">마이</p>
@@ -299,6 +303,11 @@ export default function MyPage({ nav, isDark, toggleTheme, nickname }) {
               <div className="menu-item" onClick={() => nav('legal', { doc: 'terms', from: 'mypage' })}><i className="fa-solid fa-file-contract"></i><span className="mlabel">서비스 이용약관</span><i className="fa-solid fa-chevron-right chev"></i></div>
               <div className="menu-item" onClick={toggleTheme}><i className={isDark ? 'fa-solid fa-sun' : 'fa-solid fa-moon'}></i><span className="mlabel">{isDark ? '라이트 모드로 전환' : '다크 모드로 전환'}</span><i className="fa-solid fa-chevron-right chev"></i></div>
               <div className="menu-item" onClick={() => setPinOpen(true)}><i className="fa-solid fa-lock"></i><span className="mlabel">앱 잠금 비밀번호 {pinDone ? '변경' : '설정'}</span><i className="fa-solid fa-chevron-right chev"></i></div>
+              {pinDone && (
+                <div className="menu-item" onClick={() => { disableLock(); apiRemovePin().catch(() => {}); setPinDone(false); flash('앱 잠금을 해제했어요.') }}>
+                  <i className="fa-solid fa-lock-open"></i><span className="mlabel">앱 잠금 사용 안 함</span><i className="fa-solid fa-chevron-right chev"></i>
+                </div>
+              )}
             </div>
             <div style={{ display: 'flex', gap: 10, marginTop: 16 }}>
               <button className="cta cta--ghost" style={{ flex: 1 }} onClick={() => setConfirm('logout')}>로그아웃</button>
@@ -436,7 +445,12 @@ export default function MyPage({ nav, isDark, toggleTheme, nickname }) {
         <div className="sheet-backdrop" onClick={() => setPinOpen(false)} style={{ alignItems: 'center', padding: 22 }}>
           <div className="modal" onClick={e => e.stopPropagation()}>
             <h3 style={{ margin: '0 0 16px', fontSize: 18, color: 'var(--ink)' }}>앱 잠금 비밀번호</h3>
-            <PinPad onDone={() => { setPinDone(true); setPinOpen(false) }} onCancel={() => setPinOpen(false)} />
+            <PinPad onDone={(pin) => {
+              enableLock(pin)
+              apiSetPin(pin).catch(() => {})
+              setPinDone(true); setPinOpen(false)
+              flash('앱 잠금 비밀번호를 저장했어요.')
+            }} onCancel={() => setPinOpen(false)} />
           </div>
         </div>
       )}

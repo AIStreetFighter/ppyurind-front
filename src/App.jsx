@@ -20,6 +20,9 @@ import NotFound from "./screens/NotFound";
 import Chat from "./screens/Chat";
 import EmailAuth from "./screens/EmailAuth";
 import OAuthCallback from "./screens/OAuthCallback";
+import LockScreen from "./screens/LockScreen";
+import { shouldLock } from "./utils/appLock";
+import { getAccessToken } from "./api/client";
 
 const SCREEN_PATHS = {
   kakaoLogin: "/",
@@ -124,8 +127,15 @@ function AppContent() {
     notFound: <NotFound {...props} />,
   };
 
+  // 앱 잠금: 로그인 상태 + 잠금 사용 + 이번 세션 미해제면 잠금화면 노출
+  const [locked, setLocked] = useState(() => !!getAccessToken() && shouldLock());
+
   return (
-    <div className={`phone${isDark ? "" : " is-light"}`}>{screens[screen]}</div>
+    <div className={`phone${isDark ? "" : " is-light"}`}>
+      {locked
+        ? <LockScreen onUnlock={() => setLocked(false)} />
+        : screens[screen]}
+    </div>
   );
 }
 

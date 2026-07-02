@@ -2,6 +2,7 @@ import { useState } from 'react'
 import ThemeToggle from '../components/ThemeToggle'
 import PinPad from '../components/PinPad'
 import { saveOnboarding, setPin as apiSetPin } from '../api/ppyurindApi'
+import { enableLock } from '../utils/appLock'
 
 // 라벨 → relationship_years(정수, 구간 하한값). 과거 라벨도 하위호환 유지.
 const YEAR_TO_NUM = {
@@ -180,9 +181,7 @@ export default function Onboarding({ nav, isDark, toggleTheme, nickname: initial
                   concernEtc: concerns.includes('기타') ? etcText : null,
                   aiTone: tone,
                 })
-                if (useLock && pinSet) {
-                  // PIN은 별도로 전달 (pinSet 시 PinPad에서 pin값 필요 → 현재는 스킵)
-                }
+                // 앱 잠금 PIN은 PinPad onDone 시점에 이미 저장됨(enableLock + apiSetPin)
                 onNicknameSave?.(nickname.trim())
                 onConcernsSave?.(concerns)
                 nav('home')
@@ -209,7 +208,11 @@ export default function Onboarding({ nav, isDark, toggleTheme, nickname: initial
           <div className="modal" onClick={e => e.stopPropagation()}>
             <h3 style={{ margin: '0 0 16px', fontSize: 18, color: 'var(--ink)' }}>앱 잠금 설정</h3>
             <PinPad
-              onDone={() => { setPinSet(true); setShowPin(false) }}
+              onDone={(pin) => {
+                enableLock(pin)                 // 로컬 잠금 활성화(검증용)
+                apiSetPin(pin).catch(() => {})  // 백엔드 저장(영속, best-effort)
+                setPinSet(true); setShowPin(false)
+              }}
               onCancel={() => { setShowPin(false); if (!pinSet) setUseLock(false) }}
             />
           </div>
