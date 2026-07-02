@@ -9,7 +9,7 @@ const YEAR_TO_NUM = {
   '1년 차': 1, '2년 차': 2, '2~3년': 2, '5년 이상': 5, '3년 이상': 3, '선택안함': null,
 }
 
-export default function Onboarding({ nav, isDark, toggleTheme, onNicknameSave, onConcernsSave }) {
+export default function Onboarding({ nav, isDark, toggleTheme, nickname: initialNickname, onNicknameSave, onConcernsSave }) {
   const [step, setStep] = useState(1)
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState('')
@@ -19,7 +19,7 @@ export default function Onboarding({ nav, isDark, toggleTheme, onNicknameSave, o
   const [etcText, setEtcText] = useState('')
   const [tone, setTone] = useState('부드럽게')
 
-  const [nickname, setNickname] = useState('')
+  const [nickname, setNickname] = useState(initialNickname && initialNickname !== '지우' ? initialNickname : '')
   const [useLock, setUseLock] = useState(false)
   const [pinSet, setPinSet] = useState(false)
   const [showPin, setShowPin] = useState(false)
@@ -70,8 +70,17 @@ export default function Onboarding({ nav, isDark, toggleTheme, onNicknameSave, o
 
       {step === 1 && (
         <>
-          <h1 className="page-title" style={{ marginTop: 0 }}>우리 사이,<br />먼저 알려주세요</h1>
-          <p className="page-sub">맞춤 감정 분석을 위해 몇 가지만 여쭤볼게요.</p>
+          {nickname.trim() ? (
+            <>
+              <h1 className="page-title" style={{ marginTop: 0 }}>안녕하세요<br />{nickname.trim()}님 👋</h1>
+              <p className="page-sub">원활한 분석과 서비스 제공을 위해<br />아래 항목에 응답해주세요.</p>
+            </>
+          ) : (
+            <>
+              <h1 className="page-title" style={{ marginTop: 0 }}>우리 사이,<br />먼저 알려주세요</h1>
+              <p className="page-sub">맞춤 감정 분석을 위해 몇 가지만 여쭤볼게요.</p>
+            </>
+          )}
           <p className="onboard-note"><i className="fa-solid fa-circle-info"></i> 추후 마이페이지 맞춤설정에서 언제든 수정할 수 있어요.</p>
 
           <div className="section-label">관계 상태</div>
@@ -132,7 +141,7 @@ export default function Onboarding({ nav, isDark, toggleTheme, onNicknameSave, o
           />
           <p className="onboard-hint">
             {nickname.trim()
-              ? <>같은 닉네임이 있으면 뒤에 <b style={{ color: 'var(--ink-soft)' }}>#0421</b> 같은 번호가 흐리게 붙어요.</>
+              ? <>가입 때 정한 닉네임이에요. 여기서 바꿀 수도 있어요. 같은 닉네임이 있으면 뒤에 <b style={{ color: 'var(--ink-soft)' }}>#0421</b> 같은 번호가 흐리게 붙어요.</>
               : '한글·영문 2~12자. 중복돼도 괜찮아요.'}
           </p>
 

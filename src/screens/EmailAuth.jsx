@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { login, register } from '../api/ppyurindApi'
 import { CATS_REGISTER, CATS_LOGIN_FAIL, HELLO_DARK, HELLO_LIGHT } from '../data/images'
 
-export default function EmailAuth({ nav, isDark }) {
+export default function EmailAuth({ nav, isDark, onNicknameSave }) {
   const [mode, setMode] = useState('login') // 'login' | 'register'
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -21,7 +21,9 @@ export default function EmailAuth({ nav, isDark }) {
         await login({ email, password })
         nav('home')
       } else {
-        await register({ nickname: nickname || '새싹', email, password })
+        const finalNick = nickname.trim() || '새싹'
+        await register({ nickname: finalNick, email, password })
+        onNicknameSave?.(finalNick)   // 가입 닉네임을 온보딩으로 이어줌
         nav('onboarding')
       }
     } catch (err) {
