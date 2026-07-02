@@ -136,7 +136,10 @@ export default function Community({ nav, isDark, toggleTheme, concerns = [] }) {
   }
 
   const seedPosts = apiPosts !== null ? apiPosts : ALL_POSTS
-  const base = [...userPosts, ...seedPosts]
+  // API에 이미 올라간 글은 API 버전(최신 카운트)을 사용, 로컬에만 있는 글만 앞에 추가
+  const apiPostIds = new Set(seedPosts.map(p => String(p.id)))
+  const localOnlyPosts = userPosts.filter(p => !apiPostIds.has(String(p.id)))
+  const base = [...localOnlyPosts, ...seedPosts]
     .filter(p => !hiddenAuthors.includes(p.author))
     .filter(p => !query.trim() || p.nick.includes(query) || p.title.includes(query) || p.body.includes(query) || p.tag.includes(query))
 
