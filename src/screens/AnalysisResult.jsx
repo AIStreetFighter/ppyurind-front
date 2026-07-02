@@ -79,7 +79,31 @@ export default function AnalysisResult({ nav, isDark, toggleTheme, nickname, res
         <p>"{r?.new_self_insight || `${who}님은 해결보다 공감을 먼저 원해요.`}"</p>
       </div>
 
-      <div style={{ marginTop: 16 }}><SafetyCard nav={nav} signal="우울 무기력" /></div>
+      {/* 위험 신호 감지 시 safety_action 안내 배너 */}
+      {r?.safety_action && (
+        <div style={{
+          marginTop: 16, padding: '14px 16px', borderRadius: 14,
+          background: r.risk_level === 'danger' ? 'rgba(232,80,80,0.10)' : 'rgba(232,143,80,0.10)',
+          border: `1.5px solid ${r.risk_level === 'danger' ? 'rgba(232,80,80,0.35)' : 'rgba(232,143,80,0.35)'}`,
+          display: 'flex', gap: 12, alignItems: 'flex-start',
+        }}>
+          <i className={`fa-solid ${r.risk_level === 'danger' ? 'fa-triangle-exclamation' : 'fa-circle-info'}`}
+             style={{ color: r.risk_level === 'danger' ? '#e85050' : '#e88f50', marginTop: 2, flexShrink: 0 }}></i>
+          <div>
+            <p style={{ margin: '0 0 4px', fontSize: 14, fontWeight: 700, color: 'var(--ink)' }}>
+              {r.risk_level === 'danger' ? '지금 많이 힘드신 것 같아요' : '마음이 많이 지쳐있는 것 같아요'}
+            </p>
+            <p style={{ margin: 0, fontSize: 13, lineHeight: 1.6, color: 'var(--ink-soft)' }}>{r.safety_action}</p>
+          </div>
+        </div>
+      )}
+
+      {/* risk_level에 따라 SafetyCard 표시 방식 결정 */}
+      {(r?.risk_level === 'danger' || r?.risk_level === 'caution') ? (
+        <div style={{ marginTop: 16 }}><SafetyCard nav={nav} signal={r.safety_reason || '우울 무기력'} /></div>
+      ) : (
+        <div style={{ marginTop: 16 }}><SafetyCard collapsible nav={nav} signal="우울 무기력" /></div>
+      )}
 
       <button className="cta" style={{ marginTop: 18 }} onClick={() => nav('translate', { initialText: rawContent || '' })}>
         <i className="fa-solid fa-comment-medical" style={{ marginRight: 7 }}></i>이 마음, 말투 바꿔 전하기
