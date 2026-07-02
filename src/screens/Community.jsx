@@ -210,13 +210,13 @@ export default function Community({ nav, isDark, toggleTheme, concerns = [] }) {
             alt=""
             style={{ width: '100%', height: 210, objectFit: 'cover', objectPosition: 'center top', display: 'block' }}
           />
-          {/* 그라디언트 오버레이 + 텍스트 */}
+          {/* 좌측 텍스트 그라디언트 오버레이 */}
           <div style={{
             position: 'absolute', inset: 0,
             background: isDark
               ? 'linear-gradient(to right, rgba(10,10,30,0.75) 55%, transparent)'
               : 'linear-gradient(to right, rgba(255,245,235,0.82) 55%, transparent)',
-            padding: '56px 22px 18px',
+            padding: '70px 22px 22px',
             display: 'flex', flexDirection: 'column', justifyContent: 'flex-end',
           }}>
             <h1 style={{ margin: 0, fontSize: 26, fontWeight: 800, color: 'var(--ink)', letterSpacing: '-0.02em', lineHeight: 1.2 }}>
@@ -226,11 +226,19 @@ export default function Community({ nav, isDark, toggleTheme, concerns = [] }) {
               결혼 2년 차, 비슷한 고민을 가진<br />사람들의 이야기
             </p>
           </div>
+          {/* 하단 페이드 아웃 */}
+          <div style={{
+            position: 'absolute', bottom: 0, left: 0, right: 0, height: 48,
+            background: isDark
+              ? 'linear-gradient(to bottom, transparent, var(--bg))'
+              : 'linear-gradient(to bottom, transparent, var(--bg))',
+            pointerEvents: 'none',
+          }} />
           {/* 상단바 — 배너 위에 절대 위치 */}
           <div style={{
             position: 'absolute', top: 0, left: 0, right: 0, zIndex: 2,
             display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-            padding: '16px 20px',
+            padding: '28px 20px 12px',
           }}>
             <p className="eyebrow" style={{ margin: 0, color: isDark ? 'rgba(255,255,255,0.9)' : 'var(--ink)' }}>커뮤니티</p>
             <div className="topbar__icons">
