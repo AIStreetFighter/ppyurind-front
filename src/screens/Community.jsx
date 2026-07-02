@@ -3,6 +3,7 @@ import BottomNav from '../components/BottomNav'
 import ThemeToggle from '../components/ThemeToggle'
 import NotifBell from '../components/NotifBell'
 import { nickFromId, avatarSrc } from '../data/nicknames'
+import { BANNER_DARK, BANNER_LIGHT, CAT_SHARE } from '../data/images'
 import { listCommunityPosts, empathyPost, comfortPost, reportPost, muteAuthor, deleteCommunityPost } from '../api/ppyurindApi'
 
 const MY_POSTS_STORAGE_KEY = 'ppyurind:myCommunityPosts'
@@ -194,10 +195,28 @@ export default function Community({ nav, isDark, toggleTheme, concerns = [] }) {
           </div>
         </div>
 
-        <div className="header community-header">
-          <h1 className="page-title">비슷한 마음들</h1>
-          <p className="page-sub">결혼 2년 차, 비슷한 고민을 가진 사람들의 이야기</p>
-          <div className="header-art"><img src="/assets/cats/cat_03_t.png" alt="" /></div>
+        {/* 커뮤니티 배너 */}
+        <div style={{ position: 'relative', margin: '0 -20px', overflow: 'hidden', borderRadius: '0 0 20px 20px' }}>
+          <img
+            src={isDark ? BANNER_DARK : BANNER_LIGHT}
+            alt=""
+            style={{ width: '100%', height: 160, objectFit: 'cover', objectPosition: 'center', display: 'block' }}
+          />
+          <div style={{
+            position: 'absolute', inset: 0,
+            background: isDark
+              ? 'linear-gradient(to right, rgba(10,10,30,0.72) 55%, transparent)'
+              : 'linear-gradient(to right, rgba(255,245,235,0.78) 55%, transparent)',
+            padding: '18px 22px',
+            display: 'flex', flexDirection: 'column', justifyContent: 'center',
+          }}>
+            <h1 style={{ margin: 0, fontSize: 26, fontWeight: 800, color: 'var(--ink)', letterSpacing: '-0.02em', lineHeight: 1.2 }}>
+              비슷한 마음들
+            </h1>
+            <p style={{ margin: '6px 0 0', fontSize: 13, color: 'var(--ink-soft)', lineHeight: 1.5 }}>
+              결혼 2년 차, 비슷한 고민을 가진<br />사람들의 이야기
+            </p>
+          </div>
         </div>
 
         {showSearch && (
@@ -331,7 +350,7 @@ export default function Community({ nav, isDark, toggleTheme, concerns = [] }) {
           <div className="card locked">
             <div className="blurred" aria-hidden="true">
               <div className="post-head">
-                <div className="avatar"><img src="/assets/cats/cat_04_t.png" alt="" /></div>
+                <div className="avatar"><img src={CAT_SHARE} alt="" /></div>
                 <div style={{ flex: 1 }}>
                   <p className="post-name">익명 · 친밀감 고민이 있어요</p>
                   <p className="post-tag">AI 태그: #19+ #스킨십 #거리감</p>

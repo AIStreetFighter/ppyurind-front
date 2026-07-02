@@ -1,5 +1,6 @@
 import ThemeToggle from '../components/ThemeToggle'
 import { getOAuthUrl } from '../api/ppyurindApi'
+import { LOGO } from '../data/images'
 
 export default function KakaoLogin({ nav, isDark, toggleTheme }) {
   return (
@@ -34,7 +35,7 @@ export default function KakaoLogin({ nav, isDark, toggleTheme }) {
           marginBottom: 32,
           boxShadow: '0 10px 30px rgba(0,0,0,0.25)',
         }}>
-          <img src="/assets/logo.png" alt="쀼라인드" style={{ width: '100%', height: '100%', objectFit: 'cover', transform: 'scale(1.12)' }} />
+          <img src={LOGO} alt="쀼라인드" style={{ width: '100%', height: '100%', objectFit: 'cover', transform: 'scale(1.12)' }} />
         </div>
 
         <h1 style={{ margin: '0 0 12px', fontSize: 34, fontWeight: 800, color: 'var(--ink)', letterSpacing: '-0.02em' }}>

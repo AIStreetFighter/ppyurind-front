@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
+import { CAT_CHAT } from '../data/images'
 import SafetyCard from '../components/SafetyCard'
 import { sendChatMessage } from '../api/ppyurindApi'
 
@@ -111,7 +112,7 @@ export default function Chat({ nav }) {
           if (m.from === 'ai') {
             return (
               <div key={i} className="msg-row msg-row--ai">
-                <div className="msg-avatar"><img src="/assets/cats/cat_navy.png" alt="" /></div>
+                <div className="msg-avatar"><img src={CAT_CHAT} alt="" /></div>
                 <div className="msg-stack">
                   <div className="msg-bubble msg-bubble--ai">{m.text}</div>
                   <span className="msg-time">{m.time}</span>
@@ -130,7 +131,7 @@ export default function Chat({ nav }) {
         })}
         {typing && (
           <div className="msg-row msg-row--ai">
-            <div className="msg-avatar"><img src="/assets/cats/cat_navy.png" alt="" /></div>
+            <div className="msg-avatar"><img src={CAT_CHAT} alt="" /></div>
             <div className="msg-bubble msg-bubble--ai msg-typing"><span></span><span></span><span></span></div>
           </div>
         )}

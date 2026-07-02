@@ -4,6 +4,7 @@ import ThemeToggle from '../components/ThemeToggle'
 import { EVENT_TYPES } from '../data/events'
 import NotifBell from '../components/NotifBell'
 import { getMe, listEvents } from '../api/ppyurindApi'
+import { CAT_HOME } from '../data/images'
 
 // 다가오는 기념일/생일에 맞춘 선물 추천 광고 — 진입 시 랜덤 노출
 const GIFT_ADS = [
@@ -80,8 +81,8 @@ export default function Home({ nav, isDark, toggleTheme, nickname: propNickname,
           <h1 className="page-title">오늘 마음은<br />어때요, {nickname || '지우'}님?</h1>
           <p className="page-sub">{todayLabel()}</p>
           <button className="nyang-bubble" onClick={() => nav('chat')}>고민이 있나요? 🐾</button>
-          <div className="header-art" onClick={() => nav('chat')} role="button" aria-label="쀼냥 상담 열기">
-            <img src="/assets/cats/cat_01_t.png" alt="" />
+          <div className="header-art" onClick={() => nav('chat')} role="button" aria-label="쀼냥 상담 열기" style={{ width: 130, height: 130 }}>
+            <img src={CAT_HOME} alt="" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
           </div>
         </div>
 

@@ -3,6 +3,7 @@ import BottomNav from '../components/BottomNav'
 import ThemeToggle from '../components/ThemeToggle'
 import PinPad from '../components/PinPad'
 import { logout, deleteMe, updateMe, getDex, addDex, deleteDex, updateNotificationSettings, getMe } from '../api/ppyurindApi'
+import { CAT_MYPAGE } from '../data/images'
 import { SUPPORT_PROGRAMS } from '../data/supportPrograms'
 
 const DEX_STORAGE_KEY = 'ppyurind:dexItems'
@@ -162,7 +163,7 @@ export default function MyPage({ nav, isDark, toggleTheme, nickname }) {
 
         <div className="card" style={{ marginTop: 10, display: 'flex', alignItems: 'center', gap: 15 }}>
           <div className="avatar" style={{ width: 56, height: 56 }}>
-            <img src="/assets/cats/cat_02_t.png" alt="" />
+            <img src={CAT_MYPAGE} alt="" />
           </div>
           <div style={{ flex: 1 }}>
             <p className="row__title" style={{ fontSize: 17 }}>{nickname || '들풀'} <span style={{ fontSize: 12, color: 'var(--ink-muted)', fontWeight: 400 }}>#0421</span></p>

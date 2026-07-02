@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { login, register } from '../api/ppyurindApi'
+import { CATS_REGISTER, CATS_LOGIN_FAIL, HELLO_DARK, HELLO_LIGHT } from '../data/images'
 
 export default function EmailAuth({ nav, isDark }) {
   const [mode, setMode] = useState('login') // 'login' | 'register'
@@ -47,7 +48,7 @@ export default function EmailAuth({ nav, isDark }) {
         textAlign: 'center',
       }}>
         <img
-          src="/assets/cats2_no_bg.png"
+          src={CATS_LOGIN_FAIL}
           alt="로그인 실패"
           style={{ width: 210, marginBottom: 0, userSelect: 'none' }}
         />
@@ -95,12 +96,12 @@ export default function EmailAuth({ nav, isDark }) {
         {/* 캐릭터 + 인사말 */}
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', paddingTop: 10 }}>
           <img
-            src="/assets/cats_no_bg.png"
+            src={CATS_REGISTER}
             alt="쀼라인드 캐릭터"
             style={{ width: 160, userSelect: 'none' }}
           />
           <img
-            src={isDark ? '/assets/annyeonghaseyo_white.png' : '/assets/annyeonghaseyo_purple.png'}
+            src={isDark ? HELLO_DARK : HELLO_LIGHT}
             alt="안녕하세요!"
             style={{ width: 220, marginTop: 2, userSelect: 'none' }}
           />
