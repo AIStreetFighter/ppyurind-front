@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { getCommunityPost, empathyPost, comfortPost, listComments, createComment, createReply, likeComment, reportPost, muteAuthor } from '../api/ppyurindApi'
+import { getCommunityPost, empathyPost, comfortPost, listComments, createComment, createReply, likeComment, deleteComment as apiDeleteComment, reportPost, muteAuthor } from '../api/ppyurindApi'
 import { avatarSrc } from '../data/nicknames'
 import { getReaction, setReaction, setCommentCount } from '../utils/reactions'
 
@@ -159,10 +159,14 @@ export default function PostDetail({ nav, post }) {
 
   const deleteComment = (commentId, replyId) => {
     setCommentMenuOpen(null)
-    addDeletedCommentId(replyId ?? commentId)
+    const targetId = replyId ?? commentId
+    addDeletedCommentId(targetId)
     refreshDeletedIds()
     if (isLocalPost(post.id)) {
       softDeleteLocalComment(post.id, commentId, replyId ?? null)
+    } else {
+      // 백엔드 DELETE — 실패해도 UI는 이미 숨겨져 있으므로 조용히 처리
+      apiDeleteComment(targetId).catch(() => {})
     }
     flashComment('댓글을 삭제했어요.')
   }

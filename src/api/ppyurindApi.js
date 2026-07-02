@@ -156,6 +156,7 @@ export const listReplies   = (commentId) => api.get(`/community/comments/${comme
 export const createReply   = ({ commentId, content, isAnonymous = true }) =>
   api.post(`/community/comments/${commentId}/replies`, { content, is_anonymous: isAnonymous })
 export const likeComment   = (commentId) => api.post(`/community/comments/${commentId}/like`, {})
+export const deleteComment = (commentId) => api.delete(`/community/comments/${commentId}`)
 
 // 내 게시글 삭제 — 백엔드 DELETE /community/posts/{id} 구현 후 사용 가능
 export const deleteCommunityPost = (id) => api.delete(`/community/posts/${id}`)

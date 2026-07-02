@@ -194,7 +194,7 @@ export default function Community({ nav, isDark, toggleTheme, concerns = [] }) {
     <>
       <div className="phone-body">
         {/* 배너 + 상단바 통합 — 상단바가 배너 이미지 위에 얹힘 */}
-        <div style={{ position: 'relative', margin: '-20px -20px 0', overflow: 'hidden', borderRadius: '0 0 20px 20px' }}>
+        <div style={{ position: 'relative', margin: '-20px -20px 0', overflow: 'hidden' }}>
           <img
             src={isDark ? BANNER_DARK : BANNER_LIGHT}
             alt=""
