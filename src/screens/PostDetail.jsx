@@ -101,7 +101,18 @@ export default function PostDetail({ nav, post }) {
       setCommentsLoaded(true)
       return
     }
-    getCommunityPost(post.id).then(d => setDetail(d)).catch(() => {})
+    getCommunityPost(post.id).then(d => {
+      setDetail(d)
+      // 백엔드가 반환한 has_empathized/has_comforted를 신뢰 소스로 사용 (localStorage 덮어쓰기)
+      if (typeof d.has_empathized === 'boolean') {
+        setLiked(d.has_empathized)
+        setReaction(post.id, { liked: d.has_empathized })
+      }
+      if (typeof d.has_comforted === 'boolean') {
+        setComforted(d.has_comforted)
+        setReaction(post.id, { comforted: d.has_comforted })
+      }
+    }).catch(() => {})
     listComments(post.id)
       .then(data => {
         setComments((data.comments || data.items || []).map(mapComment))
@@ -131,17 +142,31 @@ export default function PostDetail({ nav, post }) {
   }
 
   const handleEmpathy = () => {
-    empathyPost(post.id).catch(() => {})
     const next = !liked
-    setReaction(post.id, { liked: next })   // 피드와 공유되는 단일 소스에 저장
     setLiked(next)
+    setReaction(post.id, { liked: next })
+    empathyPost(post.id)
+      .then(res => {
+        if (res && typeof res.liked === 'boolean') {
+          setLiked(res.liked)
+          setReaction(post.id, { liked: res.liked })
+        }
+      })
+      .catch(() => {})
   }
 
   const handleComfort = () => {
-    comfortPost(post.id).catch(() => {})
     const next = !comforted
-    setReaction(post.id, { comforted: next })
     setComforted(next)
+    setReaction(post.id, { comforted: next })
+    comfortPost(post.id)
+      .then(res => {
+        if (res && typeof res.comforted === 'boolean') {
+          setComforted(res.comforted)
+          setReaction(post.id, { comforted: res.comforted })
+        }
+      })
+      .catch(() => {})
   }
 
   const toggleLike = (cid, rid) => {

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import BottomNav from '../components/BottomNav'
 import { listMyCommunityPosts, deleteCommunityPost } from '../api/ppyurindApi'
-import { loadMyCommunityPosts, saveMyCommunityPost, mapCommunityPostToLocal } from '../utils/myCommunityPosts'
+import { loadMyCommunityPosts, mapCommunityPostToLocal } from '../utils/myCommunityPosts'
 import { avatarSrc } from '../data/nicknames'
 
 const MY_POSTS_STORAGE_KEY = 'ppyurind:myCommunityPosts'

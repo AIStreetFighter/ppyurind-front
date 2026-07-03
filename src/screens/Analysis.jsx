@@ -95,7 +95,7 @@ export default function Analysis({ nav, isDark, toggleTheme, nickname }) {
     emotion: apiData.emotion || dummy.emotion,
     phrases: apiData.phrases?.length ? apiData.phrases : dummy.phrases,
     weekly: apiData.weekly?.length ? apiData.weekly : dummy.weekly,
-    weekly_note: apiData.weekly_note || dummy.weekly_note,
+    weeklyNote: apiData.weekly_note || dummy.weeklyNote,
     weeks: apiData.weeks?.length ? apiData.weeks : dummy.weeks,
     trend: apiData.trend || dummy.trend,
     insight: apiData.insight || dummy.insight,
