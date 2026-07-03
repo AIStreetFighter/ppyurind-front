@@ -84,10 +84,8 @@ body {
   }
 
   .pd-input {
-    left: 50%;
-    right: auto;
-    width: min(100%, 1040px);
-    transform: translateX(-50%);
+    left: 0;
+    right: 0;
     border-left: 1px solid var(--nav-line);
     border-right: 1px solid var(--nav-line);
   }
