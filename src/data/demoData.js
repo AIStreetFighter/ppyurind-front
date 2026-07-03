@@ -81,6 +81,8 @@ export function resolveDemo(method, path, body) {
   // 커뮤니티 목록: DEMO_UNHANDLED → catch → setApiPosts(null) → Community.jsx ALL_POSTS(25개) 사용
   if (method === 'GET' && p === '/community/posts') return DEMO_UNHANDLED
   if (method === 'GET' && /^\/community\/posts\/[^/]+\/similar$/.test(p)) return demoSimilar
+  // 댓글 목록: 데모 모드에선 댓글 데이터가 없으므로 빈 목록 반환 (undefined면 화면에서 크래시)
+  if (method === 'GET' && /^\/community\/posts\/[^/]+\/comments$/.test(p)) return { comments: [], total: 0 }
 
   // 쓰기/상호작용 요청은 조용히 성공 처리 → 화면의 낙관적 UI/자체 폴백 사용
   if (method === 'POST' && p === '/emotions/analyze') return demoAnalysis(body)
