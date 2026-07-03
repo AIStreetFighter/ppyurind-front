@@ -1,4 +1,4 @@
-import { isDemo } from '../utils/demo'
+import { isDemo, disableDemo } from '../utils/demo'
 import { resolveDemo, DEMO_UNHANDLED } from '../data/demoData'
 
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || '/api/v1').replace(/\/$/, '')
@@ -34,8 +34,13 @@ export function setRefreshToken(token) {
 }
 
 // 로그인/OAuth 성공 시 두 토큰을 한 번에 저장
+// 실제 토큰이 저장되면(=실 로그인) 데모 플래그를 해제한다.
+// 데모 둘러보기 후 로그아웃 없이 로그인해도 목데이터에 갇히지 않도록.
 export function setTokens({ access, refresh } = {}) {
-  if (access) setAccessToken(access)
+  if (access) {
+    setAccessToken(access)
+    disableDemo()
+  }
   if (refresh) setRefreshToken(refresh)
 }
 
