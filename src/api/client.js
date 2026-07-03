@@ -107,7 +107,7 @@ async function refreshAccessToken() {
 
 export async function apiRequest(path, options = {}, _retried = false) {
   // 데모 모드: 네트워크 없이 목데이터로 응답 (미정의 경로는 조용히 null → 화면 자체 폴백)
-  if (isDemo()) {
+  if (isDemo() && options.useRealApi !== true) {
     const method = (options.method || 'GET').toUpperCase()
     let body = null
     try { body = options.body ? JSON.parse(options.body) : null } catch {}
@@ -117,16 +117,17 @@ export async function apiRequest(path, options = {}, _retried = false) {
   }
 
   const token = getAccessToken()
-  const headers = new Headers(options.headers || {})
+  const { useRealApi: _useRealApi, ...fetchOptions } = options
+  const headers = new Headers(fetchOptions.headers || {})
 
-  if (!headers.has('Content-Type') && options.body && !(options.body instanceof FormData)) {
+  if (!headers.has('Content-Type') && fetchOptions.body && !(fetchOptions.body instanceof FormData)) {
     headers.set('Content-Type', 'application/json')
   }
   if (token && !headers.has('Authorization')) {
     headers.set('Authorization', `Bearer ${token}`)
   }
 
-  const response = await fetch(`${API_BASE_URL}${path}`, { ...options, headers })
+  const response = await fetch(`${API_BASE_URL}${path}`, { ...fetchOptions, headers })
 
   // 401 → refresh 1회 시도 후 원요청 재시도. refresh 대상 자체는 제외.
   if (response.status === 401 && !_retried && path !== '/auth/refresh') {
