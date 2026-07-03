@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { BrowserRouter, useLocation, useNavigate } from "react-router-dom";
+import Splash from "./screens/Splash";
 import KakaoLogin from "./screens/KakaoLogin";
 import Onboarding from "./screens/Onboarding";
 import Home from "./screens/Home";
@@ -145,6 +146,8 @@ function AppContent() {
 }
 
 export default function App() {
+  const [showSplash, setShowSplash] = useState(true)
+  if (showSplash) return <Splash onDone={() => setShowSplash(false)} />
   return (
     <BrowserRouter>
       <AppContent />
