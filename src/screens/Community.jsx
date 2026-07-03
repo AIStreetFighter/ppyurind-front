@@ -247,6 +247,8 @@ export default function Community({ nav, isDark, toggleTheme, concerns = [] }) {
             background: isDark
               ? 'linear-gradient(to right, rgba(10,10,30,0.80) 22%, rgba(10,10,30,0) 54%)'
               : 'linear-gradient(to right, rgba(255,248,240,0.88) 22%, rgba(255,248,240,0) 54%)',
+            WebkitMaskImage: 'linear-gradient(to top, transparent 0%, black 42%)',
+            maskImage: 'linear-gradient(to top, transparent 0%, black 42%)',
             padding: '56px 22px 18px',
             display: 'flex', flexDirection: 'column', justifyContent: 'flex-end',
           }}>
