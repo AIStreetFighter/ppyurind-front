@@ -223,13 +223,13 @@ body {
 .community-header .header-art { top: -20px; right: -2px; width: 126px; height: 136px; }
 
 /* 커뮤니티 배너 — 고양이 하단 고정, 하단 25%만 페이드 */
-/* 데스크톱/와이드: 2.4:1 배너 이미지 */
+/* 다크: 1080×613 → 1.76:1 / 라이트: 1774×739 → 2.4:1 */
 .community-banner {
   --comm-fade: #1B2240;
   position: relative;
   margin: -20px -20px 0;
   overflow: hidden;
-  aspect-ratio: 2.4 / 1;
+  aspect-ratio: 1.76 / 1;
   background-size: cover;
   background-position: center bottom;
   background-image: url('/assets/cats/header_dark.png');
@@ -247,15 +247,16 @@ body {
 }
 .phone.is-light .community-banner {
   --comm-fade: #FFFFFF;
+  aspect-ratio: 2.4 / 1;
   background-image: url('/assets/cats/header_light.png');
 }
 /* 라이트는 원본이 이미 밝아 하단 페이드를 약하게 유지 */
 .phone.is-light .community-banner::after { height: 26%; }
 
-/* 모바일: 세로로 조금 더 긴 전용 배너 (이미지 원본 비율에 맞춤) */
+/* 모바일: 이미지 원본 비율에 맞춤 (다크 1.76:1 / 라이트 1.94:1) */
 @media (max-width: 480px) {
   .community-banner {
-    aspect-ratio: 2.15 / 1;
+    aspect-ratio: 1.76 / 1;
     background-image: url('/assets/cats/header_dark_mobile.png');
   }
   .phone.is-light .community-banner {
