@@ -3,9 +3,6 @@ import { CAT_CHAT } from '../data/images'
 import SafetyCard from '../components/SafetyCard'
 import { sendChatMessage } from '../api/ppyurindApi'
 
-// 데모용 룰베이스 응답 — 키워드로 위험신호 감지 시 안전 지원, 그 외엔 공감형 응답
-const DANGER_WORDS = ['폭력', '폭언', '때리', '맞았', '위협', '무서', '죽고', '자해', '협박', '학대']
-
 function nowTime() {
   const d = new Date()
   const h = d.getHours()
@@ -14,30 +11,13 @@ function nowTime() {
   return `${ampm} ${hh}:${String(d.getMinutes()).padStart(2, '0')}`
 }
 
-function buildReply(text) {
-  const isDanger = DANGER_WORDS.some(w => text.includes(w))
-  if (isDanger) {
-    return {
-      danger: true,
-      lines: [
-        '정말 많이 두렵고 힘드셨겠어요. 💜\n당신의 안전이 가장 중요해요.',
-        '지금 안전한가요?\n위험한 상황이라면 안전한 장소로 먼저 이동해 주세요.',
-      ],
-    }
-  }
-  return {
-    danger: false,
-    lines: [
-      '많이 속상하셨겠어요… 💜\n감정이 격해진 상황에서는 누구나 상처받기 쉬워요.',
-      '지금은 잠시 숨을 고르고, 나의 감정과 바라는 마음을 정리한 뒤\n차분히 이야기 나눠보는 건 어떨까요?',
-    ],
-  }
-}
-
 const SUGGESTIONS = [
-  '요즘 자꾸 다투게 돼요',
-  '서운한 마음을 어떻게 전할까요?',
+  '요즘 자꾸 사소한 말투 때문에 싸워요',
+  '서운한 마음을 어떻게 말해야 할까요?',
   '대화가 잘 안 통해요',
+  '배우자가 제 말을 무시하는 것 같아요',
+  '이혼하고 싶지는 않은데 불륜 문제로 걱정돼요',
+  '법적으로 문제가 될까 걱정돼요',
 ]
 
 export default function Chat({ nav }) {
@@ -46,6 +26,7 @@ export default function Chat({ nav }) {
       from: 'ai',
       text: '안녕하세요, 쀼냥이에요. 🐾\n마음에 담아둔 고민을 편하게 들려주세요. 함께 이야기 나눠요.',
       time: nowTime(),
+      includeInHistory: false,
     },
   ])
   const [draft, setDraft] = useState('')
@@ -60,7 +41,7 @@ export default function Chat({ nav }) {
     const text = (raw ?? draft).trim()
     if (!text || typing) return
     const history = messages
-      .filter(m => !m.safety)
+      .filter(m => !m.safety && m.text && m.includeInHistory !== false)
       .map(m => ({ role: m.from === 'me' ? 'user' : 'assistant', content: m.text }))
     setMessages(m => [...m, { from: 'me', text, time: nowTime() }])
     setDraft('')
@@ -69,28 +50,23 @@ export default function Chat({ nav }) {
     try {
       const data = await sendChatMessage({ message: text, history })
       // 백엔드 ChatResponse.reply 는 문자열 배열(list[str]) — 각 줄을 개별 말풍선으로 표시
-      const rawReply = data?.reply ?? data?.message ?? ''
-      const lines = (Array.isArray(rawReply) ? rawReply : [rawReply]).filter(Boolean)
+      const rawReply = data?.reply
+      const lines = (Array.isArray(rawReply) ? rawReply : [rawReply])
+        .filter(line => typeof line === 'string' && line.trim())
+        .map(line => line.trim())
+      if (lines.length === 0) throw new Error('Chat API response did not contain a valid reply')
       const showSafety = data?.show_safety_card || data?.risk_level === 'high'
-      lines.forEach((line, i) => {
-        setTimeout(() => {
-          setMessages(m => [...m, { from: 'ai', text: line, time: nowTime() }])
-          if (i === lines.length - 1 && showSafety) {
-            setTimeout(() => setMessages(m => [...m, { from: 'ai', safety: true }]), 500)
-          }
-        }, 350 * i)
-      })
-    } catch {
-      // 백엔드 오류 시 룰베이스 폴백
-      const reply = buildReply(text)
-      reply.lines.forEach((line, i) => {
-        setTimeout(() => {
-          setMessages(m => [...m, { from: 'ai', text: line, time: nowTime() }])
-          if (i === reply.lines.length - 1 && reply.danger) {
-            setTimeout(() => setMessages(m => [...m, { from: 'ai', safety: true }]), 500)
-          }
-        }, 600 * (i + 1))
-      })
+      const replyMessages = lines.map(line => ({ from: 'ai', text: line, time: nowTime() }))
+      if (showSafety) replyMessages.push({ from: 'ai', safety: true })
+      setMessages(m => [...m, ...replyMessages])
+    } catch (error) {
+      console.error('Chat API request failed:', error)
+      setMessages(m => [...m, {
+        from: 'ai',
+        text: '답변을 불러오지 못했어요. 잠시 후 다시 시도해 주세요.',
+        time: nowTime(),
+        includeInHistory: false,
+      }])
     } finally {
       setTyping(false)
     }

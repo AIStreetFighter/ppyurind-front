@@ -155,7 +155,7 @@ export const convertText = ({ originalText, filterMode = 'soft', situationTag })
 
 // ── 6. AI 채팅 상담 ──────────────────────────
 export const sendChatMessage = ({ message, history = [] }) =>
-  api.post('/chat', { message, history })
+  api.post('/chat', { message, history }, { useRealApi: true })
 
 // ── 7. 커뮤니티 ──────────────────────────────
 export const listCommunityPosts = ({ offset = 0, limit = 20, author } = {}) => {
