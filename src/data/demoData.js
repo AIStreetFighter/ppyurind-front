@@ -88,5 +88,39 @@ export function resolveDemo(method, path, body) {
   if (method === 'PUT' && /^\/secrets\//.test(p)) return { ...(body || {}) }
   if (method === 'PUT' && p === '/users/me') return { ...demoUser(), ...(body || {}) }
 
+  // 커뮤니티 익명 게시 — Record → 공유 플로우 완성
+  if (method === 'POST' && p === '/community/posts') {
+    return {
+      id: 'demo-post-' + Date.now(),
+      title: body?.title ?? '속마음 기록',
+      content: body?.content ?? '',
+      is_anonymous: true,
+      anonymous_nickname: '익명의 쀼냥',
+      anonymous_avatar: 'cat_02_t',
+      empathy_count: 0, comfort_count: 0, comment_count: 0,
+      ai_tags: ['서운함', '대화단절'],
+      created_at: new Date().toISOString(),
+    }
+  }
+  if (method === 'DELETE' && /^\/community\/posts\//.test(p)) return null
+  if (method === 'POST' && /^\/community\/posts\/[^/]+(\/like|\/empathy|\/comfort|\/dislike)$/.test(p)) return null
+
+  // 말투 변환 — 톤별 고정 응답 (Translate.jsx 자체 mockConvert 폴백보다 더 자연스럽게)
+  if (method === 'POST' && p === '/filter') {
+    const tone = body?.filter_mode || 'soft'
+    const converted = {
+      soft:    '오늘 말이 없었던 것 같아서 나 좀 외로웠어. 조금만 더 얘기해줄 수 있어?',
+      honest:  '솔직히 오늘 너무 말이 없어서 서운했어. 나도 힘들었거든.',
+      short:   '오늘 좀 외로웠어. 나중에 얘기하자.',
+      request: '오늘 퇴근하고 10분만 나랑 얘기해줄 수 있어?',
+    }
+    return {
+      original_text: body?.original_text ?? '',
+      converted_text: converted[tone] ?? converted.soft,
+      filter_mode: tone,
+      situation_tag: body?.situation_tag ?? null,
+    }
+  }
+
   return DEMO_UNHANDLED
 }

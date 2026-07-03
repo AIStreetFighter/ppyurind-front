@@ -161,7 +161,7 @@ export async function uploadFile(path, file, _retried = false) {
   if (isDemo()) {
     await new Promise(r => setTimeout(r, 200))
     // OCR은 masked_text, 미디어 업로드는 media_url 형태를 기대 — 둘 다 채워 안전하게 반환
-    return { masked_text: '(데모) 캡처에서 인식된 대화 내용이에요.', media_url: '', url: '' }
+    return { masked_text: '○○: 오늘 늦어?\n나: 7시쯤 될 것 같아\n○○: 응\n나: 밥은 먹고 올게\n○○: 알겠어\n나: 피곤하지? 오늘 무슨 일 있었어?\n○○: 그냥', media_url: '', url: '' }
   }
   const token = getAccessToken()
   const headers = new Headers()

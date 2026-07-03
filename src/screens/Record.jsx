@@ -4,6 +4,7 @@ import BottomNav from '../components/BottomNav'
 import SafetyCard from '../components/SafetyCard'
 import { analyzeEmotion, createCommunityPost, getSpeechToken, uploadOcrImage } from '../api/ppyurindApi'
 import { mapCommunityPostToLocal, saveMyCommunityPost } from '../utils/myCommunityPosts'
+import { isDemo } from '../utils/demo'
 
 const LAST_EMOTION_KEY = 'ppyurind:lastEmotion'
 
@@ -41,11 +42,37 @@ export default function Record({ nav, isDark, toggleTheme }) {
   const [analyzing, setAnalyzing] = useState(false)
   const [error, setError] = useState('')
   const recognizerRef = useRef(null)
+  const demoIntervalRef = useRef(null)
+  const demoTextRef = useRef('')
 
   // ── 음성 STT ────────────────────────────────────────────────
+  const DEMO_SCRIPT = '오늘 남편이 퇴근하고 와서 말을 거의 안 했어. 내가 뭔가 물어봐도 짧게 대답하고. 피곤한 건 알겠는데 그래도 조금 서운하더라고. 말하기도 애매하고.'
+
   const startRecording = async () => {
     setMediaError('')
     setLiveText('')
+
+    if (isDemo()) {
+      setRecording(true)
+      demoTextRef.current = ''
+      const words = DEMO_SCRIPT.split(' ')
+      let i = 0
+      demoIntervalRef.current = setInterval(() => {
+        i++
+        const current = words.slice(0, i).join(' ')
+        demoTextRef.current = current
+        setLiveText(current)
+        if (i >= words.length) {
+          clearInterval(demoIntervalRef.current)
+          demoIntervalRef.current = null
+          setText(DEMO_SCRIPT)
+          setLiveText('')
+          setRecording(false)
+        }
+      }, 160)
+      return
+    }
+
     try {
       const { token, region } = await getSpeechToken()
       const SpeechSDK = await import('microsoft-cognitiveservices-speech-sdk')
@@ -72,6 +99,12 @@ export default function Record({ nav, isDark, toggleTheme }) {
   const stopRecording = () => {
     setRecording(false)
     setLiveText('')
+    if (demoIntervalRef.current) {
+      clearInterval(demoIntervalRef.current)
+      demoIntervalRef.current = null
+      if (demoTextRef.current) setText(demoTextRef.current)
+      return
+    }
     if (recognizerRef.current) {
       recognizerRef.current.stopContinuousRecognitionAsync(
         () => { recognizerRef.current?.close(); recognizerRef.current = null },
