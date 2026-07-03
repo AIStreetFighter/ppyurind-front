@@ -77,8 +77,8 @@ export function resolveDemo(method, path, body) {
 
   if (method === 'GET' && p === '/users/me') return demoUser()
   if (method === 'GET' && p === '/calendar') return demoEvents()
-  // 커뮤니티 목록: seedId 확보용 최소 응답 (화면은 자체 SEED 25개 사용, 여기선 similar 트리거용)
-  if (method === 'GET' && p === '/community/posts') return { items: [{ id: 1 }], total: 1 }
+  // 커뮤니티 목록: DEMO_UNHANDLED → catch → setApiPosts(null) → Community.jsx ALL_POSTS(25개) 사용
+  if (method === 'GET' && p === '/community/posts') return DEMO_UNHANDLED
   if (method === 'GET' && /^\/community\/posts\/[^/]+\/similar$/.test(p)) return demoSimilar
 
   // 쓰기/상호작용 요청은 조용히 성공 처리 → 화면의 낙관적 UI/자체 폴백 사용
