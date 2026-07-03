@@ -78,6 +78,10 @@ export default function PostDetail({ nav, post }) {
   // 피드에서 누른 공감/위로 상태를 localStorage에서 이어받음 → 상세 진입 시 아이콘 유지
   const [liked, setLiked]     = useState(() => getReaction(post?.id).liked)
   const [comforted, setComforted] = useState(() => getReaction(post?.id).comforted)
+  // 서버가 내려주는 실수치를 그대로 신뢰 — liked/comforted로 +1을 더하면
+  // 상세 진입 시 이미 반영된 count에 중복으로 더해져 숫자가 부풀어 오르는 문제가 있었음
+  const [empathyCount, setEmpathyCount] = useState(() => post?.empathy_count ?? post?.empathy ?? 0)
+  const [comfortCount, setComfortCount] = useState(() => post?.comfort_count ?? post?.comfort ?? 0)
   const [menuOpen, setMenuOpen] = useState(false)
   const [draft, setDraft]     = useState('')
   const [replyTo, setReplyTo] = useState(null)
@@ -104,6 +108,7 @@ export default function PostDetail({ nav, post }) {
       return
     }
     getCommunityPost(post.id).then(d => {
+      if (!d) return
       setDetail(d)
       // 백엔드가 반환한 has_empathized/has_comforted를 신뢰 소스로 사용 (localStorage 덮어쓰기)
       if (typeof d.has_empathized === 'boolean') {
@@ -114,6 +119,9 @@ export default function PostDetail({ nav, post }) {
         setComforted(d.has_comforted)
         setReaction(post.id, { comforted: d.has_comforted })
       }
+      // count는 서버 값이 이미 내 반응을 포함한 실수치이므로 그대로 반영 (liked/comforted로 또 더하지 않음)
+      if (typeof d.empathy_count === 'number') setEmpathyCount(d.empathy_count)
+      if (typeof d.comfort_count === 'number') setComfortCount(d.comfort_count)
     }).catch(() => {})
     listComments(post.id)
       .then(data => {
@@ -147,12 +155,14 @@ export default function PostDetail({ nav, post }) {
     const next = !liked
     setLiked(next)
     setReaction(post.id, { liked: next })
+    setEmpathyCount(c => Math.max(0, c + (next ? 1 : -1)))
     empathyPost(post.id)
       .then(res => {
         if (res && typeof res.liked === 'boolean') {
           setLiked(res.liked)
           setReaction(post.id, { liked: res.liked })
         }
+        if (res && typeof res.empathy_count === 'number') setEmpathyCount(res.empathy_count)
       })
       .catch(() => {})
   }
@@ -161,12 +171,14 @@ export default function PostDetail({ nav, post }) {
     const next = !comforted
     setComforted(next)
     setReaction(post.id, { comforted: next })
+    setComfortCount(c => Math.max(0, c + (next ? 1 : -1)))
     comfortPost(post.id)
       .then(res => {
         if (res && typeof res.comforted === 'boolean') {
           setComforted(res.comforted)
           setReaction(post.id, { comforted: res.comforted })
         }
+        if (res && typeof res.comfort_count === 'number') setComfortCount(res.comfort_count)
       })
       .catch(() => {})
   }
@@ -278,8 +290,6 @@ export default function PostDetail({ nav, post }) {
   }
 
   const d = detail || post
-  const empathyCount = (d.empathy_count ?? d.empathy ?? 0) + (liked ? 1 : 0)
-  const comfortCount = (d.comfort_count ?? d.comfort ?? 0) + (comforted ? 1 : 0)
   // 삭제 제외 댓글+대댓 수 (피드 캐시와 동일 공식)
   const visibleCommentCount = comments.reduce((acc, c) => {
     const top = isDeleted(c) ? 0 : 1
