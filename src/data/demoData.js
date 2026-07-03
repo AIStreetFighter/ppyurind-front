@@ -61,64 +61,6 @@ function demoAnalysis(body) {
   }
 }
 
-function demoChatReply(body) {
-  const message = String(body?.message || '')
-  const includesAny = words => words.some(word => message.includes(word))
-
-  if (includesAny(['폭력', '협박', '무서워', '무섭', '때렸', '때리', '맞았', '학대'])) {
-    return {
-      reply: [
-        '많이 두렵고 힘드셨겠어요. 무엇보다 지금 안전한지 먼저 확인하고 싶어요.',
-        '당장 위험하다면 안전한 장소로 이동하고 112나 가까운 지원기관에 도움을 요청해 주세요.',
-      ],
-      show_safety_card: true,
-      risk_level: 'high',
-    }
-  }
-
-  if (includesAny(['이혼', '불륜', '외도', '법', '소송', '재산', '양육'])) {
-    return {
-      reply: [
-        '관계를 지키고 싶은 마음과 현실적인 걱정이 함께 있어 많이 복잡하셨겠어요.',
-        '구체적인 사정에 따라 판단이 달라질 수 있어 단정하기는 어려워요. 관련 기록을 정리한 뒤 법률 전문가나 상담기관에서 일반적인 대응 범위를 확인해 보는 것도 도움이 될 수 있어요.',
-      ],
-      show_safety_card: false,
-      risk_level: 'caution',
-    }
-  }
-
-  if (includesAny(['무시', '서운', '외면', '거리감'])) {
-    return {
-      reply: [
-        '내 말과 마음이 중요하게 받아들여지지 않는 것 같아 많이 서운하셨겠어요.',
-        '상대의 행동을 단정하기보다 “그때 내 말을 듣지 않는 것처럼 느껴져 속상했어”처럼 경험과 감정을 중심으로 전해보는 건 어떨까요?',
-      ],
-      show_safety_card: false,
-      risk_level: 'normal',
-    }
-  }
-
-  if (includesAny(['싸워', '싸움', '다퉈', '다툼', '말투'])) {
-    return {
-      reply: [
-        '사소한 말투가 반복해서 갈등으로 이어져 지치고 답답하셨겠어요.',
-        '감정이 조금 가라앉은 때에 문제의 말 자체보다 서로 어떤 기분이 들었는지부터 차분히 이야기해 보면 어떨까요?',
-      ],
-      show_safety_card: false,
-      risk_level: 'normal',
-    }
-  }
-
-  return {
-    reply: [
-      '말해줘서 고마워요. 지금 마음이 많이 무거우셨겠어요. 🐾',
-      '어떤 순간이 가장 속상하게 느껴졌는지 조금 더 들려줄래요?',
-    ],
-    show_safety_card: false,
-    risk_level: 'normal',
-  }
-}
-
 // method: 'GET'|'POST'|..., path: '/users/me' 등 (쿼리 포함 가능)
 export function resolveDemo(method, path, body) {
   const p = path.split('?')[0]
@@ -133,7 +75,7 @@ export function resolveDemo(method, path, body) {
 
   // 쓰기/상호작용 요청은 조용히 성공 처리 → 화면의 낙관적 UI/자체 폴백 사용
   if (method === 'POST' && p === '/emotions/analyze') return demoAnalysis(body)
-  if (method === 'POST' && p === '/chat') return demoChatReply(body)
+  if (method === 'POST' && p === '/chat') return DEMO_UNHANDLED
   if (method === 'POST' && p === '/calendar') return { id: 'new-' + Date.now(), ...(body || {}) }
   if (method === 'PUT' && /^\/calendar\//.test(p)) return { ...(body || {}) }
   if (method === 'POST' && p === '/secrets') return { id: 'new-' + Date.now(), ...(body || {}) }
