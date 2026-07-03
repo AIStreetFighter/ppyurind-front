@@ -11,7 +11,7 @@ export default function Splash({ onDone }) {
       setExiting(true)
       // fade-out 0.4s 후 실제 전환
       setTimeout(onDone, 400)
-    }, 3200)
+    }, 5000)
     return () => clearTimeout(t)
   }, [onDone])
 
