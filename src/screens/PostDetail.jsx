@@ -65,6 +65,7 @@ function mapComment(c) {
     id: c.id,
     nick: c.anonymous_nickname || '익명',
     body: c.content,
+    deleted: !!c.is_deleted,
     time: c.created_at ? relTime(c.created_at) : '방금',
     likes: c.like_count || 0,
     liked: false,
