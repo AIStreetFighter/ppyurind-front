@@ -5,13 +5,12 @@ const CHAT_LIGHT = '/assets/cats/chat_light.png'
 
 // 전역 플로팅 AI 상담 버튼 — 테두리 없이 고양이 일러스트만 은은하게 떠 있음.
 // 진입 시 인사 말풍선을 잠깐 보여주고 자동으로 접어 화면을 어지럽히지 않음.
-export default function FloatingChat({ nav, isDark }) {
-  const [showBubble, setShowBubble] = useState(true)
+export default function FloatingChat({ nav, isDark, noBubble = false }) {
+  const [showBubble, setShowBubble] = useState(!noBubble)
 
   useEffect(() => {
-    const t = setTimeout(() => setShowBubble(false), 5000)
-    return () => clearTimeout(t)
-  }, [])
+    setShowBubble(!noBubble)
+  }, [noBubble])
 
   return (
     <div

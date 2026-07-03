@@ -25,9 +25,8 @@ import FloatingChat from "./components/FloatingChat";
 import { shouldLock } from "./utils/appLock";
 import { getAccessToken } from "./api/client";
 
-// 전역 플로팅 챗봇을 노출할 화면 (커뮤니티·홈·전체화면 플로우 제외)
-// 홈은 헤더에 쀼냥이 이미 있어 중복 방지, 커뮤니티는 글쓰기 FAB가 있어 제외
-const CHATBOT_SCREENS = new Set(["record", "analysis", "calendar", "report", "mypage", "myPosts"]);
+// 전역 플로팅 챗봇 노출 화면. 홈은 말풍선 없이(noBubble), 커뮤니티는 글쓰기 FAB와 겹쳐 제외
+const CHATBOT_SCREENS = new Set(["home", "record", "analysis", "calendar", "report", "mypage", "myPosts"]);
 
 const SCREEN_PATHS = {
   kakaoLogin: "/",
@@ -140,7 +139,7 @@ function AppContent() {
       {locked
         ? <LockScreen onUnlock={() => setLocked(false)} />
         : screens[screen]}
-      {!locked && CHATBOT_SCREENS.has(screen) && <FloatingChat nav={nav} isDark={isDark} />}
+      {!locked && CHATBOT_SCREENS.has(screen) && <FloatingChat nav={nav} isDark={isDark} noBubble={screen === 'home'} />}
     </div>
   );
 }
