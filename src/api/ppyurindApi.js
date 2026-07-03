@@ -4,6 +4,36 @@
 import { api, uploadFile, setAccessToken, setTokens, setRefreshToken, clearAccessToken, getAccessToken } from './client'
 import { disableDemo } from '../utils/demo'
 
+/**
+ * @typedef {Object} AnalysisMeta
+ * @property {('normal'|'caution'|'danger'|'emergency'|string)=} risk_level
+ * @property {string=} ai_status
+ * @property {boolean=} fallback_used
+ * @property {string=} label_schema_version
+ */
+
+/**
+ * @typedef {Object} SafetyInfo
+ * @property {boolean=} show_safety_card
+ * @property {string=} category
+ * @property {('normal'|'caution'|'danger'|'emergency'|string)=} level
+ * @property {string=} message
+ * @property {string[]=} contacts
+ */
+
+/**
+ * 기존 분석 응답 필드는 유지하고 백엔드 안전 정책 필드만 optional로 확장한다.
+ * @typedef {Object} AnalysisResponse
+ * @property {string=} risk_level
+ * @property {string=} primary_emotion
+ * @property {string=} secondary_emotion
+ * @property {string=} conflict_cause
+ * @property {string=} hidden_need
+ * @property {string=} recommended_action
+ * @property {AnalysisMeta=} meta
+ * @property {SafetyInfo=} safety
+ */
+
 // ── 1. 헬스체크 ──────────────────────────────
 export const checkHealth   = () => api.get('/health')
 export const checkHealthDb = () => api.get('/health/db')
@@ -83,6 +113,7 @@ export const removePin = () => api.delete('/users/me/pin')
 // ── 4. 감정 기록 ──────────────────────────────
 // 분석 + DB 저장 — POST /emotions/analyze (PR#16 이후 저장까지 처리)
 // inputType: 'text' | 'voice' | 'image'
+/** @returns {Promise<AnalysisResponse>} */
 export const analyzeEmotion = ({ rawContent, inputType = 'text' }) =>
   api.post('/emotions/analyze', { raw_content: rawContent, input_type: inputType })
 

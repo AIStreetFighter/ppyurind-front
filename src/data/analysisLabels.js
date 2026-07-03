@@ -91,6 +91,34 @@ export const RISK_LEVELS = {
   danger:  { label: '위험',  action: '안전 안내 우선, 긴급 기관 연결' },
 }
 
+// 신규 taxonomy를 우선 사용하되, 기존 백엔드 표시값도 그대로 노출해 화면이 비지 않게 한다.
+const TAXONOMY_ALIASES = {
+  emotions: {
+    hurt: '서운함', anger: '분노', anxiety: '불안', lonely: '외로움',
+    guilty: '죄책감', helpless: '무기력', confused: '혼란',
+  },
+  conflictTopics: {
+    housework: '가사분담', childcare: '양육', economy: '경제', family: '시댁/처가',
+    communication: '대화방식', affection: '애정표현', trust: '신뢰', contact: '시간사용',
+  },
+  hiddenNeeds: {
+    need_empathy: '공감받고 싶음', need_recognition: '인정받고 싶음',
+    need_respect: '존중받고 싶음', need_safety: '안전함',
+    need_autonomy: '자율성', need_love_check: '애정', need_rest: '휴식',
+  },
+  relationshipPatterns: {
+    criticism: '비난', defensive: '방어', contempt: '경멸',
+    stonewalling: '회피', avoidance: '회피', emotional_disconnection: '감정적 단절',
+  },
+  aiTones: { realistic: 'honest' },
+}
+
+export function displayAnalysisLabel(group, value) {
+  if (typeof value !== 'string' || !value.trim()) return ''
+  const cleanValue = value.trim()
+  return TAXONOMY_ALIASES[group]?.[cleanValue] || cleanValue
+}
+
 // ── 비밀도감 자동 추출 카테고리
 export const SECRET_NOTE_CATEGORIES = [
   { id: 'taboo',    label: '조심해야 할 대화 주제', desc: '건드리면 감정이 크게 상하는 주제' },
