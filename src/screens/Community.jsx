@@ -301,6 +301,26 @@ export default function Community({ nav, isDark, toggleTheme, concerns = [] }) {
         <div className="stack">
           {(similar && similar.length > 0) ? (
             similar.filter((s, idx, arr) => arr.findIndex(item => String(item.postId) === String(s.postId)) === idx).map(s => {
+              if (s.is_adult) {
+                return (
+                  <div key={s.postId} className="card locked" style={{ padding: 0 }}>
+                    <div className="blurred" aria-hidden="true" style={{ padding: 15 }}>
+                      <div className="row">
+                        <div className="avatar"><img className="pfp" src={avatarSrc(s.postId)} alt="" /></div>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <p className="row__title">"{(s.content || '').slice(0, 22)}"</p>
+                          <p className="row__sub">유사도 {Math.round(s.similarityScore)}%</p>
+                        </div>
+                        <span className="badge badge--match">매칭</span>
+                      </div>
+                    </div>
+                    <div className="locked__overlay" style={{ gap: 6 }}>
+                      <span className="badge badge--age"><i className="fa-solid fa-lock" style={{ fontSize: 10 }}></i> 19+ 친밀감 고민</span>
+                      <button className="btn-pill" style={{ fontSize: 12, padding: '4px 14px' }} onClick={(e) => { e.stopPropagation(); flash('성인 인증은 시연용이에요. 실제 연동 예정.') }}>성인 인증하기</button>
+                    </div>
+                  </div>
+                )
+              }
               const found = base.find(p => String(p.id) === String(s.postId))
               const title = found?.title || (s.content || '').slice(0, 26)
               return (

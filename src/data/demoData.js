@@ -41,6 +41,7 @@ const demoSimilar = [
   { postId: 1, content: '기념일을 매번 제가 챙기는 것 같아 서운해요', similarityScore: 86 },
   { postId: 4, content: '육아는 왜 늘 제 몫일까요', similarityScore: 82 },
   { postId: 8, content: '서로 너무 바빠서 대화가 없어요', similarityScore: 79 },
+  { postId: 99, content: '결혼 후 스킨십이 확 줄었어요. 먼저 다가가기도 눈치 보여요', similarityScore: 74, is_adult: true },
 ]
 
 function demoAnalysis(body) {
