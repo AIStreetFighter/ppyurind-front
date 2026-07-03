@@ -241,14 +241,18 @@ export default function Community({ nav, isDark, toggleTheme, concerns = [] }) {
       <div className="phone-body">
         {/* 배너 + 상단바 통합 — 배경/비율은 CSS에서 테마·화면폭별로 처리 */}
         <div className="community-banner">
-          {/* 좌측 텍스트 그라디언트 오버레이 */}
+          {/* 좌측 그라디언트 오버레이 — mask로 하단 자연스럽게 페이드 (텍스트 분리) */}
           <div style={{
             position: 'absolute', inset: 0, zIndex: 2,
             background: isDark
               ? 'linear-gradient(to right, rgba(10,10,30,0.80) 22%, rgba(10,10,30,0) 54%)'
               : 'linear-gradient(to right, rgba(255,248,240,0.88) 22%, rgba(255,248,240,0) 54%)',
-            WebkitMaskImage: 'linear-gradient(to top, transparent 0%, black 42%)',
-            maskImage: 'linear-gradient(to top, transparent 0%, black 42%)',
+            WebkitMaskImage: 'linear-gradient(to top, transparent 0%, black 38%)',
+            maskImage: 'linear-gradient(to top, transparent 0%, black 38%)',
+          }} />
+          {/* 텍스트 — mask 없이 항상 선명하게 */}
+          <div style={{
+            position: 'absolute', inset: 0, zIndex: 2,
             padding: '56px 22px 18px',
             display: 'flex', flexDirection: 'column', justifyContent: 'flex-end',
           }}>
