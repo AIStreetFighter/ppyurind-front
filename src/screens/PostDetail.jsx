@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { getCommunityPost, empathyPost, comfortPost, listComments, createComment, createReply, likeComment, deleteComment as apiDeleteComment, reportPost, muteAuthor } from '../api/ppyurindApi'
+import { getCommunityPost, empathyPost, comfortPost, listComments, createComment, createReply, likeComment, deleteComment as apiDeleteComment, reportPost, reportComment, muteAuthor } from '../api/ppyurindApi'
 import { avatarSrc } from '../data/nicknames'
 import { getReaction, setReaction, setCommentCount } from '../utils/reactions'
 
@@ -84,6 +84,7 @@ export default function PostDetail({ nav, post }) {
   const [replyDraft, setReplyDraft] = useState('')
   const [comments, setComments] = useState([])
   const [reportOpen, setReportOpen] = useState(false)
+  const [reportTarget, setReportTarget] = useState(null) // null=게시글 신고, 아니면 신고할 댓글/대댓글 id
   const [commentToast, setCommentToast] = useState('')
   const [commentMenuOpen, setCommentMenuOpen] = useState(null) // commentId or `r:${commentId}:${replyId}`
   const [myCommentIds, setMyCommentIds] = useState(() => getMyCommentIds())
@@ -253,9 +254,21 @@ export default function PostDetail({ nav, post }) {
   }
 
   const handleReport = (reason) => {
-    reportPost(post.id, reason).catch(() => {})
+    if (reportTarget) {
+      reportComment(post.id, reportTarget, reason).catch(() => {})
+    } else {
+      reportPost(post.id, reason).catch(() => {})
+    }
     setReportOpen(false)
+    setReportTarget(null)
     setMenuOpen(false)
+    flashComment('신고가 접수됐어요.')
+  }
+
+  const openCommentReport = (commentId) => {
+    setCommentMenuOpen(null)
+    setReportTarget(commentId)
+    setReportOpen(true)
   }
 
   const handleMute = () => {
@@ -360,16 +373,22 @@ export default function PostDetail({ nav, post }) {
                   {!isDeleted(c) && c.body != null && (
                     <i className={`${c.liked ? 'fa-solid' : 'fa-regular'} fa-heart pd-c-heart${c.liked ? ' on' : ''}`} onClick={() => toggleLike(c.id)}></i>
                   )}
-                  {isMyComment(c) && !isDeleted(c) && (
+                  {!isDeleted(c) && c.body != null && (
                     <div style={{ position: 'relative' }} onClick={e => e.stopPropagation()}>
                       <i className="fa-solid fa-ellipsis-vertical"
                          style={{ color: 'var(--ink-muted)', cursor: 'pointer', padding: '4px 6px', fontSize: 13 }}
                          onClick={() => setCommentMenuOpen(commentMenuOpen === c.id ? null : c.id)} />
                       {commentMenuOpen === c.id && (
                         <div className="kebab-menu" style={{ right: 0, top: 22, minWidth: 120 }}>
-                          <div className="kebab-item danger" onClick={() => deleteComment(c.id, undefined)}>
-                            <i className="fa-solid fa-trash"></i> 삭제
-                          </div>
+                          {isMyComment(c) ? (
+                            <div className="kebab-item danger" onClick={() => deleteComment(c.id, undefined)}>
+                              <i className="fa-solid fa-trash"></i> 삭제
+                            </div>
+                          ) : (
+                            <div className="kebab-item danger" onClick={() => openCommentReport(c.id)}>
+                              <i className="fa-solid fa-flag"></i> 신고
+                            </div>
+                          )}
                         </div>
                       )}
                     </div>
@@ -400,7 +419,7 @@ export default function PostDetail({ nav, post }) {
                     {!isDeleted(r) && r.body != null && (
                       <i className={`${r.liked ? 'fa-solid' : 'fa-regular'} fa-heart pd-c-heart${r.liked ? ' on' : ''}`} onClick={() => toggleLike(c.id, r.id)}></i>
                     )}
-                    {isMyComment(r) && !isDeleted(r) && (
+                    {!isDeleted(r) && r.body != null && (
                       <div style={{ position: 'relative' }} onClick={e => e.stopPropagation()}>
                         <i className="fa-solid fa-ellipsis-vertical"
                            style={{ color: 'var(--ink-muted)', cursor: 'pointer', padding: '4px 6px', fontSize: 13 }}
@@ -410,9 +429,15 @@ export default function PostDetail({ nav, post }) {
                            }} />
                         {commentMenuOpen === `r:${c.id}:${r.id}` && (
                           <div className="kebab-menu" style={{ right: 0, top: 22, minWidth: 120 }}>
-                            <div className="kebab-item danger" onClick={() => deleteComment(c.id, r.id)}>
-                              <i className="fa-solid fa-trash"></i> 삭제
-                            </div>
+                            {isMyComment(r) ? (
+                              <div className="kebab-item danger" onClick={() => deleteComment(c.id, r.id)}>
+                                <i className="fa-solid fa-trash"></i> 삭제
+                              </div>
+                            ) : (
+                              <div className="kebab-item danger" onClick={() => openCommentReport(r.id)}>
+                                <i className="fa-solid fa-flag"></i> 신고
+                              </div>
+                            )}
                           </div>
                         )}
                       </div>
@@ -452,7 +477,7 @@ export default function PostDetail({ nav, post }) {
 
       {/* 신고 모달 */}
       {reportOpen && (
-        <div className="sheet-backdrop" onClick={() => setReportOpen(false)} style={{ alignItems: 'center', padding: 22 }}>
+        <div className="sheet-backdrop" onClick={() => { setReportOpen(false); setReportTarget(null) }} style={{ alignItems: 'center', padding: 22 }}>
           <div className="modal" onClick={e => e.stopPropagation()} style={{ textAlign: 'left' }}>
             <h3 style={{ margin: '0 0 14px', fontSize: 17, color: 'var(--ink)' }}>신고 사유를 선택해주세요</h3>
             {['스팸·도배', '음란·불건전', '욕설·혐오', '개인정보 노출', '기타'].map(r => (
