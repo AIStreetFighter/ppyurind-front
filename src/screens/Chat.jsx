@@ -73,7 +73,7 @@ export default function Chat({ nav }) {
   }
 
   return (
-    <div className="chat-page">
+    <>
       <div className="chat-topbar">
         <i className="fa-solid fa-chevron-left chat-back" onClick={() => nav('home')}></i>
         <p className="chat-title">쀼냥 상담 <i className="fa-solid fa-wand-magic-sparkles" style={{ fontSize: 13, color: 'var(--brand)' }}></i></p>
@@ -133,6 +133,6 @@ export default function Chat({ nav }) {
           <i className="fa-solid fa-arrow-up"></i>
         </button>
       </div>
-    </div>
+    </>
   )
 }
