@@ -204,6 +204,8 @@ export const deleteCommunityPost = (id) => api.delete(`/community/posts/${id}`)
 
 // 신고 / 작성자 숨김
 export const reportPost = (id, reason) => api.post(`/community/posts/${id}/report`, { reason })
+export const reportComment = (postId, commentId, reason) =>
+  api.post(`/community/posts/${postId}/report`, { reason, interaction_id: commentId })
 export const muteAuthor = (id)         => api.post(`/community/posts/${id}/mute-author`, {})
 
 // 유사 게시글
