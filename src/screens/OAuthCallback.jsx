@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { setTokens } from '../api/client'
+import { disableDemo } from '../utils/demo'
 
 // 백엔드가 /auth/success?token=...&refresh=...&isNew=true 로 리다이렉트해줌
 export default function OAuthCallback({ nav }) {
@@ -13,6 +14,7 @@ export default function OAuthCallback({ nav }) {
 
     if (token) {
       setTokens({ access: token, refresh })
+      disableDemo()
       nav(isNew ? 'onboarding' : 'home')
     } else {
       setError('로그인에 실패했어요. 다시 시도해주세요.')

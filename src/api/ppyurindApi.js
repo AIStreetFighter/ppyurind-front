@@ -53,6 +53,7 @@ export async function register({ nickname, email, password }) {
     access: loginData.accessToken || loginData.access_token,
     refresh: loginData.refreshToken || loginData.refresh_token,
   })
+  disableDemo()
   return loginData
 }
 
@@ -63,6 +64,7 @@ export async function login({ email, password }) {
     access: data.accessToken || data.access_token,
     refresh: data.refreshToken || data.refresh_token,
   })
+  disableDemo()
   return data
 }
 
