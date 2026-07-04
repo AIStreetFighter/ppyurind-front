@@ -77,7 +77,8 @@ export default function Chat({ nav }) {
       <div className="chat-topbar">
         <i className="fa-solid fa-chevron-left chat-back" onClick={() => nav('home')}></i>
         <p className="chat-title">쀼냥 상담 <i className="fa-solid fa-wand-magic-sparkles" style={{ fontSize: 13, color: 'var(--brand)' }}></i></p>
-        <i className="fa-regular fa-user chat-prof"></i>
+        {/* TODO: 추후 상담 프로필/마이페이지 연결 시 복구 */}
+        {/* <i className="fa-regular fa-user chat-prof"></i> */}
       </div>
 
       <div className="chat-body" ref={scrollRef}>
