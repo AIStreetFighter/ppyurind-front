@@ -88,18 +88,17 @@ export default function Analysis({ nav, isDark, toggleTheme, nickname }) {
   }, [period])
 
   const dummy = REPORTS[period]
-  const r = apiData ? {
+  const shouldUseDummy = !apiData
+    || apiData.record_count === 0
+    || apiData.recordCount === 0
+  const r = shouldUseDummy ? dummy : {
     ...dummy,
     summary: apiData.monthly_self_insight || apiData.recurring_conflict_pattern || dummy.summary,
     gaslight: apiData.gaslight || dummy.gaslight,
     emotion: apiData.emotion || dummy.emotion,
     phrases: apiData.phrases?.length ? apiData.phrases : dummy.phrases,
-    weekly: apiData.weekly?.length ? apiData.weekly : dummy.weekly,
-    weeklyNote: apiData.weekly_note || dummy.weeklyNote,
-    weeks: apiData.weeks?.length ? apiData.weeks : dummy.weeks,
-    trend: apiData.trend || dummy.trend,
     insight: apiData.insight || dummy.insight,
-  } : dummy
+  }
   const maxCount = Math.max(...r.phrases.map(p => p.count))
   const gaugePct = Math.min(100, (r.gaslight.score / 20) * 100)
 
