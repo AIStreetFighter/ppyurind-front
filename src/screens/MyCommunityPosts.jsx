@@ -121,7 +121,7 @@ export default function MyCommunityPosts({ nav }) {
         </div>
       )}
 
-      <BottomNav active="마이" nav={nav} />
+      <BottomNav active="MY" nav={nav} />
     </>
   )
 }

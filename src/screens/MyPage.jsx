@@ -580,7 +580,7 @@ export default function MyPage({ nav, isDark, toggleTheme, nickname }) {
         </div>
       )}
 
-      <BottomNav active="마이" nav={nav} />
+      <BottomNav active="MY" nav={nav} />
     </>
   )
 }

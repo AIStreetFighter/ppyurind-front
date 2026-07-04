@@ -277,7 +277,7 @@ export default function MindCheckup({ nav, signal = '' }) {
         )}
       </div>
 
-      <BottomNav active="마이" nav={nav} />
+      <BottomNav active="MY" nav={nav} />
     </>
   )
 }

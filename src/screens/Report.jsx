@@ -63,7 +63,7 @@ export default function Report({ nav, isDark, toggleTheme }) {
         </div>
       </div>
 
-      <BottomNav active="마이" nav={nav} />
+      <BottomNav active="MY" nav={nav} />
     </>
   )
 }
