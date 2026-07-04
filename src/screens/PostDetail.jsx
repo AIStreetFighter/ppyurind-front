@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { getCommunityPost, empathyPost, comfortPost, listComments, createComment, createReply, likeComment, deleteComment as apiDeleteComment, reportPost, reportComment, muteAuthor } from '../api/ppyurindApi'
 import { avatarSrc, nickFromId, diverseAnonymousIdentity, safeCommentAvatarSrc, safeCatAvatarSrc } from '../data/nicknames'
 import { getReaction, setReaction, setCommentCount, getDemoReaction, setDemoReaction, getDemoComments, setDemoComments, setDemoCommentCount, ensureDemoComments } from '../utils/reactions'
@@ -76,6 +76,7 @@ function mapComment(c, demo = false) {
 }
 
 export default function PostDetail({ nav, post }) {
+  const bodyRef = useRef(null)
   const demoMode = isDemo()
   const [detail, setDetail]   = useState(post)
   // 피드에서 누른 공감/위로 상태를 localStorage에서 이어받음 → 상세 진입 시 아이콘 유지
@@ -134,6 +135,11 @@ export default function PostDetail({ nav, post }) {
     setComments(rows.map(mapComment))
     setCommentsLoaded(true)
   }
+
+  useLayoutEffect(() => {
+    bodyRef.current?.scrollTo({ top: 0, left: 0 })
+    window.scrollTo({ top: 0, left: 0 })
+  }, [post?.id])
 
   useEffect(() => {
     if (!post?.id) return
@@ -461,27 +467,28 @@ export default function PostDetail({ nav, post }) {
   return (
     <div className="pd" onClick={() => commentMenuOpen && setCommentMenuOpen(null)}>
       {commentToast && <div className="toast">{commentToast}</div>}
-      <div className="pd-top">
-        <i className="fa-solid fa-arrow-left pd-top-ic" onClick={() => nav('community')}></i>
-        <span className="pd-top-title">커뮤니티</span>
-        <div className="pd-top-right">
-          <div style={{ position: 'relative' }}>
-            <i className="fa-solid fa-ellipsis-vertical pd-top-ic" onClick={() => setMenuOpen(o => !o)}></i>
-            {menuOpen && (
-              <div className="kebab-menu">
-                <div className="kebab-item danger" onClick={() => { setMenuOpen(false); setReportOpen(true) }}>
-                  <i className="fa-solid fa-flag"></i> 신고하기
+      <div className="pd-body" ref={bodyRef}>
+        <div className="pd-top">
+          <i className="fa-solid fa-arrow-left pd-top-ic" onClick={() => nav('community')}></i>
+          <span className="pd-top-title">커뮤니티</span>
+          <div className="pd-top-right">
+            <div style={{ position: 'relative' }}>
+              <i className="fa-solid fa-ellipsis-vertical pd-top-ic" onClick={() => setMenuOpen(o => !o)}></i>
+              {menuOpen && (
+                <div className="kebab-menu">
+                  <div className="kebab-item danger" onClick={() => { setMenuOpen(false); setReportOpen(true) }}>
+                    <i className="fa-solid fa-flag"></i> 신고하기
+                  </div>
+                  <div className="kebab-item danger" onClick={handleMute}>
+                    <i className="fa-solid fa-eye-slash"></i> 이 회원 글 숨기기
+                  </div>
                 </div>
-                <div className="kebab-item danger" onClick={handleMute}>
-                  <i className="fa-solid fa-eye-slash"></i> 이 회원 글 숨기기
-                </div>
-              </div>
-            )}
+              )}
+            </div>
           </div>
         </div>
-      </div>
 
-      <div className="pd-body">
+        <div className="pd-scroll-content">
         <div className="post-head">
           <div className="avatar"><img className="pfp" src={avatarSrc(post.id)} alt="" /></div>
           <div style={{ flex: 1, minWidth: 0 }}>
@@ -632,6 +639,7 @@ export default function PostDetail({ nav, post }) {
           {comments.length === 0 && (
             <p style={{ textAlign: 'center', color: 'var(--ink-muted)', fontSize: 13.5, padding: '20px 0' }}>첫 댓글을 남겨보세요 💬</p>
           )}
+        </div>
         </div>
       </div>
 
