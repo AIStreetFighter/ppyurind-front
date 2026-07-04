@@ -80,8 +80,14 @@ export default function PostDetail({ nav, post }) {
   const [comforted, setComforted] = useState(() => getReaction(post?.id).comforted)
   // 서버가 내려주는 실수치를 그대로 신뢰 — liked/comforted로 +1을 더하면
   // 상세 진입 시 이미 반영된 count에 중복으로 더해져 숫자가 부풀어 오르는 문제가 있었음
-  const [empathyCount, setEmpathyCount] = useState(() => post?.empathy_count ?? post?.empathy ?? 0)
-  const [comfortCount, setComfortCount] = useState(() => post?.comfort_count ?? post?.comfort ?? 0)
+  const [empathyCount, setEmpathyCount] = useState(() => {
+    const base = post?.empathy_count ?? post?.empathy ?? 0
+    return base + (isLocalPost(post?.id) && getReaction(post?.id).liked ? 1 : 0)
+  })
+  const [comfortCount, setComfortCount] = useState(() => {
+    const base = post?.comfort_count ?? post?.comfort ?? 0
+    return base + (isLocalPost(post?.id) && getReaction(post?.id).comforted ? 1 : 0)
+  })
   const [menuOpen, setMenuOpen] = useState(false)
   const [draft, setDraft]     = useState('')
   const [replyTo, setReplyTo] = useState(null)
@@ -100,8 +106,22 @@ export default function PostDetail({ nav, post }) {
   const refreshMyCommentIds = () => setMyCommentIds(getMyCommentIds())
   const refreshDeletedIds = () => setDeletedCommentIds(getDeletedCommentIds())
 
+  const reloadComments = async () => {
+    if (!post?.id) return
+    if (isLocalPost(post.id)) {
+      setComments(getLocalComments(post.id))
+      setCommentsLoaded(true)
+      return
+    }
+    const data = await listComments(post.id)
+    const rows = data?.comments || data?.items || (Array.isArray(data) ? data : [])
+    setComments(rows.map(mapComment))
+    setCommentsLoaded(true)
+  }
+
   useEffect(() => {
     if (!post?.id) return
+    setCommentsLoaded(false)
     if (isLocalPost(post.id)) {
       setComments(getLocalComments(post.id))
       setCommentsLoaded(true)
@@ -123,12 +143,7 @@ export default function PostDetail({ nav, post }) {
       if (typeof d.empathy_count === 'number') setEmpathyCount(d.empathy_count)
       if (typeof d.comfort_count === 'number') setComfortCount(d.comfort_count)
     }).catch(() => {})
-    listComments(post.id)
-      .then(data => {
-        setComments((data?.comments || data?.items || []).map(mapComment))
-        setCommentsLoaded(true)
-      })
-      .catch(() => { setCommentsLoaded(true) })
+    reloadComments().catch(() => {})
   }, [post?.id])
 
   // 삭제 제외 댓글+대댓 수를 캐시 → 피드가 재사용해 "댓글 0" 불일치 제거
@@ -151,36 +166,66 @@ export default function PostDetail({ nav, post }) {
     )
   }
 
-  const handleEmpathy = () => {
-    const next = !liked
-    setLiked(next)
-    setReaction(post.id, { liked: next })
-    setEmpathyCount(c => Math.max(0, c + (next ? 1 : -1)))
-    empathyPost(post.id)
-      .then(res => {
+  const refreshPostReaction = async () => {
+    const d = await getCommunityPost(post.id)
+    if (typeof d?.has_empathized === 'boolean') {
+      setLiked(d.has_empathized)
+      setReaction(post.id, { liked: d.has_empathized })
+    }
+    if (typeof d?.has_comforted === 'boolean') {
+      setComforted(d.has_comforted)
+      setReaction(post.id, { comforted: d.has_comforted })
+    }
+    if (typeof d?.empathy_count === 'number') setEmpathyCount(d.empathy_count)
+    if (typeof d?.comfort_count === 'number') setComfortCount(d.comfort_count)
+  }
+
+  const handleEmpathy = async () => {
+    if (isLocalPost(post.id)) {
+      const next = !liked
+      setLiked(next)
+      setReaction(post.id, { liked: next })
+      setEmpathyCount(count => Math.max(0, count + (next ? 1 : -1)))
+      return
+    }
+    try {
+      const res = await empathyPost(post.id)
         if (res && typeof res.liked === 'boolean') {
           setLiked(res.liked)
           setReaction(post.id, { liked: res.liked })
+        } else if (res && typeof res.has_empathized === 'boolean') {
+          setLiked(res.has_empathized)
+          setReaction(post.id, { liked: res.has_empathized })
         }
         if (res && typeof res.empathy_count === 'number') setEmpathyCount(res.empathy_count)
-      })
-      .catch(() => {})
+    } catch {
+      try { await refreshPostReaction() } catch {}
+      flashComment('공감 처리에 실패했어요. 잠시 후 다시 시도해 주세요.')
+    }
   }
 
-  const handleComfort = () => {
-    const next = !comforted
-    setComforted(next)
-    setReaction(post.id, { comforted: next })
-    setComfortCount(c => Math.max(0, c + (next ? 1 : -1)))
-    comfortPost(post.id)
-      .then(res => {
+  const handleComfort = async () => {
+    if (isLocalPost(post.id)) {
+      const next = !comforted
+      setComforted(next)
+      setReaction(post.id, { comforted: next })
+      setComfortCount(count => Math.max(0, count + (next ? 1 : -1)))
+      return
+    }
+    try {
+      const res = await comfortPost(post.id)
         if (res && typeof res.comforted === 'boolean') {
           setComforted(res.comforted)
           setReaction(post.id, { comforted: res.comforted })
+        } else if (res && typeof res.has_comforted === 'boolean') {
+          setComforted(res.has_comforted)
+          setReaction(post.id, { comforted: res.has_comforted })
         }
         if (res && typeof res.comfort_count === 'number') setComfortCount(res.comfort_count)
-      })
-      .catch(() => {})
+    } catch {
+      try { await refreshPostReaction() } catch {}
+      flashComment('위로 처리에 실패했어요. 잠시 후 다시 시도해 주세요.')
+    }
   }
 
   const toggleLike = (cid, rid) => {
@@ -196,16 +241,28 @@ export default function PostDetail({ nav, post }) {
   const isMyComment = (c) => c.nick === '나' || myCommentIds.has(String(c.id))
   const isDeleted = (c) => c.deleted || deletedCommentIds.has(String(c.id))
 
-  const deleteComment = (commentId, replyId) => {
+  const deleteComment = async (commentId, replyId) => {
     setCommentMenuOpen(null)
     const targetId = replyId ?? commentId
-    addDeletedCommentId(targetId)
-    refreshDeletedIds()
     if (isLocalPost(post.id)) {
+      addDeletedCommentId(targetId)
+      refreshDeletedIds()
       softDeleteLocalComment(post.id, commentId, replyId ?? null)
+      setComments(getLocalComments(post.id))
     } else {
-      // 백엔드 DELETE — 실패해도 UI는 이미 숨겨져 있으므로 조용히 처리
-      apiDeleteComment(targetId).catch(() => {})
+      // 서버 삭제 성공 후 목록을 다시 받아 화면을 서버 상태와 맞춘다.
+      try {
+        await apiDeleteComment(targetId)
+      } catch {
+        flashComment('댓글 삭제에 실패했어요. 잠시 후 다시 시도해 주세요.')
+        return
+      }
+      try {
+        await reloadComments()
+      } catch {
+        flashComment('삭제는 처리됐지만 목록 새로고침에 실패했어요. 새로고침 후 확인해주세요.')
+        return
+      }
     }
     flashComment('댓글을 삭제했어요.')
   }
@@ -222,17 +279,23 @@ export default function PostDetail({ nav, post }) {
       return
     }
 
+    let created
     try {
-      const created = await createComment({ postId: post.id, content: text, isAnonymous: true })
+      created = await createComment({ postId: post.id, content: text, isAnonymous: true })
       addMyCommentId(created.id)
       refreshMyCommentIds()
-      setComments(c => [...c, mapComment(created)])
     } catch (err) {
       // 401(세션 만료)은 전역 핸들러가 로그인으로 유도 → 임시저장 안 함
       if (err?.status === 401) { setDraft(text); return }
       console.error('댓글 작성 실패:', err?.status, err?.message ?? err)
-      setComments(c => [...c, { id: Date.now(), nick: '나', body: text, time: '방금', likes: 0, liked: false, replies: [] }])
-      flashComment('댓글이 임시 저장됐어요 · 새로고침하면 사라질 수 있어요')
+      setDraft(text)
+      flashComment('댓글 등록에 실패했어요. 잠시 후 다시 시도해 주세요.')
+      return
+    }
+    try {
+      await reloadComments()
+    } catch {
+      flashComment('댓글은 저장됐지만 목록 새로고침에 실패했어요. 새로고침 후 확인해주세요.')
     }
   }
 
@@ -248,20 +311,23 @@ export default function PostDetail({ nav, post }) {
       return
     }
 
+    let created
     try {
-      const created = await createReply({ commentId: cid, content: text, isAnonymous: true })
+      created = await createReply({ commentId: cid, content: text, isAnonymous: true })
       addMyCommentId(created.id)
       refreshMyCommentIds()
-      setComments(cs => cs.map(c => c.id === cid
-        ? { ...c, replies: [...c.replies, mapComment(created)] }
-        : c))
     } catch (err) {
       if (err?.status === 401) { setReplyDraft(text); setReplyTo(cid); return }
       console.error('답글 작성 실패:', err?.status, err?.message ?? err)
-      setComments(cs => cs.map(c => c.id === cid
-        ? { ...c, replies: [...c.replies, { id: Date.now(), nick: '나', body: text, time: '방금', likes: 0, liked: false }] }
-        : c))
-      flashComment('답글이 임시 저장됐어요 · 새로고침하면 사라질 수 있어요')
+      setReplyDraft(text)
+      setReplyTo(cid)
+      flashComment('답글 등록에 실패했어요. 잠시 후 다시 시도해 주세요.')
+      return
+    }
+    try {
+      await reloadComments()
+    } catch {
+      flashComment('답글은 저장됐지만 목록 새로고침에 실패했어요. 새로고침 후 확인해주세요.')
     }
   }
 

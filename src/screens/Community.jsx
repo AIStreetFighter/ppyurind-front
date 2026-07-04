@@ -8,6 +8,7 @@ import { likedMap, comfortedMap, setReaction, getCommentCount } from '../utils/r
 import { listCommunityPosts, empathyPost, comfortPost, reportPost, muteAuthor, deleteCommunityPost, getSimilarPosts } from '../api/ppyurindApi'
 
 const MY_POSTS_STORAGE_KEY = 'ppyurind:myCommunityPosts'
+const isLocalPost = (id) => typeof id === 'string' && id.startsWith('u')
 
 const SEED = [
   ['기념일을 매번 제가 챙겨요', '#대화단절 #서운함', '기념일을 매번 제가 챙기는 것 같아서 서운해요. 그냥 한 번쯤 먼저 물어봐주길 바랐어요. 큰 걸 바라는 것도 아닌데 그게 그렇게 어려운 일일까요…', 106, 32, 14],
@@ -78,7 +79,9 @@ function mapApiPost(p) {
     body: p.content || '',
     empathy: p.empathy_count || 0,
     comfort: p.comfort_count || 0,
-    comments: p.comment_count || 0,
+    hasEmpathized: typeof p.has_empathized === 'boolean' ? p.has_empathized : undefined,
+    hasComforted: typeof p.has_comforted === 'boolean' ? p.has_comforted : undefined,
+    comments: typeof p.comment_count === 'number' ? p.comment_count : undefined,
     author: `user_${p.id}`,
     daysAgo: p.created_at ? Math.round((Date.now() - new Date(p.created_at)) / 86400000) : 0,
     createdAt: p.created_at || null,
@@ -137,7 +140,28 @@ export default function Community({ nav, isDark, toggleTheme, concerns = [] }) {
   useEffect(() => {
     listCommunityPosts({ offset: 0, limit: 50 }).then(data => {
       const items = Array.isArray(data) ? data : (data.items || [])
-      setApiPosts(items.map(mapApiPost))
+      const mapped = items.map(mapApiPost)
+      setApiPosts(mapped)
+      setLiked(current => {
+        const next = { ...current }
+        mapped.forEach(p => {
+          if (typeof p.hasEmpathized === 'boolean') {
+            next[p.id] = p.hasEmpathized
+            setReaction(p.id, { liked: p.hasEmpathized })
+          }
+        })
+        return next
+      })
+      setComforted(current => {
+        const next = { ...current }
+        mapped.forEach(p => {
+          if (typeof p.hasComforted === 'boolean') {
+            next[p.id] = p.hasComforted
+            setReaction(p.id, { comforted: p.hasComforted })
+          }
+        })
+        return next
+      })
     }).catch(() => setApiPosts(null))
   }, [])
 
@@ -152,31 +176,61 @@ export default function Community({ nav, isDark, toggleTheme, concerns = [] }) {
 
   const flash = (msg) => { setToast(msg); setTimeout(() => setToast(''), 1900) }
 
-  // 공감/위로: 원본 카운트는 건드리지 않고 localStorage 반응 상태만 토글.
-  // 표시 카운트는 렌더 시 "원본 + (liked?1:0)"으로 계산 → 이중 카운트/초기화 없음.
-  const handleEmpathy = (p, e) => {
+  // 서버 게시글은 API 응답의 count/state를 사용하고, 로컬 게시글만 저장된 반응을 토글한다.
+  const handleEmpathy = async (p, e) => {
     e.stopPropagation()
-    empathyPost(p.id).catch(() => {})
-    const wasLiked = !!liked[p.id]
-    setReaction(p.id, { liked: !wasLiked })
-    setLiked(s => ({ ...s, [p.id]: !wasLiked }))
+    if (isLocalPost(p.id)) {
+      const nextLiked = !liked[p.id]
+      setReaction(p.id, { liked: nextLiked })
+      setLiked(s => ({ ...s, [p.id]: nextLiked }))
+      return
+    }
+    try {
+      const res = await empathyPost(p.id)
+      const nextLiked = typeof res?.liked === 'boolean' ? res.liked : res?.has_empathized
+      if (typeof nextLiked === 'boolean') {
+        setReaction(p.id, { liked: nextLiked })
+        setLiked(s => ({ ...s, [p.id]: nextLiked }))
+      }
+      if (typeof res?.empathy_count === 'number') {
+        setApiPosts(posts => posts?.map(post => post.id === p.id ? { ...post, empathy: res.empathy_count } : post))
+      }
+    } catch {
+      flash('공감 처리에 실패했어요. 잠시 후 다시 시도해 주세요.')
+    }
   }
 
-  const handleComfort = (p, e) => {
+  const handleComfort = async (p, e) => {
     e.stopPropagation()
-    comfortPost(p.id).catch(() => {})
-    const wasComforted = !!comforted[p.id]
-    setReaction(p.id, { comforted: !wasComforted })
-    setComforted(s => ({ ...s, [p.id]: !wasComforted }))
+    if (isLocalPost(p.id)) {
+      const nextComforted = !comforted[p.id]
+      setReaction(p.id, { comforted: nextComforted })
+      setComforted(s => ({ ...s, [p.id]: nextComforted }))
+      return
+    }
+    try {
+      const res = await comfortPost(p.id)
+      const nextComforted = typeof res?.comforted === 'boolean' ? res.comforted : res?.has_comforted
+      if (typeof nextComforted === 'boolean') {
+        setReaction(p.id, { comforted: nextComforted })
+        setComforted(s => ({ ...s, [p.id]: nextComforted }))
+      }
+      if (typeof res?.comfort_count === 'number') {
+        setApiPosts(posts => posts?.map(post => post.id === p.id ? { ...post, comfort: res.comfort_count } : post))
+      }
+    } catch {
+      flash('위로 처리에 실패했어요. 잠시 후 다시 시도해 주세요.')
+    }
   }
 
-  // 표시용 카운트 (원본 불변 + 반응 상태 반영)
-  const empathyOf = (p) => (p.empathy || 0) + (liked[p.id] ? 1 : 0)
-  const comfortOf = (p) => (p.comfort || 0) + (comforted[p.id] ? 1 : 0)
-  // 댓글 수: 상세에서 계산해 캐시한 실제 수가 있으면 그걸, 없으면 원본 comment_count
+  // 서버 count에는 반응 상태를 더하지 않고, 서버가 없는 로컬 게시글만 active 상태를 반영한다.
+  const empathyOf = (p) => (p.empathy || 0) + (isLocalPost(p.id) && liked[p.id] ? 1 : 0)
+  const comfortOf = (p) => (p.comfort || 0) + (isLocalPost(p.id) && comforted[p.id] ? 1 : 0)
+  // 서버 comment_count를 우선하고, 로컬 게시글 또는 서버값이 없을 때만 캐시를 사용한다.
   const commentsOf = (p) => {
+    if (!isLocalPost(p.id) && typeof p.comments === 'number') return p.comments
     const cached = getCommentCount(p.id)
-    return cached != null ? cached : (p.comments || 0)
+    return cached != null ? cached : (p.comments ?? 0)
   }
 
   const submitReport = (reason) => {

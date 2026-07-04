@@ -1,6 +1,7 @@
 // 공감/위로 반응 + 댓글 수를 localStorage로 영속화 —
-// 피드(Community)와 상세(PostDetail)가 같은 소스를 공유해 카운트/아이콘이 항상 일치하도록 한다.
-// 규칙: 원본 카운트(post.empathy 등)는 절대 수정하지 않고, "원본 + (liked?1:0)"으로만 표시한다.
+// 피드(Community)와 상세(PostDetail)가 같은 반응 상태를 공유하도록 한다.
+// 서버 게시글 count는 서버 응답만 사용하고, localStorage 반응은 active 상태 보조용이다.
+// 서버가 없는 로컬 게시글에 한해 저장된 반응 상태로 로컬 count를 계산한다.
 
 const REACT_KEY = 'ppyurind:reactions'   // { [postId]: { liked, comforted } }
 const CCOUNT_KEY = 'ppyurind:commentCounts' // { [postId]: number } — 상세에서 계산한 실제 댓글 수
