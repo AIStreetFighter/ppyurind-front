@@ -9,10 +9,12 @@ import { isDemo } from './demo'
 const REACT_KEY = 'ppyurind:reactions'   // { [postId]: { liked, comforted } }
 const CCOUNT_KEY = 'ppyurind:commentCounts' // { [postId]: number } — 상세에서 계산한 실제 댓글 수
 const DEMO_REACT_KEY = 'ppyurind:demo:reactions'
+const DEMO_REACT_VERSION_KEY = 'ppyurind:demo:reactionsVersion'
+const DEMO_REACT_VERSION = '2'
 const DEMO_COMMENTS_KEY = 'ppyurind:demo:comments'
 const DEMO_CCOUNT_KEY = 'ppyurind:demo:commentCounts'
 const DEMO_COMMENTS_VERSION_KEY = 'ppyurind:demo:commentsVersion'
-const DEMO_COMMENTS_VERSION = '3'
+const DEMO_COMMENTS_VERSION = '6'
 
 function readJson(key) {
   try { return JSON.parse(localStorage.getItem(key) || '{}') } catch { return {} }
@@ -57,13 +59,52 @@ export function setCommentCount(id, n) {
   localStorage.setItem(CCOUNT_KEY, JSON.stringify(all))
 }
 
-export function getAllDemoReactions() { return readJson(DEMO_REACT_KEY) }
-export function getDemoReaction(id) {
-  return getAllDemoReactions()[String(id)] || { liked: false, comforted: false, empathyCount: 0, comfortCount: 0 }
+function normalizeStoredDemoReaction(stored = {}) {
+  const liked = !!stored.liked
+  const comforted = !!stored.comforted
+  return {
+    liked,
+    comforted,
+    empathyDelta: liked ? 1 : 0,
+    comfortDelta: comforted ? 1 : 0,
+  }
+}
+
+function migrateDemoReactions() {
+  if (localStorage.getItem(DEMO_REACT_VERSION_KEY) === DEMO_REACT_VERSION) return
+  const all = readJson(DEMO_REACT_KEY)
+  for (const postId in all) all[postId] = normalizeStoredDemoReaction(all[postId])
+  localStorage.setItem(DEMO_REACT_KEY, JSON.stringify(all))
+  localStorage.setItem(DEMO_REACT_VERSION_KEY, DEMO_REACT_VERSION)
+}
+
+export function getAllDemoReactions() {
+  migrateDemoReactions()
+  return readJson(DEMO_REACT_KEY)
+}
+export function getDemoReaction(id, empathyBase = 0, comfortBase = 0) {
+  const stored = normalizeStoredDemoReaction(getAllDemoReactions()[String(id)])
+  const { liked, comforted, empathyDelta, comfortDelta } = stored
+  return {
+    ...stored,
+    liked,
+    comforted,
+    empathyDelta,
+    comfortDelta,
+    empathyCount: Math.max(0, empathyBase + empathyDelta),
+    comfortCount: Math.max(0, comfortBase + comfortDelta),
+  }
 }
 export function setDemoReaction(id, patch) {
   const all = getAllDemoReactions()
-  all[String(id)] = { ...getDemoReaction(id), ...patch }
+  const current = getDemoReaction(id)
+  all[String(id)] = {
+    liked: current.liked,
+    comforted: current.comforted,
+    empathyDelta: current.empathyDelta,
+    comfortDelta: current.comfortDelta,
+    ...patch,
+  }
   localStorage.setItem(DEMO_REACT_KEY, JSON.stringify(all))
   return all[String(id)]
 }
@@ -87,11 +128,18 @@ export function countActiveDemoComments(comments) {
     + (comment.replies || []).filter(reply => !(reply.is_deleted || reply.deleted)).length, 0)
 }
 export function setDemoComments(postId, comments) {
+  const timestampOf = item => new Date(item.created_at || item.createdAt || 0).getTime() || 0
+  const sorted = comments
+    .map(comment => ({
+      ...comment,
+      replies: [...(comment.replies || [])].sort((a, b) => timestampOf(a) - timestampOf(b)),
+    }))
+    .sort((a, b) => timestampOf(a) - timestampOf(b))
   const all = readJson(DEMO_COMMENTS_KEY)
-  all[String(postId)] = comments
+  all[String(postId)] = sorted
   localStorage.setItem(DEMO_COMMENTS_KEY, JSON.stringify(all))
-  setDemoCommentCount(postId, countActiveDemoComments(comments))
-  return comments
+  setDemoCommentCount(postId, countActiveDemoComments(sorted))
+  return sorted
 }
 export function getDemoCommentCount(id) {
   const value = readJson(DEMO_CCOUNT_KEY)[String(id)]
@@ -153,10 +201,59 @@ function deterministicTemplateOffset(postId, length) {
   return length > 0 ? value % length : 0
 }
 
+function seedDemoCreatedAt(_postId, index, count, anchor) {
+  return new Date(anchor - Math.max(1, count - index) * 60 * 60 * 1000).toISOString()
+}
+
+function createdAtFromDemoId(id, prefix) {
+  const timestamp = Number(String(id).replace(prefix, ''))
+  if (!Number.isFinite(timestamp) || timestamp <= 0) return null
+  const date = new Date(timestamp)
+  return Number.isNaN(date.getTime()) ? null : date.toISOString()
+}
+
+function addMissingDemoCreatedAt(comments, postId) {
+  const anchor = Math.floor(Date.now() / 3600000) * 3600000
+  const seedCount = comments.filter(comment => String(comment.id).startsWith('demo-seed-')).length
+  let seedIndex = 0
+  return comments.map((comment, index) => {
+    const isSeed = String(comment.id).startsWith('demo-seed-')
+    const repairedCreatedAt = isSeed
+      ? seedDemoCreatedAt(postId, seedIndex++, seedCount, anchor)
+      : comment.created_at || comment.createdAt
+        || createdAtFromDemoId(comment.id, /^demo-c-/)
+        || new Date(anchor - (index + 1) * 3600000).toISOString()
+    const parentTimestamp = new Date(repairedCreatedAt).getTime()
+    return ({
+      ...comment,
+      created_at: repairedCreatedAt,
+      replies: (comment.replies || []).map((reply, replyIndex) => ({
+        ...reply,
+        created_at: reply.created_at || reply.createdAt || (() => {
+          return createdAtFromDemoId(reply.id, /^demo-r-/)
+            || new Date(Math.min(anchor, parentTimestamp + (replyIndex + 1) * 3600000)).toISOString()
+        })(),
+      })),
+    })
+  })
+}
+
 function migrateDemoComments() {
   if (localStorage.getItem(DEMO_COMMENTS_VERSION_KEY) === DEMO_COMMENTS_VERSION) return
-  localStorage.removeItem(DEMO_COMMENTS_KEY)
-  localStorage.removeItem(DEMO_CCOUNT_KEY)
+  const all = readJson(DEMO_COMMENTS_KEY)
+  for (const postId in all) {
+    if (Array.isArray(all[postId])) {
+      const repaired = addMissingDemoCreatedAt(all[postId], postId)
+      const timestampOf = item => new Date(item.created_at || item.createdAt || 0).getTime() || 0
+      all[postId] = repaired
+        .map(comment => ({
+          ...comment,
+          replies: [...(comment.replies || [])].sort((a, b) => timestampOf(a) - timestampOf(b)),
+        }))
+        .sort((a, b) => timestampOf(a) - timestampOf(b))
+    }
+  }
+  localStorage.setItem(DEMO_COMMENTS_KEY, JSON.stringify(all))
   localStorage.setItem(DEMO_COMMENTS_VERSION_KEY, DEMO_COMMENTS_VERSION)
 }
 
@@ -178,14 +275,14 @@ export function ensureDemoComments(post) {
 
   const templates = demoTemplatesFor(post)
   const templateOffset = deterministicTemplateOffset(key, templates.length)
-  const createdAt = new Date().toISOString()
+  const anchor = Math.floor(Date.now() / 3600000) * 3600000
   const comments = Array.from({ length: count }, (_, index) => {
     const id = `demo-seed-${key}-${index + 1}`
     const identity = diverseAnonymousIdentity(`demo-comments:${key}`, index)
     return {
       id,
       content: templates[(templateOffset + index) % templates.length],
-      created_at: createdAt,
+      created_at: seedDemoCreatedAt(key, index, count, anchor),
       is_deleted: false,
       anonymous_nickname: identity.nickname,
       anonymous_avatar: identity.avatar,

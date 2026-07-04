@@ -184,7 +184,7 @@ export default function Community({ nav, isDark, toggleTheme, concerns = [] }) {
     e.stopPropagation()
     if (demoMode) {
       const nextLiked = !getDemoReaction(p.id).liked
-      setDemoReaction(p.id, { liked: nextLiked, empathyCount: nextLiked ? 1 : 0 })
+      setDemoReaction(p.id, { liked: nextLiked, empathyDelta: nextLiked ? 1 : 0 })
       setLiked(s => ({ ...s, [p.id]: nextLiked }))
       return
     }
@@ -213,7 +213,7 @@ export default function Community({ nav, isDark, toggleTheme, concerns = [] }) {
     e.stopPropagation()
     if (demoMode) {
       const nextComforted = !getDemoReaction(p.id).comforted
-      setDemoReaction(p.id, { comforted: nextComforted, comfortCount: nextComforted ? 1 : 0 })
+      setDemoReaction(p.id, { comforted: nextComforted, comfortDelta: nextComforted ? 1 : 0 })
       setComforted(s => ({ ...s, [p.id]: nextComforted }))
       return
     }
@@ -239,8 +239,8 @@ export default function Community({ nav, isDark, toggleTheme, concerns = [] }) {
   }
 
   // 서버 count에는 반응 상태를 더하지 않고, 서버가 없는 로컬 게시글만 active 상태를 반영한다.
-  const empathyOf = (p) => demoMode ? getDemoReaction(p.id).empathyCount : (p.empathy || 0) + (isLocalPost(p.id) && liked[p.id] ? 1 : 0)
-  const comfortOf = (p) => demoMode ? getDemoReaction(p.id).comfortCount : (p.comfort || 0) + (isLocalPost(p.id) && comforted[p.id] ? 1 : 0)
+  const empathyOf = (p) => demoMode ? getDemoReaction(p.id, p.empathy ?? 0, p.comfort ?? 0).empathyCount : (p.empathy || 0) + (isLocalPost(p.id) && liked[p.id] ? 1 : 0)
+  const comfortOf = (p) => demoMode ? getDemoReaction(p.id, p.empathy ?? 0, p.comfort ?? 0).comfortCount : (p.comfort || 0) + (isLocalPost(p.id) && comforted[p.id] ? 1 : 0)
   // 서버 comment_count를 우선하고, 로컬 게시글 또는 서버값이 없을 때만 캐시를 사용한다.
   const commentsOf = (p) => {
     if (demoMode) {
