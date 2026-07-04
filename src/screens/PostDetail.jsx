@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
 import { getCommunityPost, empathyPost, comfortPost, listComments, createComment, createReply, likeComment, deleteComment as apiDeleteComment, reportPost, reportComment, muteAuthor } from '../api/ppyurindApi'
-import { avatarSrc } from '../data/nicknames'
-import { getReaction, setReaction, setCommentCount } from '../utils/reactions'
+import { avatarSrc, nickFromId, diverseAnonymousIdentity } from '../data/nicknames'
+import { getReaction, setReaction, setCommentCount, getDemoReaction, setDemoReaction, getDemoComments, setDemoComments, setDemoCommentCount, ensureDemoComments } from '../utils/reactions'
+import { isDemo } from '../utils/demo'
 
 // 로컬 저장 글(id가 'u'로 시작)인지 판별
 const isLocalPost = (id) => typeof id === 'string' && id.startsWith('u')
@@ -60,31 +61,35 @@ function relTime(iso) {
   return `${Math.round(hrs / 24)}일`
 }
 
-function mapComment(c) {
+function mapComment(c, demo = false) {
   return {
     id: c.id,
-    nick: c.anonymous_nickname || '익명',
+    nick: c.anonymous_nickname || (demo ? nickFromId(c.id) : '익명'),
+    avatar: demo ? (c.anonymous_avatar || avatarSrc(c.id)) : avatarSrc(c.id),
     body: c.content,
     deleted: !!c.is_deleted,
     time: c.created_at ? relTime(c.created_at) : '방금',
     likes: c.like_count || 0,
     liked: false,
-    replies: (c.replies || []).map(mapComment),
+    replies: (c.replies || []).map(reply => mapComment(reply, demo)),
   }
 }
 
 export default function PostDetail({ nav, post }) {
+  const demoMode = isDemo()
   const [detail, setDetail]   = useState(post)
   // 피드에서 누른 공감/위로 상태를 localStorage에서 이어받음 → 상세 진입 시 아이콘 유지
-  const [liked, setLiked]     = useState(() => getReaction(post?.id).liked)
-  const [comforted, setComforted] = useState(() => getReaction(post?.id).comforted)
+  const [liked, setLiked]     = useState(() => demoMode ? getDemoReaction(post?.id).liked : getReaction(post?.id).liked)
+  const [comforted, setComforted] = useState(() => demoMode ? getDemoReaction(post?.id).comforted : getReaction(post?.id).comforted)
   // 서버가 내려주는 실수치를 그대로 신뢰 — liked/comforted로 +1을 더하면
   // 상세 진입 시 이미 반영된 count에 중복으로 더해져 숫자가 부풀어 오르는 문제가 있었음
   const [empathyCount, setEmpathyCount] = useState(() => {
+    if (demoMode) return getDemoReaction(post?.id).empathyCount
     const base = post?.empathy_count ?? post?.empathy ?? 0
     return base + (isLocalPost(post?.id) && getReaction(post?.id).liked ? 1 : 0)
   })
   const [comfortCount, setComfortCount] = useState(() => {
+    if (demoMode) return getDemoReaction(post?.id).comfortCount
     const base = post?.comfort_count ?? post?.comfort ?? 0
     return base + (isLocalPost(post?.id) && getReaction(post?.id).comforted ? 1 : 0)
   })
@@ -108,6 +113,11 @@ export default function PostDetail({ nav, post }) {
 
   const reloadComments = async () => {
     if (!post?.id) return
+    if (demoMode) {
+      setComments(ensureDemoComments(post).map(comment => mapComment(comment, true)))
+      setCommentsLoaded(true)
+      return
+    }
     if (isLocalPost(post.id)) {
       setComments(getLocalComments(post.id))
       setCommentsLoaded(true)
@@ -122,6 +132,16 @@ export default function PostDetail({ nav, post }) {
   useEffect(() => {
     if (!post?.id) return
     setCommentsLoaded(false)
+    if (demoMode) {
+      const reaction = getDemoReaction(post.id)
+      setLiked(reaction.liked)
+      setComforted(reaction.comforted)
+      setEmpathyCount(reaction.empathyCount)
+      setComfortCount(reaction.comfortCount)
+      setComments(ensureDemoComments(post).map(comment => mapComment(comment, true)))
+      setCommentsLoaded(true)
+      return
+    }
     if (isLocalPost(post.id)) {
       setComments(getLocalComments(post.id))
       setCommentsLoaded(true)
@@ -154,8 +174,9 @@ export default function PostDetail({ nav, post }) {
       const reps = (c.replies || []).filter(r => !(r.deleted || deletedCommentIds.has(String(r.id)))).length
       return acc + top + reps
     }, 0)
-    setCommentCount(post.id, n)
-  }, [commentsLoaded, comments, deletedCommentIds, post?.id])
+    if (demoMode) setDemoCommentCount(post.id, n)
+    else setCommentCount(post.id, n)
+  }, [commentsLoaded, comments, deletedCommentIds, post?.id, demoMode])
 
   if (!post) {
     return (
@@ -181,6 +202,13 @@ export default function PostDetail({ nav, post }) {
   }
 
   const handleEmpathy = async () => {
+    if (demoMode) {
+      const next = !getDemoReaction(post.id).liked
+      const saved = setDemoReaction(post.id, { liked: next, empathyCount: next ? 1 : 0 })
+      setLiked(saved.liked)
+      setEmpathyCount(saved.empathyCount)
+      return
+    }
     if (isLocalPost(post.id)) {
       const next = !liked
       setLiked(next)
@@ -205,6 +233,13 @@ export default function PostDetail({ nav, post }) {
   }
 
   const handleComfort = async () => {
+    if (demoMode) {
+      const next = !getDemoReaction(post.id).comforted
+      const saved = setDemoReaction(post.id, { comforted: next, comfortCount: next ? 1 : 0 })
+      setComforted(saved.comforted)
+      setComfortCount(saved.comfortCount)
+      return
+    }
     if (isLocalPost(post.id)) {
       const next = !comforted
       setComforted(next)
@@ -230,7 +265,7 @@ export default function PostDetail({ nav, post }) {
 
   const toggleLike = (cid, rid) => {
     const targetId = rid ?? cid
-    likeComment(targetId).catch(() => {})
+    if (!demoMode) likeComment(targetId).catch(() => {})
     setComments(cs => cs.map(c => {
       if (c.id !== cid) return c
       if (rid == null) return { ...c, liked: !c.liked, likes: c.likes + (c.liked ? -1 : 1) }
@@ -238,13 +273,26 @@ export default function PostDetail({ nav, post }) {
     }))
   }
 
-  const isMyComment = (c) => c.nick === '나' || myCommentIds.has(String(c.id))
+  const isMyComment = (c) => demoMode || c.nick === '나' || myCommentIds.has(String(c.id))
   const isDeleted = (c) => c.deleted || deletedCommentIds.has(String(c.id))
 
   const deleteComment = async (commentId, replyId) => {
     setCommentMenuOpen(null)
     const targetId = replyId ?? commentId
-    if (isLocalPost(post.id)) {
+    if (demoMode) {
+      const next = getDemoComments(post.id).map(comment => {
+        if (String(comment.id) !== String(commentId)) return comment
+        if (replyId != null) return {
+          ...comment,
+          replies: (comment.replies || []).map(reply => String(reply.id) === String(replyId)
+            ? { ...reply, is_deleted: true, content: null }
+            : reply),
+        }
+        return { ...comment, is_deleted: true, content: null }
+      })
+      setDemoComments(post.id, next)
+      setComments(next.map(comment => mapComment(comment, true)))
+    } else if (isLocalPost(post.id)) {
       addDeletedCommentId(targetId)
       refreshDeletedIds()
       softDeleteLocalComment(post.id, commentId, replyId ?? null)
@@ -271,6 +319,25 @@ export default function PostDetail({ nav, post }) {
     if (!draft.trim()) return
     const text = draft.trim()
     setDraft('')
+
+    if (demoMode) {
+      const stored = getDemoComments(post.id)
+      const id = `demo-c-${Date.now()}`
+      const identity = diverseAnonymousIdentity(`demo-comments:${post.id}`, stored.length)
+      const local = {
+        id,
+        content: text,
+        created_at: new Date().toISOString(),
+        is_deleted: false,
+        anonymous_nickname: identity.nickname,
+        anonymous_avatar: identity.avatar,
+        replies: [],
+      }
+      const next = [...stored, local]
+      setDemoComments(post.id, next)
+      setComments(next.map(comment => mapComment(comment, true)))
+      return
+    }
 
     if (isLocalPost(post.id)) {
       const local = { id: Date.now(), nick: '나', body: text, time: '방금', likes: 0, liked: false, replies: [] }
@@ -303,6 +370,28 @@ export default function PostDetail({ nav, post }) {
     if (!replyDraft.trim()) return
     const text = replyDraft.trim()
     setReplyDraft(''); setReplyTo(null)
+
+    if (demoMode) {
+      const stored = getDemoComments(post.id)
+      const identityIndex = stored.reduce((total, comment) => total + 1 + (comment.replies || []).length, 0)
+      const id = `demo-r-${Date.now()}`
+      const identity = diverseAnonymousIdentity(`demo-comments:${post.id}`, identityIndex)
+      const local = {
+        id,
+        content: text,
+        created_at: new Date().toISOString(),
+        is_deleted: false,
+        anonymous_nickname: identity.nickname,
+        anonymous_avatar: identity.avatar,
+        replies: [],
+      }
+      const next = stored.map(comment => String(comment.id) === String(cid)
+        ? { ...comment, replies: [...(comment.replies || []), local] }
+        : comment)
+      setDemoComments(post.id, next)
+      setComments(next.map(comment => mapComment(comment, true)))
+      return
+    }
 
     if (isLocalPost(post.id)) {
       const local = { id: Date.now(), nick: '나', body: text, time: '방금', likes: 0, liked: false }
@@ -427,7 +516,7 @@ export default function PostDetail({ nav, post }) {
           {comments.map(c => (
             <div key={c.id} className="pd-comment">
               <div className="pd-c-row">
-                <div className="avatar avatar--sm"><img className="pfp" src={avatarSrc(c.id)} alt="" /></div>
+                <div className="avatar avatar--sm"><img className="pfp" src={c.avatar || avatarSrc(c.id)} alt="" /></div>
                 <div className="pd-c-main">
                   <p className="pd-c-nick">{c.nick}</p>
                   {isDeleted(c) ? (
@@ -474,7 +563,7 @@ export default function PostDetail({ nav, post }) {
 
               {(c.replies || []).map(r => (
                 <div key={r.id} className="pd-c-row pd-reply">
-                  <div className="avatar avatar--sm"><img className="pfp" src={avatarSrc(r.id)} alt="" /></div>
+                  <div className="avatar avatar--sm"><img className="pfp" src={r.avatar || avatarSrc(r.id)} alt="" /></div>
                   <div className="pd-c-main">
                     <p className="pd-c-nick">{r.nick}</p>
                     {isDeleted(r) ? (

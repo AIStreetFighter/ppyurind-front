@@ -76,3 +76,14 @@ export function avatarSrc(id) {
   const n = hashSeed(id) % AVATARS.length
   return AVATARS[n]
 }
+
+// 데모 댓글처럼 한 묶음 안에서 여러 익명 사용자가 필요한 경우를 위한 결정적 분산 매핑.
+// 같은 seed/index는 항상 같은 결과를 내고, 연속 index는 동물과 아바타를 순환한다.
+export function diverseAnonymousIdentity(seed, index = 0) {
+  const base = hashSeed(seed)
+  const offset = Math.max(0, Math.floor(index))
+  const adjective = ADJECTIVES[(base + offset * 7) % ADJECTIVES.length]
+  const animal = ANIMALS[(Math.floor(base / ADJECTIVES.length) + offset) % ANIMALS.length]
+  const avatar = AVATARS[(base + offset) % AVATARS.length]
+  return { nickname: `${adjective} ${animal}`, avatar }
+}
