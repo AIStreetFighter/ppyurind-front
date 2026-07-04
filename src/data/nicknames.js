@@ -77,6 +77,31 @@ export function avatarSrc(id) {
   return AVATARS[n]
 }
 
+const SAFE_CAT_AVATARS = [
+  '/assets/cats/cat_01_t.png',
+  '/assets/cats/cat_02_t.png',
+  '/assets/cats/cat_03_t.png',
+  '/assets/cats/cat_04_t.png',
+]
+
+export function safeCatAvatarSrc(id) {
+  return SAFE_CAT_AVATARS[hashSeed(id ?? 'anonymous') % SAFE_CAT_AVATARS.length]
+}
+
+export function safeCommentAvatarSrc(value, id) {
+  if (typeof value === 'string') {
+    const avatar = value.trim()
+    if (/^data:image\//i.test(avatar) || /^https?:\/\//i.test(avatar)) return avatar
+
+    const supportedCode = avatar.match(/^cat_0([1-4])(?:_t)?$/i)
+    if (supportedCode) return SAFE_CAT_AVATARS[Number(supportedCode[1]) - 1]
+
+    const supportedPath = avatar.match(/^\/?assets\/cats\/cat_0([1-4])_t\.png$/i)
+    if (supportedPath) return SAFE_CAT_AVATARS[Number(supportedPath[1]) - 1]
+  }
+  return safeCatAvatarSrc(id)
+}
+
 // 데모 댓글처럼 한 묶음 안에서 여러 익명 사용자가 필요한 경우를 위한 결정적 분산 매핑.
 // 같은 seed/index는 항상 같은 결과를 내고, 연속 index는 동물과 아바타를 순환한다.
 export function diverseAnonymousIdentity(seed, index = 0) {
