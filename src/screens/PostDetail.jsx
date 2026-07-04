@@ -53,26 +53,40 @@ function softDeleteLocalComment(postId, commentId, replyId) {
 }
 
 function relTime(iso) {
-  const mins = Math.round((Date.now() - new Date(iso)) / 60000)
-  if (mins < 1) return '방금'
-  if (mins < 60) return `${mins}분`
-  const hrs = Math.round(mins / 60)
-  if (hrs < 24) return `${hrs}시간`
-  return `${Math.round(hrs / 24)}일`
+  const date = new Date(iso)
+  if (Number.isNaN(date.getTime())) return '방금 전'
+  const mins = Math.max(0, Math.floor((Date.now() - date.getTime()) / 60000))
+  if (mins < 1) return '방금 전'
+  if (mins < 60) return `${mins}분 전`
+  const hrs = Math.floor(mins / 60)
+  if (hrs < 24) return `${hrs}시간 전`
+  return `${date.getMonth() + 1}월 ${date.getDate()}일`
 }
 
 function mapComment(c, demo = false) {
+  const createdAt = c.created_at || c.createdAt
   return {
     id: c.id,
     nick: c.anonymous_nickname || (demo ? nickFromId(c.id) : '익명'),
     avatar: safeCommentAvatarSrc(c.anonymous_avatar, c.id),
     body: c.content,
     deleted: !!c.is_deleted,
-    time: c.created_at ? relTime(c.created_at) : '방금',
+    createdAt,
+    time: createdAt ? relTime(createdAt) : '방금 전',
     likes: c.like_count || 0,
     liked: false,
     replies: (c.replies || []).map(reply => mapComment(reply, demo)),
   }
+}
+
+function sortCommentsByCreatedAt(comments) {
+  const timestampOf = comment => new Date(comment.createdAt || comment.created_at || 0).getTime() || 0
+  return comments
+    .map(comment => ({
+      ...comment,
+      replies: [...(comment.replies || [])].sort((a, b) => timestampOf(a) - timestampOf(b)),
+    }))
+    .sort((a, b) => timestampOf(a) - timestampOf(b))
 }
 
 export default function PostDetail({ nav, post }) {
@@ -85,12 +99,12 @@ export default function PostDetail({ nav, post }) {
   // 서버가 내려주는 실수치를 그대로 신뢰 — liked/comforted로 +1을 더하면
   // 상세 진입 시 이미 반영된 count에 중복으로 더해져 숫자가 부풀어 오르는 문제가 있었음
   const [empathyCount, setEmpathyCount] = useState(() => {
-    if (demoMode) return getDemoReaction(post?.id).empathyCount
+    if (demoMode) return getDemoReaction(post?.id, post?.empathy_count ?? post?.empathy ?? 0, post?.comfort_count ?? post?.comfort ?? 0).empathyCount
     const base = post?.empathy_count ?? post?.empathy ?? 0
     return base + (isLocalPost(post?.id) && getReaction(post?.id).liked ? 1 : 0)
   })
   const [comfortCount, setComfortCount] = useState(() => {
-    if (demoMode) return getDemoReaction(post?.id).comfortCount
+    if (demoMode) return getDemoReaction(post?.id, post?.empathy_count ?? post?.empathy ?? 0, post?.comfort_count ?? post?.comfort ?? 0).comfortCount
     const base = post?.comfort_count ?? post?.comfort ?? 0
     return base + (isLocalPost(post?.id) && getReaction(post?.id).comforted ? 1 : 0)
   })
@@ -121,7 +135,7 @@ export default function PostDetail({ nav, post }) {
   const reloadComments = async () => {
     if (!post?.id) return
     if (demoMode) {
-      setComments(ensureDemoComments(post).map(comment => mapComment(comment, true)))
+      setComments(sortCommentsByCreatedAt(ensureDemoComments(post).map(comment => mapComment(comment, true))))
       setCommentsLoaded(true)
       return
     }
@@ -132,7 +146,7 @@ export default function PostDetail({ nav, post }) {
     }
     const data = await listComments(post.id)
     const rows = data?.comments || data?.items || (Array.isArray(data) ? data : [])
-    setComments(rows.map(mapComment))
+    setComments(sortCommentsByCreatedAt(rows.map(mapComment)))
     setCommentsLoaded(true)
   }
 
@@ -145,12 +159,12 @@ export default function PostDetail({ nav, post }) {
     if (!post?.id) return
     setCommentsLoaded(false)
     if (demoMode) {
-      const reaction = getDemoReaction(post.id)
+      const reaction = getDemoReaction(post.id, post.empathy_count ?? post.empathy ?? 0, post.comfort_count ?? post.comfort ?? 0)
       setLiked(reaction.liked)
       setComforted(reaction.comforted)
       setEmpathyCount(reaction.empathyCount)
       setComfortCount(reaction.comfortCount)
-      setComments(ensureDemoComments(post).map(comment => mapComment(comment, true)))
+      setComments(sortCommentsByCreatedAt(ensureDemoComments(post).map(comment => mapComment(comment, true))))
       setCommentsLoaded(true)
       return
     }
@@ -172,8 +186,12 @@ export default function PostDetail({ nav, post }) {
         setReaction(post.id, { comforted: d.has_comforted })
       }
       // count는 서버 값이 이미 내 반응을 포함한 실수치이므로 그대로 반영 (liked/comforted로 또 더하지 않음)
-      if (typeof d.empathy_count === 'number') setEmpathyCount(d.empathy_count)
-      if (typeof d.comfort_count === 'number') setComfortCount(d.comfort_count)
+      if (typeof d.empathy_count === 'number') {
+        setEmpathyCount(current => d.empathy_count > 0 || current === 0 ? d.empathy_count : current)
+      }
+      if (typeof d.comfort_count === 'number') {
+        setComfortCount(current => d.comfort_count > 0 || current === 0 ? d.comfort_count : current)
+      }
     }).catch(() => {})
     reloadComments().catch(() => {})
   }, [post?.id])
@@ -209,14 +227,19 @@ export default function PostDetail({ nav, post }) {
       setComforted(d.has_comforted)
       setReaction(post.id, { comforted: d.has_comforted })
     }
-    if (typeof d?.empathy_count === 'number') setEmpathyCount(d.empathy_count)
-    if (typeof d?.comfort_count === 'number') setComfortCount(d.comfort_count)
+    if (typeof d?.empathy_count === 'number') {
+      setEmpathyCount(current => d.empathy_count > 0 || current === 0 ? d.empathy_count : current)
+    }
+    if (typeof d?.comfort_count === 'number') {
+      setComfortCount(current => d.comfort_count > 0 || current === 0 ? d.comfort_count : current)
+    }
   }
 
   const handleEmpathy = async () => {
     if (demoMode) {
       const next = !getDemoReaction(post.id).liked
-      const saved = setDemoReaction(post.id, { liked: next, empathyCount: next ? 1 : 0 })
+      setDemoReaction(post.id, { liked: next, empathyDelta: next ? 1 : 0 })
+      const saved = getDemoReaction(post.id, post.empathy_count ?? post.empathy ?? 0, post.comfort_count ?? post.comfort ?? 0)
       setLiked(saved.liked)
       setEmpathyCount(saved.empathyCount)
       return
@@ -237,7 +260,9 @@ export default function PostDetail({ nav, post }) {
           setLiked(res.has_empathized)
           setReaction(post.id, { liked: res.has_empathized })
         }
-        if (res && typeof res.empathy_count === 'number') setEmpathyCount(res.empathy_count)
+        if (res && typeof res.empathy_count === 'number') {
+          setEmpathyCount(current => res.empathy_count > 0 || current === 0 ? res.empathy_count : current)
+        }
     } catch {
       try { await refreshPostReaction() } catch {}
       flashComment('공감 처리에 실패했어요. 잠시 후 다시 시도해 주세요.')
@@ -247,7 +272,8 @@ export default function PostDetail({ nav, post }) {
   const handleComfort = async () => {
     if (demoMode) {
       const next = !getDemoReaction(post.id).comforted
-      const saved = setDemoReaction(post.id, { comforted: next, comfortCount: next ? 1 : 0 })
+      setDemoReaction(post.id, { comforted: next, comfortDelta: next ? 1 : 0 })
+      const saved = getDemoReaction(post.id, post.empathy_count ?? post.empathy ?? 0, post.comfort_count ?? post.comfort ?? 0)
       setComforted(saved.comforted)
       setComfortCount(saved.comfortCount)
       return
@@ -268,7 +294,9 @@ export default function PostDetail({ nav, post }) {
           setComforted(res.has_comforted)
           setReaction(post.id, { comforted: res.has_comforted })
         }
-        if (res && typeof res.comfort_count === 'number') setComfortCount(res.comfort_count)
+        if (res && typeof res.comfort_count === 'number') {
+          setComfortCount(current => res.comfort_count > 0 || current === 0 ? res.comfort_count : current)
+        }
     } catch {
       try { await refreshPostReaction() } catch {}
       flashComment('위로 처리에 실패했어요. 잠시 후 다시 시도해 주세요.')
@@ -303,7 +331,7 @@ export default function PostDetail({ nav, post }) {
         return { ...comment, is_deleted: true, content: null }
       })
       setDemoComments(post.id, next)
-      setComments(next.map(comment => mapComment(comment, true)))
+      setComments(sortCommentsByCreatedAt(next.map(comment => mapComment(comment, true))))
     } else if (isLocalPost(post.id)) {
       addDeletedCommentId(targetId)
       refreshDeletedIds()
@@ -347,12 +375,12 @@ export default function PostDetail({ nav, post }) {
       }
       const next = [...stored, local]
       setDemoComments(post.id, next)
-      setComments(next.map(comment => mapComment(comment, true)))
+      setComments(sortCommentsByCreatedAt(next.map(comment => mapComment(comment, true))))
       return
     }
 
     if (isLocalPost(post.id)) {
-      const local = { id: Date.now(), nick: '나', body: text, time: '방금', likes: 0, liked: false, replies: [] }
+      const local = { id: Date.now(), nick: '나', body: text, createdAt: new Date().toISOString(), time: '방금 전', likes: 0, liked: false, replies: [] }
       saveLocalComment(post.id, local)
       setComments(c => [...c, local])
       return
@@ -401,12 +429,12 @@ export default function PostDetail({ nav, post }) {
         ? { ...comment, replies: [...(comment.replies || []), local] }
         : comment)
       setDemoComments(post.id, next)
-      setComments(next.map(comment => mapComment(comment, true)))
+      setComments(sortCommentsByCreatedAt(next.map(comment => mapComment(comment, true))))
       return
     }
 
     if (isLocalPost(post.id)) {
-      const local = { id: Date.now(), nick: '나', body: text, time: '방금', likes: 0, liked: false }
+      const local = { id: Date.now(), nick: '나', body: text, createdAt: new Date().toISOString(), time: '방금 전', likes: 0, liked: false }
       saveLocalReply(post.id, cid, local)
       setComments(cs => cs.map(c => c.id === cid ? { ...c, replies: [...c.replies, local] } : c))
       return
@@ -541,7 +569,7 @@ export default function PostDetail({ nav, post }) {
                   )}
                   {!isDeleted(c) && c.body != null && (
                     <div className="pd-c-meta">
-                      <span>{c.time}</span>
+                      <span>{c.createdAt ? relTime(c.createdAt) : c.time}</span>
                       {c.likes > 0 && <span className="static">좋아요 {c.likes}</span>}
                       <span onClick={() => setReplyTo(replyTo === c.id ? null : c.id)}>답글</span>
                     </div>
@@ -588,7 +616,7 @@ export default function PostDetail({ nav, post }) {
                     )}
                     {!isDeleted(r) && r.body != null && (
                       <div className="pd-c-meta">
-                        <span>{r.time}</span>
+                        <span>{r.createdAt ? relTime(r.createdAt) : r.time}</span>
                         {r.likes > 0 && <span className="static">좋아요 {r.likes}</span>}
                       </div>
                     )}
