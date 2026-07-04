@@ -4,7 +4,8 @@ import ThemeToggle from '../components/ThemeToggle'
 import NotifBell from '../components/NotifBell'
 import { nickFromId, avatarSrc } from '../data/nicknames'
 import { CAT_SHARE } from '../data/images'
-import { likedMap, comfortedMap, setReaction, getCommentCount } from '../utils/reactions'
+import { likedMap, comfortedMap, setReaction, getCommentCount, demoLikedMap, demoComfortedMap, getDemoReaction, setDemoReaction, getDemoCommentCount } from '../utils/reactions'
+import { isDemo } from '../utils/demo'
 import { listCommunityPosts, empathyPost, comfortPost, reportPost, muteAuthor, deleteCommunityPost, getSimilarPosts } from '../api/ppyurindApi'
 
 const MY_POSTS_STORAGE_KEY = 'ppyurind:myCommunityPosts'
@@ -114,12 +115,13 @@ function uniquePosts(posts) {
   })
 }
 export default function Community({ nav, isDark, toggleTheme, concerns = [] }) {
+  const demoMode = isDemo()
   const [filter, setFilter] = useState('전체')
   const [query, setQuery] = useState('')
   const [showSearch, setShowSearch] = useState(false)
   // 공감/위로 상태는 localStorage에서 로드 → 뒤로가기/리마운트해도 유지
-  const [liked, setLiked] = useState(() => likedMap())
-  const [comforted, setComforted] = useState(() => comfortedMap())
+  const [liked, setLiked] = useState(() => demoMode ? demoLikedMap() : likedMap())
+  const [comforted, setComforted] = useState(() => demoMode ? demoComfortedMap() : comfortedMap())
   const [menuOpen, setMenuOpen] = useState(null)
   const [toast, setToast] = useState('')
   const [reportFor, setReportFor] = useState(null)
@@ -142,6 +144,7 @@ export default function Community({ nav, isDark, toggleTheme, concerns = [] }) {
       const items = Array.isArray(data) ? data : (data.items || [])
       const mapped = items.map(mapApiPost)
       setApiPosts(mapped)
+      if (demoMode) return
       setLiked(current => {
         const next = { ...current }
         mapped.forEach(p => {
@@ -163,7 +166,7 @@ export default function Community({ nav, isDark, toggleTheme, concerns = [] }) {
         return next
       })
     }).catch(() => setApiPosts(null))
-  }, [])
+  }, [demoMode])
 
   // "나와 비슷한 고민": 내 최근 글(없으면 최신 실제 글)을 기준으로 벡터 유사도 추천.
   useEffect(() => {
@@ -179,6 +182,12 @@ export default function Community({ nav, isDark, toggleTheme, concerns = [] }) {
   // 서버 게시글은 API 응답의 count/state를 사용하고, 로컬 게시글만 저장된 반응을 토글한다.
   const handleEmpathy = async (p, e) => {
     e.stopPropagation()
+    if (demoMode) {
+      const nextLiked = !getDemoReaction(p.id).liked
+      setDemoReaction(p.id, { liked: nextLiked, empathyCount: nextLiked ? 1 : 0 })
+      setLiked(s => ({ ...s, [p.id]: nextLiked }))
+      return
+    }
     if (isLocalPost(p.id)) {
       const nextLiked = !liked[p.id]
       setReaction(p.id, { liked: nextLiked })
@@ -202,6 +211,12 @@ export default function Community({ nav, isDark, toggleTheme, concerns = [] }) {
 
   const handleComfort = async (p, e) => {
     e.stopPropagation()
+    if (demoMode) {
+      const nextComforted = !getDemoReaction(p.id).comforted
+      setDemoReaction(p.id, { comforted: nextComforted, comfortCount: nextComforted ? 1 : 0 })
+      setComforted(s => ({ ...s, [p.id]: nextComforted }))
+      return
+    }
     if (isLocalPost(p.id)) {
       const nextComforted = !comforted[p.id]
       setReaction(p.id, { comforted: nextComforted })
@@ -224,10 +239,11 @@ export default function Community({ nav, isDark, toggleTheme, concerns = [] }) {
   }
 
   // 서버 count에는 반응 상태를 더하지 않고, 서버가 없는 로컬 게시글만 active 상태를 반영한다.
-  const empathyOf = (p) => (p.empathy || 0) + (isLocalPost(p.id) && liked[p.id] ? 1 : 0)
-  const comfortOf = (p) => (p.comfort || 0) + (isLocalPost(p.id) && comforted[p.id] ? 1 : 0)
+  const empathyOf = (p) => demoMode ? getDemoReaction(p.id).empathyCount : (p.empathy || 0) + (isLocalPost(p.id) && liked[p.id] ? 1 : 0)
+  const comfortOf = (p) => demoMode ? getDemoReaction(p.id).comfortCount : (p.comfort || 0) + (isLocalPost(p.id) && comforted[p.id] ? 1 : 0)
   // 서버 comment_count를 우선하고, 로컬 게시글 또는 서버값이 없을 때만 캐시를 사용한다.
   const commentsOf = (p) => {
+    if (demoMode) return getDemoCommentCount(p.id)
     if (!isLocalPost(p.id) && typeof p.comments === 'number') return p.comments
     const cached = getCommentCount(p.id)
     return cached != null ? cached : (p.comments ?? 0)
