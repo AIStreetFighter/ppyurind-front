@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { getCommunityPost, empathyPost, comfortPost, listComments, createComment, createReply, likeComment, deleteComment as apiDeleteComment, reportPost, reportComment, muteAuthor } from '../api/ppyurindApi'
-import { avatarSrc, nickFromId, diverseAnonymousIdentity } from '../data/nicknames'
+import { avatarSrc, nickFromId, diverseAnonymousIdentity, safeCommentAvatarSrc, safeCatAvatarSrc } from '../data/nicknames'
 import { getReaction, setReaction, setCommentCount, getDemoReaction, setDemoReaction, getDemoComments, setDemoComments, setDemoCommentCount, ensureDemoComments } from '../utils/reactions'
 import { isDemo } from '../utils/demo'
 
@@ -65,7 +65,7 @@ function mapComment(c, demo = false) {
   return {
     id: c.id,
     nick: c.anonymous_nickname || (demo ? nickFromId(c.id) : '익명'),
-    avatar: demo ? (c.anonymous_avatar || avatarSrc(c.id)) : avatarSrc(c.id),
+    avatar: safeCommentAvatarSrc(c.anonymous_avatar, c.id),
     body: c.content,
     deleted: !!c.is_deleted,
     time: c.created_at ? relTime(c.created_at) : '방금',
@@ -107,6 +107,12 @@ export default function PostDetail({ nav, post }) {
   const [commentsLoaded, setCommentsLoaded] = useState(false)
 
   const flashComment = (msg) => { setCommentToast(msg); setTimeout(() => setCommentToast(''), 2500) }
+  const handleCommentAvatarError = (event, id) => {
+    const image = event.currentTarget
+    if (image.dataset.fallbackApplied === '1') return
+    image.dataset.fallbackApplied = '1'
+    image.src = safeCatAvatarSrc(id)
+  }
 
   const refreshMyCommentIds = () => setMyCommentIds(getMyCommentIds())
   const refreshDeletedIds = () => setDeletedCommentIds(getDeletedCommentIds())
@@ -516,7 +522,7 @@ export default function PostDetail({ nav, post }) {
           {comments.map(c => (
             <div key={c.id} className="pd-comment">
               <div className="pd-c-row">
-                <div className="avatar avatar--sm"><img className="pfp" src={c.avatar || avatarSrc(c.id)} alt="" /></div>
+                <div className="avatar avatar--sm"><img className="pfp" src={c.avatar || safeCatAvatarSrc(c.id)} alt="" onError={event => handleCommentAvatarError(event, c.id)} /></div>
                 <div className="pd-c-main">
                   <p className="pd-c-nick">{c.nick}</p>
                   {isDeleted(c) ? (
@@ -563,7 +569,7 @@ export default function PostDetail({ nav, post }) {
 
               {(c.replies || []).map(r => (
                 <div key={r.id} className="pd-c-row pd-reply">
-                  <div className="avatar avatar--sm"><img className="pfp" src={r.avatar || avatarSrc(r.id)} alt="" /></div>
+                  <div className="avatar avatar--sm"><img className="pfp" src={r.avatar || safeCatAvatarSrc(r.id)} alt="" onError={event => handleCommentAvatarError(event, r.id)} /></div>
                   <div className="pd-c-main">
                     <p className="pd-c-nick">{r.nick}</p>
                     {isDeleted(r) ? (
