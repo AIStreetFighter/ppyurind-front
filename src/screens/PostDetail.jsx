@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { getCommunityPost, empathyPost, comfortPost, listComments, createComment, createReply, likeComment, deleteComment as apiDeleteComment, reportPost, reportComment, muteAuthor } from '../api/ppyurindApi'
-import { avatarSrc, nickFromId, randomNick } from '../data/nicknames'
-import { getReaction, setReaction, setCommentCount, getDemoReaction, setDemoReaction, getDemoComments, setDemoComments, setDemoCommentCount } from '../utils/reactions'
+import { avatarSrc, nickFromId, diverseAnonymousIdentity } from '../data/nicknames'
+import { getReaction, setReaction, setCommentCount, getDemoReaction, setDemoReaction, getDemoComments, setDemoComments, setDemoCommentCount, ensureDemoComments } from '../utils/reactions'
 import { isDemo } from '../utils/demo'
 
 // 로컬 저장 글(id가 'u'로 시작)인지 판별
@@ -114,7 +114,7 @@ export default function PostDetail({ nav, post }) {
   const reloadComments = async () => {
     if (!post?.id) return
     if (demoMode) {
-      setComments(getDemoComments(post.id).map(comment => mapComment(comment, true)))
+      setComments(ensureDemoComments(post).map(comment => mapComment(comment, true)))
       setCommentsLoaded(true)
       return
     }
@@ -138,7 +138,7 @@ export default function PostDetail({ nav, post }) {
       setComforted(reaction.comforted)
       setEmpathyCount(reaction.empathyCount)
       setComfortCount(reaction.comfortCount)
-      setComments(getDemoComments(post.id).map(comment => mapComment(comment, true)))
+      setComments(ensureDemoComments(post).map(comment => mapComment(comment, true)))
       setCommentsLoaded(true)
       return
     }
@@ -321,17 +321,19 @@ export default function PostDetail({ nav, post }) {
     setDraft('')
 
     if (demoMode) {
+      const stored = getDemoComments(post.id)
       const id = `demo-c-${Date.now()}`
+      const identity = diverseAnonymousIdentity(`demo-comments:${post.id}`, stored.length)
       const local = {
         id,
         content: text,
         created_at: new Date().toISOString(),
         is_deleted: false,
-        anonymous_nickname: randomNick(),
-        anonymous_avatar: avatarSrc(id),
+        anonymous_nickname: identity.nickname,
+        anonymous_avatar: identity.avatar,
         replies: [],
       }
-      const next = [...getDemoComments(post.id), local]
+      const next = [...stored, local]
       setDemoComments(post.id, next)
       setComments(next.map(comment => mapComment(comment, true)))
       return
@@ -370,17 +372,20 @@ export default function PostDetail({ nav, post }) {
     setReplyDraft(''); setReplyTo(null)
 
     if (demoMode) {
+      const stored = getDemoComments(post.id)
+      const identityIndex = stored.reduce((total, comment) => total + 1 + (comment.replies || []).length, 0)
       const id = `demo-r-${Date.now()}`
+      const identity = diverseAnonymousIdentity(`demo-comments:${post.id}`, identityIndex)
       const local = {
         id,
         content: text,
         created_at: new Date().toISOString(),
         is_deleted: false,
-        anonymous_nickname: randomNick(),
-        anonymous_avatar: avatarSrc(id),
+        anonymous_nickname: identity.nickname,
+        anonymous_avatar: identity.avatar,
         replies: [],
       }
-      const next = getDemoComments(post.id).map(comment => String(comment.id) === String(cid)
+      const next = stored.map(comment => String(comment.id) === String(cid)
         ? { ...comment, replies: [...(comment.replies || []), local] }
         : comment)
       setDemoComments(post.id, next)

@@ -4,7 +4,7 @@ import ThemeToggle from '../components/ThemeToggle'
 import NotifBell from '../components/NotifBell'
 import { nickFromId, avatarSrc } from '../data/nicknames'
 import { CAT_SHARE } from '../data/images'
-import { likedMap, comfortedMap, setReaction, getCommentCount, demoLikedMap, demoComfortedMap, getDemoReaction, setDemoReaction, getDemoCommentCount } from '../utils/reactions'
+import { likedMap, comfortedMap, setReaction, getCommentCount, demoLikedMap, demoComfortedMap, getDemoReaction, setDemoReaction, getDemoCommentCount, ensureDemoComments } from '../utils/reactions'
 import { isDemo } from '../utils/demo'
 import { listCommunityPosts, empathyPost, comfortPost, reportPost, muteAuthor, deleteCommunityPost, getSimilarPosts } from '../api/ppyurindApi'
 
@@ -243,7 +243,10 @@ export default function Community({ nav, isDark, toggleTheme, concerns = [] }) {
   const comfortOf = (p) => demoMode ? getDemoReaction(p.id).comfortCount : (p.comfort || 0) + (isLocalPost(p.id) && comforted[p.id] ? 1 : 0)
   // 서버 comment_count를 우선하고, 로컬 게시글 또는 서버값이 없을 때만 캐시를 사용한다.
   const commentsOf = (p) => {
-    if (demoMode) return getDemoCommentCount(p.id)
+    if (demoMode) {
+      ensureDemoComments(p)
+      return getDemoCommentCount(p.id)
+    }
     if (!isLocalPost(p.id) && typeof p.comments === 'number') return p.comments
     const cached = getCommentCount(p.id)
     return cached != null ? cached : (p.comments ?? 0)
