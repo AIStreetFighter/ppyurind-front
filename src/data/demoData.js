@@ -7,7 +7,7 @@ export const DEMO_UNHANDLED = Symbol('demo-unhandled')
 function demoUser() {
   return {
     id: 'demo',
-    nickname: '지우',
+    nickname: localStorage.getItem('ppyurind:nickname') || '지우',
     email: 'demo@ppyurind.app',
     onboarding_completed: true,
     ai_tone: '부드럽게',

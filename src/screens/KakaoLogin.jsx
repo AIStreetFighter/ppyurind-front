@@ -12,7 +12,7 @@ export default function KakaoLogin({ nav, isDark, toggleTheme }) {
     } catch (error) {
       console.warn('데모 로그인에 실패해 프론트 데모로 진입합니다.', error)
     }
-    nav('home')
+    nav('onboarding')
   }
   // 세션 만료로 튕겨 나온 경우 안내 (한 번만 표시).
   // 플래그 소비(side effect)는 useEffect에서 — StrictMode 이중 렌더에도 안전.

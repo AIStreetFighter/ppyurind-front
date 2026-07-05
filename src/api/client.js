@@ -113,8 +113,16 @@ async function refreshAccessToken() {
 export async function apiRequest(path, options = {}, _retried = false) {
   // 데모 모드: 네트워크 없이 목데이터로 응답 (미정의 경로는 조용히 null → 화면 자체 폴백)
   const isCommunityRequest = path === '/community' || path.startsWith('/community/')
-  if (isDemo() && !isCommunityRequest && options.useRealApi !== true) {
-    const method = (options.method || 'GET').toUpperCase()
+  const token = getAccessToken()
+  const method = (options.method || 'GET').toUpperCase()
+  const demoUserApiRoutes = new Set([
+    'GET /users/me',
+    'PUT /users/me',
+    'POST /users/me/onboarding',
+    'PUT /users/me/pin',
+  ])
+  const useRealDemoUserApi = !!token && demoUserApiRoutes.has(`${method} ${path.split('?')[0]}`)
+  if (isDemo() && !isCommunityRequest && !useRealDemoUserApi && options.useRealApi !== true) {
     let body = null
     try { body = options.body ? JSON.parse(options.body) : null } catch {}
     const demoRes = resolveDemo(method, path, body)
@@ -122,7 +130,6 @@ export async function apiRequest(path, options = {}, _retried = false) {
     return demoRes === DEMO_UNHANDLED ? null : demoRes
   }
 
-  const token = getAccessToken()
   const { useRealApi: _useRealApi, skipAuth = false, ...fetchOptions } = options
   const headers = new Headers(fetchOptions.headers || {})
 
