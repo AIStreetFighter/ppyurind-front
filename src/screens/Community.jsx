@@ -419,7 +419,7 @@ export default function Community({ nav, isDark, toggleTheme, concerns = [] }) {
             base.slice(0, 2).map(p => (
               <div key={p.id} className="card" style={{ padding: 15, cursor: 'pointer' }} onClick={() => nav('post', { post: p })}>
                 <div className="row">
-                  <div className="avatar"><img className="pfp" src={p.avatar || avatarSrc(p.id)} alt="" /></div>
+                  <div className="avatar"><img className="pfp" src={safeCommentAvatarSrc(p.avatar, p.id)} alt="" /></div>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <p className="row__title">"{p.title}"</p>
                     <p className="row__sub">비슷한 고민 이야기</p>

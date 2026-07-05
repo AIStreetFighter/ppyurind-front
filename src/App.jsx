@@ -79,6 +79,13 @@ function AppContent() {
   const [analysisShared, setAnalysisShared] = useState(undefined);
   const [translateInitialText, setTranslateInitialText] = useState('');
 
+  // 탭/화면 전환 시 이전 스크롤 위치가 남아 페이지 중간부터 보이는 문제 → 최상단으로 리셋
+  // window 스크롤과 내부 스크롤 컨테이너(.phone-body/.pd-body/.sheet) 모두 초기화
+  useEffect(() => {
+    window.scrollTo(0, 0);
+    document.querySelectorAll('.phone-body, .pd-body, .sheet').forEach((el) => { el.scrollTop = 0; });
+  }, [location.pathname])
+
   // post 없이 /community/post 직접 접근 또는 새로고침 시 커뮤니티로 복귀
   useEffect(() => {
     if (screen === 'post' && !activePost) navigate(SCREEN_PATHS['community'])
