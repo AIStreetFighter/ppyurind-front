@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
 import ThemeToggle from '../components/ThemeToggle'
 import BottomNav from '../components/BottomNav'
-import { EVENT_TYPES, ymd } from '../data/events'
-import { listEvents, createEvent, deleteEvent, updateEvent } from '../api/ppyurindApi'
+import { EVENT_TYPES, calendarAccountId, hideMockEvent, mergeCalendarEvents, normalizeCalendarEvent, ymd } from '../data/events'
+import { getMe, listEvents, createEvent, deleteEvent, updateEvent } from '../api/ppyurindApi'
 
 const WEEK = ['일', '월', '화', '수', '목', '금', '토']
 
@@ -11,16 +11,20 @@ export default function Calendar({ nav, isDark, toggleTheme }) {
   const [selected, setSelected] = useState(ymd(new Date()))
   const [adding, setAdding] = useState(false)
   const [events, setEvents] = useState([])
+  const [accountId, setAccountId] = useState('guest')
   const [newTitle, setNewTitle] = useState('')
   const [newDate, setNewDate] = useState('')
   const [newType, setNewType] = useState('anniv')
   const [editing, setEditing] = useState(null) // 수정 중인 일정(null이면 추가 모드)
 
   useEffect(() => {
-    listEvents().then(data => {
-      const arr = Array.isArray(data) ? data : (data.items || [])
-      setEvents(arr.map(e => ({ ...e, date: e.date || e.event_date, type: e.type || e.event_type })))
-    }).catch(() => {})
+    Promise.allSettled([getMe(), listEvents()]).then(([userResult, eventsResult]) => {
+      const id = calendarAccountId(userResult.status === 'fulfilled' ? userResult.value : null)
+      const data = eventsResult.status === 'fulfilled' ? eventsResult.value : []
+      const apiEvents = Array.isArray(data) ? data : (data?.items || [])
+      setAccountId(id)
+      setEvents(mergeCalendarEvents(apiEvents, id))
+    })
   }, [])
 
   const year = view.getFullYear()
@@ -51,7 +55,7 @@ export default function Calendar({ nav, isDark, toggleTheme }) {
       // 추가
       try {
         const created = await createEvent({ eventType: newType, eventDate: newDate, title: newTitle.trim() })
-        setEvents(prev => [...prev, { ...created, date: created.date || newDate, type: created.type || newType }])
+        setEvents(prev => [...prev, normalizeCalendarEvent({ ...created, event_date: created?.event_date || newDate, event_type: created?.event_type || newType })])
       } catch {
         setEvents(prev => [...prev, { date: newDate, type: newType, title: newTitle.trim() }])
       }
@@ -63,7 +67,11 @@ export default function Calendar({ nav, isDark, toggleTheme }) {
   }
 
   const removeEvent = async (e) => {
-    if (e.id) await deleteEvent(e.id).catch(() => {})
+    if (e.isMock || e.source === 'mock') {
+      hideMockEvent(e.id, accountId)
+    } else if (e.id) {
+      await deleteEvent(e.id).catch(() => {})
+    }
     setEvents(prev => prev.filter(ev => ev !== e))
   }
 
@@ -136,8 +144,8 @@ export default function Calendar({ nav, isDark, toggleTheme }) {
                 <p className="row__sub">{e.date.slice(5).replace('-', '월 ')}일 · {t.label}</p>
               </div>
               {dday >= 0 && <span className="badge badge--match">D-{dday}</span>}
-              <i className="fa-solid fa-pen" style={{ color: 'var(--ink-muted)', fontSize: 12.5, marginLeft: 8, cursor: 'pointer' }}
-                onClick={ev => { ev.stopPropagation(); openEdit(e) }} />
+              {!(e.isMock || e.source === 'mock') && <i className="fa-solid fa-pen" style={{ color: 'var(--ink-muted)', fontSize: 12.5, marginLeft: 8, cursor: 'pointer' }}
+                onClick={ev => { ev.stopPropagation(); openEdit(e) }} />}
               <i className="fa-solid fa-trash" style={{ color: 'var(--ink-muted)', fontSize: 13, marginLeft: 6, cursor: 'pointer' }}
                 onClick={ev => { ev.stopPropagation(); removeEvent(e) }} />
             </div>
