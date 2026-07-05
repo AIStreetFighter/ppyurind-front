@@ -69,47 +69,17 @@ body {
     border-right: none;
   }
 
-  .pd {
-    height: auto;
-    min-height: 100vh;
-    min-height: 100dvh;
-    overflow: visible;
-  }
-
-  .pd-body {
-    flex: none;
-    min-height: 100vh;
-    min-height: 100dvh;
-    overflow-y: visible;
-    overscroll-behavior: auto;
-  }
-
-  .phone-body,
-  .pd-scroll-content {
+  .phone-body {
     width: min(100%, 1040px);
     margin: 0 auto;
     padding-left: 32px;
     padding-right: 32px;
   }
 
-  .pd-scroll-content {
-    padding-bottom: calc(104px + env(safe-area-inset-bottom));
-  }
-
   .topbar,
   .backbar {
     margin-left: 0;
     margin-right: 0;
-  }
-
-  .pd-input {
-    left: 50%;
-    right: auto;
-    width: 100%;
-    max-width: 1040px;
-    transform: translateX(-50%);
-    border-left: 1px solid var(--nav-line);
-    border-right: 1px solid var(--nav-line);
   }
 
   .bottom-nav {
@@ -124,15 +94,10 @@ body {
 }
 
 @media (min-width: 1120px) {
-  .phone-body,
-  .pd-scroll-content {
+  .phone-body {
     width: min(100%, 1120px);
     padding-left: 40px;
     padding-right: 40px;
-  }
-
-  .pd-input {
-    max-width: 1120px;
   }
 
   .bottom-nav {
@@ -1182,6 +1147,74 @@ body {
 .pd-input { position: fixed; left: 0; right: 0; bottom: 0; z-index: 40; display: flex; gap: 8px; padding: 12px 16px calc(12px + env(safe-area-inset-bottom)); background: var(--nav-bg); border-top: 1px solid var(--nav-line); backdrop-filter: blur(8px); }
 .pd-send { flex-shrink: 0; padding: 0 18px; border: none; border-radius: 11px; background: var(--brand); color: #fff; font: 600 14px 'Pretendard'; cursor: pointer; }
 .pd-send:disabled { opacity: 0.45; cursor: default; }
+
+/* 데스크톱 상세: 모바일 기본 규칙 뒤에서 스크롤·고정 입력창 기준을 재정의한다. */
+@media (min-width: 768px) {
+  .pd {
+    height: auto;
+    min-height: 100vh;
+    min-height: 100dvh;
+    overflow: visible;
+  }
+
+  .pd-body {
+    flex: none;
+    min-height: 100vh;
+    min-height: 100dvh;
+    overflow-y: visible;
+    overscroll-behavior: auto;
+  }
+
+  .pd-scroll-content,
+  .pd-input {
+    width: 100%;
+    max-width: 1040px;
+  }
+
+  .pd-scroll-content {
+    margin: 0 auto;
+    padding: 16px 32px calc(104px + env(safe-area-inset-bottom));
+  }
+
+  .pd-input {
+    left: 50%;
+    right: auto;
+    transform: translateX(-50%);
+    box-sizing: border-box;
+    border-left: 1px solid var(--nav-line);
+    border-right: 1px solid var(--nav-line);
+  }
+}
+
+@media (min-width: 1120px) {
+  .pd-scroll-content,
+  .pd-input {
+    max-width: 1120px;
+  }
+
+  .pd-scroll-content {
+    padding-left: 40px;
+    padding-right: 40px;
+  }
+}
+
+/* 좁은 PC 창: 폭이 모바일과 같아도 fine pointer에서는 문서 휠 스크롤을 사용한다. */
+@media (max-width: 767px) and (hover: hover) and (pointer: fine) {
+  .pd {
+    height: auto;
+    min-height: 100vh;
+    min-height: 100dvh;
+    overflow: visible;
+  }
+
+  .pd-body {
+    flex: none;
+    min-height: 100vh;
+    min-height: 100dvh;
+    overflow-y: visible;
+    overscroll-behavior: auto;
+  }
+}
 
 
 /* ── 쀼냥 상담 채팅 ── */
