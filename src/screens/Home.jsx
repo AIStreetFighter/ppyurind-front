@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import BottomNav from '../components/BottomNav'
 import ThemeToggle from '../components/ThemeToggle'
-import { EVENT_TYPES, calendarAccountId, mergeCalendarEvents } from '../data/events'
+import { EVENT_TYPES, calendarAccountId, mergeCalendarEvents, ymd } from '../data/events'
 import NotifBell from '../components/NotifBell'
 import { getMe, listEvents } from '../api/ppyurindApi'
 import { CAT_HOME } from '../data/images'
@@ -62,6 +62,7 @@ export default function Home({ nav, isDark, toggleTheme, nickname: propNickname,
       const data = eventsResult.status === 'fulfilled' ? eventsResult.value : []
       const apiEvents = Array.isArray(data) ? data : (data?.items || [])
       const now = new Date()
+      const today = ymd(now)
       const ym = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
       const evs = mergeCalendarEvents(apiEvents, calendarAccountId(user), now)
       setMonthEvents(
@@ -69,7 +70,7 @@ export default function Home({ nav, isDark, toggleTheme, nickname: propNickname,
           .filter(e => {
             const d = e.date || e.event_date || ''
             const type = String(e.type || e.event_type || '').toLowerCase()
-            return d.startsWith(ym) && HOME_PREVIEW_EVENT_TYPES.has(type)
+            return d.startsWith(ym) && d >= today && HOME_PREVIEW_EVENT_TYPES.has(type)
           })
           .sort((a, b) => (a.date || a.event_date || '').localeCompare(b.date || b.event_date || ''))
       )
