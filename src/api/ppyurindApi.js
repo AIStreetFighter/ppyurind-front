@@ -127,7 +127,7 @@ export const removePin = () => api.delete('/users/me/pin')
 // inputType: 'text' | 'voice' | 'image'
 /** @returns {Promise<AnalysisResponse>} */
 export const analyzeEmotion = ({ rawContent, inputType = 'text' }) =>
-  api.post('/emotions/analyze', { raw_content: rawContent, input_type: inputType })
+  api.post('/emotions/analyze', { raw_content: rawContent, input_type: inputType }, { useRealApi: true, suppressLogout: true })
 
 // 저장
 export const createEmotion = ({ inputType = 'text', rawContent, mediaUrl, isSecretExcluded = false }) =>
@@ -152,7 +152,7 @@ export const uploadRecordVoice = (file) => uploadFile('/records/voice', file)
 export const getSpeechToken = () => api.get('/media/speech-token')
 
 // 대화 캡처 탭 OCR (저장 없음) — POST /media/ocr
-// 응답: { masked_text: string }
+// 응답: { original_text?: string, extractedText?: string, text?: string, masked_text?: string }
 export const uploadOcrImage = (file) => uploadFile('/media/ocr', file)
 
 // ── 5. 말투 변환 ──────────────────────────────
@@ -191,7 +191,7 @@ export const createCommunityPost = ({ content, title, isAnonymous = true, isAdul
     is_anonymous: isAnonymous,
     is_adult_only: isAdultOnly,
     source_record_id: sourceRecordId ?? null,
-  })
+  }, { useRealApi: true, suppressLogout: true })
 
 // 리액션
 export const likePost    = (id) => api.post(`/community/posts/${id}/like`, {})
@@ -202,12 +202,12 @@ export const comfortPost = (id) => api.post(`/community/posts/${id}/comfort`, {}
 // 댓글
 export const listComments  = (postId) => api.get(`/community/posts/${postId}/comments`)
 export const createComment = ({ postId, content, isAnonymous = true }) =>
-  api.post(`/community/posts/${postId}/comments`, { content, is_anonymous: isAnonymous })
+  api.post(`/community/posts/${postId}/comments`, { content, is_anonymous: isAnonymous }, { useRealApi: true, suppressLogout: true })
 
 // 댓글 대댓글
 export const listReplies   = (commentId) => api.get(`/community/comments/${commentId}/replies`)
 export const createReply   = ({ commentId, content, isAnonymous = true }) =>
-  api.post(`/community/comments/${commentId}/replies`, { content, is_anonymous: isAnonymous })
+  api.post(`/community/comments/${commentId}/replies`, { content, is_anonymous: isAnonymous }, { useRealApi: true, suppressLogout: true })
 export const likeComment   = (commentId) => api.post(`/community/comments/${commentId}/like`, {})
 export const deleteComment = (commentId) => api.delete(`/community/comments/${commentId}`)
 
@@ -215,9 +215,9 @@ export const deleteComment = (commentId) => api.delete(`/community/comments/${co
 export const deleteCommunityPost = (id) => api.delete(`/community/posts/${id}`)
 
 // 신고 / 작성자 숨김
-export const reportPost = (id, reason) => api.post(`/community/posts/${id}/report`, { reason })
+export const reportPost = (id, reason) => api.post(`/community/posts/${id}/report`, { reason }, { useRealApi: true, suppressLogout: true })
 export const reportComment = (postId, commentId, reason) =>
-  api.post(`/community/posts/${postId}/report`, { reason, interaction_id: commentId })
+  api.post(`/community/posts/${postId}/report`, { reason, interaction_id: commentId }, { useRealApi: true, suppressLogout: true })
 export const muteAuthor = (id)         => api.post(`/community/posts/${id}/mute-author`, {})
 
 // 유사 게시글

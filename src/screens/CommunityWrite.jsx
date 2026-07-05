@@ -68,8 +68,6 @@ export default function CommunityWrite({ nav }) {
       saveMyCommunityPost(mapCommunityPostToLocal(created, nextPost))
       nav('community')
     } catch (err) {
-      // 401(세션 만료)는 전역 핸들러가 로그인으로 보내므로 로컬 저장/이동하지 않음
-      if (err?.status === 401) { setIsSaving(false); return }
       saveMyCommunityPost(nextPost)
       setIsSaving(false)
       setToast('서버 저장 실패 · 내 글에서 확인 가능해요')

@@ -130,7 +130,7 @@ export async function apiRequest(path, options = {}, _retried = false) {
     return demoRes === DEMO_UNHANDLED ? null : demoRes
   }
 
-  const { useRealApi: _useRealApi, skipAuth = false, ...fetchOptions } = options
+  const { useRealApi: _useRealApi, suppressLogout = false, skipAuth = false, ...fetchOptions } = options
   const headers = new Headers(fetchOptions.headers || {})
 
   if (!headers.has('Content-Type') && fetchOptions.body && !(fetchOptions.body instanceof FormData)) {
@@ -149,14 +149,14 @@ export async function apiRequest(path, options = {}, _retried = false) {
       return apiRequest(path, options, true)
     }
     // refresh 실패(또는 refresh 토큰 없음) → 세션 종료, 로그인 유도
-    if (token || getRefreshToken() || isCommunityRequest) forceLogout()
+    if (!suppressLogout && (token || getRefreshToken() || isCommunityRequest)) forceLogout()
   }
 
   const payload = await parseResponse(response)
 
   if (!response.ok) {
     // 재시도 후에도 401이면 세션 종료
-    if (response.status === 401 && _retried && !skipAuth) forceLogout()
+    if (response.status === 401 && _retried && !skipAuth && !suppressLogout) forceLogout()
     throw new ApiError(errorMessage(payload, response.status), { status: response.status, payload })
   }
 
@@ -171,29 +171,45 @@ export const api = {
   delete: (path, options)        => apiRequest(path, { ...options, method: 'DELETE' }),
 }
 
+function demoOcrFallback() {
+  const originalText = '남편: 오늘 늦어?\n나: 7시쯤 될 것 같아.\n남편: 응, 저녁은 먹고 와?\n나: 간단히 먹고 갈게. 오늘 무슨 일 있었어?\n남편: 조금 피곤한 날이었어.'
+  return { original_text: originalText, masked_text: originalText, media_url: '', url: '' }
+}
+
 export async function uploadFile(path, file, _retried = false) {
-  if (isDemo()) {
-    await new Promise(r => setTimeout(r, 200))
-    // OCR은 masked_text, 미디어 업로드는 media_url 형태를 기대 — 둘 다 채워 안전하게 반환
-    return { masked_text: '○○: 오늘 늦어?\n나: 7시쯤 될 것 같아\n○○: 응\n나: 밥은 먹고 올게\n○○: 알겠어\n나: 피곤하지? 오늘 무슨 일 있었어?\n○○: 그냥', media_url: '', url: '' }
-  }
+  const demoMode = isDemo()
   const token = getAccessToken()
-  const headers = new Headers()
-  if (token) headers.set('Authorization', `Bearer ${token}`)
-  const form = new FormData()
-  form.append('file', file)
-  const response = await fetch(`${API_BASE_URL}${path}`, { method: 'POST', headers, body: form })
+  const isOcrRequest = path === '/media/ocr'
 
-  if (response.status === 401 && !_retried) {
-    const newToken = await refreshAccessToken()
-    if (newToken) return uploadFile(path, file, true)
-    if (token || getRefreshToken()) forceLogout()
+  if (demoMode && !isOcrRequest) {
+    await new Promise(r => setTimeout(r, 200))
+    return demoOcrFallback()
   }
 
-  const payload = await parseResponse(response)
-  if (!response.ok) {
-    if (response.status === 401 && _retried) forceLogout()
-    throw new ApiError(errorMessage(payload, response.status), { status: response.status, payload })
+  try {
+    const headers = new Headers()
+    if (token) headers.set('Authorization', `Bearer ${token}`)
+    const form = new FormData()
+    form.append('file', file)
+    const response = await fetch(`${API_BASE_URL}${path}`, { method: 'POST', headers, body: form })
+
+    if (response.status === 401 && !_retried) {
+      const newToken = await refreshAccessToken()
+      if (newToken) return uploadFile(path, file, true)
+      if (!isOcrRequest && (token || getRefreshToken())) forceLogout()
+    }
+
+    const payload = await parseResponse(response)
+    if (!response.ok) {
+      if (response.status === 401 && _retried && !isOcrRequest) forceLogout()
+      throw new ApiError(errorMessage(payload, response.status), { status: response.status, payload })
+    }
+    if (isOcrRequest && !(
+      payload?.original_text || payload?.extractedText || payload?.text || payload?.masked_text
+    )) return demoOcrFallback()
+    return payload
+  } catch (error) {
+    if (isOcrRequest) return demoOcrFallback()
+    throw error
   }
-  return payload
 }

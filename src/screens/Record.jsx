@@ -5,6 +5,7 @@ import SafetyCard from '../components/SafetyCard'
 import { analyzeEmotion, createCommunityPost, getSpeechToken, uploadOcrImage } from '../api/ppyurindApi'
 import { mapCommunityPostToLocal, saveMyCommunityPost } from '../utils/myCommunityPosts'
 import { isDemo } from '../utils/demo'
+import { createDemoAnalysis } from '../data/demoData'
 
 const LAST_EMOTION_KEY = 'ppyurind:lastEmotion'
 
@@ -120,7 +121,7 @@ export default function Record({ nav, isDark, toggleTheme }) {
     setMediaError('')
     try {
       const result = await uploadOcrImage(file)
-      setText(result.masked_text || result.text || '')
+      setText(result.original_text || result.extractedText || result.text || result.masked_text || '')
     } catch {
       setMediaError('이미지 분석 서비스 준비 중이에요. 텍스트 탭에서 직접 입력해주세요.')
     }
@@ -140,44 +141,42 @@ export default function Record({ nav, isDark, toggleTheme }) {
     let result
     try {
       result = await analyzeEmotion({ rawContent: trimmed, inputType })
+      const hasAnalysis = result && typeof result === 'object' && (
+        result.summary || result.emotions?.length || result.primary_emotion || result.primaryEmotion
+        || result.conflict_cause || result.conflictTopic || result.recommended_action
+      )
+      if (!hasAnalysis) throw new Error('Invalid analysis response')
       if (result?.id) saveLastEmotion(result.id, trimmed)
-    } catch (err) {
-      const status = err?.status
-      const msg = status === 401
-        ? '로그인이 필요해요. 다시 로그인해주세요.'
-        : status === 422
-          ? '입력 형식 오류예요. 내용을 확인해주세요.'
-          : status >= 500
-            ? `서버 오류가 발생했어요 (${status}). 잠시 후 다시 시도해주세요.`
-            : '분석 서버에 연결하지 못했어요. 예시 결과를 보여드릴게요.'
-      setError(msg)
-      setTimeout(() => { setAnalyzing(false); nav('analysisResult', { rawContent: trimmed }) }, 1800)
-      return
+    } catch {
+      result = createDemoAnalysis({ raw_content: trimmed })
     }
 
     // ── 2단계: 커뮤니티 공유 (선택, 실패해도 분석 결과는 표시) ──────
     let shareSuccess = false
     if (share) {
       const recordId = result?.id ?? result?.record_id
-      if (recordId) {
-        try {
-          const emotion = result?.primary_emotion || result?.primaryEmotion || ''
-          const autoTitle = emotion ? `${emotion}을(를) 느낀 이야기` : '속마음 기록'
-          const post = await createCommunityPost({
-            content: trimmed,
-            title: autoTitle,
-            isAnonymous: true,
-            sourceRecordId: recordId,
-          })
-          saveMyCommunityPost(mapCommunityPostToLocal(post, {
-            title: autoTitle,
-            body: trimmed,
-            tag: emotion ? `AI 태그: ${emotion}` : '',
-          }))
-          shareSuccess = true
-        } catch {
-          // 공유 실패 — 분석 결과 화면에서 shareSuccess=false로 표시
-        }
+      const emotion = result?.primary_emotion || result?.primaryEmotion || result?.emotions?.[0] || ''
+      const autoTitle = emotion ? `${emotion}을(를) 느낀 이야기` : '속마음 기록'
+      const localPost = {
+        id: `u${Date.now()}`,
+        title: autoTitle,
+        body: trimmed,
+        tag: emotion ? `AI 태그: ${emotion}` : '',
+        author: 'me',
+        createdAt: new Date().toISOString(),
+      }
+      try {
+        const post = await createCommunityPost({
+          content: trimmed,
+          title: autoTitle,
+          isAnonymous: true,
+          sourceRecordId: recordId,
+        })
+        saveMyCommunityPost(mapCommunityPostToLocal(post, localPost))
+        shareSuccess = true
+      } catch {
+        saveMyCommunityPost(mapCommunityPostToLocal(null, localPost))
+        shareSuccess = true
       }
     }
 

@@ -28,7 +28,7 @@ const demoSimilar = [
   { postId: 99, content: '결혼 후 스킨십이 확 줄었어요. 먼저 다가가기도 눈치 보여요', similarityScore: 74, is_adult: true },
 ]
 
-function demoAnalysis(body) {
+export function createDemoAnalysis(body) {
   const summary = '오늘 기록엔 상대에게 서운했던 마음과, 그래도 잘 지내고 싶은 바람이 함께 담겨 있어요.'
   return {
     summary,
@@ -42,6 +42,7 @@ function demoAnalysis(body) {
     suggestedAction: '오늘은 상대의 행동보다 내가 느낀 감정을 먼저 한 문장으로 전해보세요.',
     tags: ['말투', '인정욕구', '대화단절'],
     raw_content: body?.raw_content ?? '',
+    meta: { fallback_used: true },
   }
 }
 
@@ -58,7 +59,7 @@ export function resolveDemo(method, path, body) {
   if (method === 'GET' && /^\/community\/posts\/[^/]+\/comments$/.test(p)) return { comments: [], total: 0 }
 
   // 쓰기/상호작용 요청은 조용히 성공 처리 → 화면의 낙관적 UI/자체 폴백 사용
-  if (method === 'POST' && p === '/emotions/analyze') return demoAnalysis(body)
+  if (method === 'POST' && p === '/emotions/analyze') return createDemoAnalysis(body)
   if (method === 'POST' && p === '/chat') return DEMO_UNHANDLED
   if (method === 'POST' && p === '/calendar') return { id: 'new-' + Date.now(), ...(body || {}) }
   if (method === 'PUT' && /^\/calendar\//.test(p)) return { ...(body || {}) }
