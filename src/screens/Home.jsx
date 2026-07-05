@@ -29,6 +29,15 @@ const bars = [
 ]
 
 const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토']
+const HOME_PREVIEW_EVENT_TYPES = new Set([
+  'anniv',
+  'anniversary',
+  'date',
+  'birthday',
+  'recommend',
+  'recommendation',
+  'ad',
+])
 
 function todayLabel() {
   const d = new Date()
@@ -59,7 +68,8 @@ export default function Home({ nav, isDark, toggleTheme, nickname: propNickname,
         evs
           .filter(e => {
             const d = e.date || e.event_date || ''
-            return d.startsWith(ym)
+            const type = String(e.type || e.event_type || '').toLowerCase()
+            return d.startsWith(ym) && HOME_PREVIEW_EVENT_TYPES.has(type)
           })
           .sort((a, b) => (a.date || a.event_date || '').localeCompare(b.date || b.event_date || ''))
       )
