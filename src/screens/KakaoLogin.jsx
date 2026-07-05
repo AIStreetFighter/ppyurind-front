@@ -1,11 +1,19 @@
 import { useState, useEffect } from 'react'
 import ThemeToggle from '../components/ThemeToggle'
-import { getOAuthUrl } from '../api/ppyurindApi'
+import { getOAuthUrl, loginDemo } from '../api/ppyurindApi'
 import { LOGO } from '../data/images'
 import { enableDemo } from '../utils/demo'
 
 export default function KakaoLogin({ nav, isDark, toggleTheme }) {
-  const startDemo = () => { enableDemo(); nav('home') }
+  const startDemo = async () => {
+    enableDemo()
+    try {
+      await loginDemo()
+    } catch (error) {
+      console.warn('데모 로그인에 실패해 프론트 데모로 진입합니다.', error)
+    }
+    nav('home')
+  }
   // 세션 만료로 튕겨 나온 경우 안내 (한 번만 표시).
   // 플래그 소비(side effect)는 useEffect에서 — StrictMode 이중 렌더에도 안전.
   const [sessionExpired, setSessionExpired] = useState(false)

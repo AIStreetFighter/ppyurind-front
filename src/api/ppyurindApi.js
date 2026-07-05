@@ -2,7 +2,7 @@
 // 쀼라인드 API 함수 모음 (신버전 백엔드 정렬 기준)
 // ─────────────────────────────────────────────
 import { api, uploadFile, setAccessToken, setTokens, setRefreshToken, clearAccessToken, getAccessToken } from './client'
-import { disableDemo } from '../utils/demo'
+import { disableDemo, getOrCreateDemoGuestId } from '../utils/demo'
 
 /**
  * @typedef {Object} AnalysisMeta
@@ -65,6 +65,16 @@ export async function login({ email, password }) {
     refresh: data.refreshToken || data.refresh_token,
   })
   disableDemo()
+  return data
+}
+
+export async function loginDemo() {
+  const demoGuestId = getOrCreateDemoGuestId()
+  const data = await api.post('/auth/demo', { demo_guest_id: demoGuestId }, { useRealApi: true, skipAuth: true })
+  const access = data?.accessToken || data?.access_token
+  const refresh = data?.refreshToken || data?.refresh_token
+  if (access) setAccessToken(access)
+  if (refresh) setRefreshToken(refresh)
   return data
 }
 

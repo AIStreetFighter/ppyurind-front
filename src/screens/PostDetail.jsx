@@ -3,6 +3,7 @@ import { getCommunityPost, empathyPost, comfortPost, listComments, createComment
 import { avatarSrc, nickFromId, diverseAnonymousIdentity, safeCommentAvatarSrc, safeCatAvatarSrc } from '../data/nicknames'
 import { getReaction, setReaction, setCommentCount, getDemoReaction, setDemoReaction, getDemoComments, setDemoComments, setDemoCommentCount, ensureDemoComments } from '../utils/reactions'
 import { isDemo } from '../utils/demo'
+import { getAccessToken } from '../api/client'
 
 // 로컬 저장 글(id가 'u'로 시작)인지 판별
 const isLocalPost = (id) => typeof id === 'string' && id.startsWith('u')
@@ -92,19 +93,20 @@ function sortCommentsByCreatedAt(comments) {
 export default function PostDetail({ nav, post }) {
   const bodyRef = useRef(null)
   const demoMode = isDemo()
+  const useDemoFallback = demoMode && !getAccessToken()
   const [detail, setDetail]   = useState(post)
   // 피드에서 누른 공감/위로 상태를 localStorage에서 이어받음 → 상세 진입 시 아이콘 유지
-  const [liked, setLiked]     = useState(() => demoMode ? getDemoReaction(post?.id).liked : getReaction(post?.id).liked)
-  const [comforted, setComforted] = useState(() => demoMode ? getDemoReaction(post?.id).comforted : getReaction(post?.id).comforted)
+  const [liked, setLiked]     = useState(() => useDemoFallback ? getDemoReaction(post?.id).liked : getReaction(post?.id).liked)
+  const [comforted, setComforted] = useState(() => useDemoFallback ? getDemoReaction(post?.id).comforted : getReaction(post?.id).comforted)
   // 서버가 내려주는 실수치를 그대로 신뢰 — liked/comforted로 +1을 더하면
   // 상세 진입 시 이미 반영된 count에 중복으로 더해져 숫자가 부풀어 오르는 문제가 있었음
   const [empathyCount, setEmpathyCount] = useState(() => {
-    if (demoMode) return getDemoReaction(post?.id, post?.empathy_count ?? post?.empathy ?? 0, post?.comfort_count ?? post?.comfort ?? 0).empathyCount
+    if (useDemoFallback) return getDemoReaction(post?.id, post?.empathy_count ?? post?.empathy ?? 0, post?.comfort_count ?? post?.comfort ?? 0).empathyCount
     const base = post?.empathy_count ?? post?.empathy ?? 0
     return base + (isLocalPost(post?.id) && getReaction(post?.id).liked ? 1 : 0)
   })
   const [comfortCount, setComfortCount] = useState(() => {
-    if (demoMode) return getDemoReaction(post?.id, post?.empathy_count ?? post?.empathy ?? 0, post?.comfort_count ?? post?.comfort ?? 0).comfortCount
+    if (useDemoFallback) return getDemoReaction(post?.id, post?.empathy_count ?? post?.empathy ?? 0, post?.comfort_count ?? post?.comfort ?? 0).comfortCount
     const base = post?.comfort_count ?? post?.comfort ?? 0
     return base + (isLocalPost(post?.id) && getReaction(post?.id).comforted ? 1 : 0)
   })
@@ -134,7 +136,7 @@ export default function PostDetail({ nav, post }) {
 
   const reloadComments = async () => {
     if (!post?.id) return
-    if (demoMode) {
+    if (useDemoFallback) {
       setComments(sortCommentsByCreatedAt(ensureDemoComments(post).map(comment => mapComment(comment, true))))
       setCommentsLoaded(true)
       return
@@ -158,7 +160,7 @@ export default function PostDetail({ nav, post }) {
   useEffect(() => {
     if (!post?.id) return
     setCommentsLoaded(false)
-    if (demoMode) {
+    if (useDemoFallback) {
       const reaction = getDemoReaction(post.id, post.empathy_count ?? post.empathy ?? 0, post.comfort_count ?? post.comfort ?? 0)
       setLiked(reaction.liked)
       setComforted(reaction.comforted)
@@ -204,9 +206,9 @@ export default function PostDetail({ nav, post }) {
       const reps = (c.replies || []).filter(r => !(r.deleted || deletedCommentIds.has(String(r.id)))).length
       return acc + top + reps
     }, 0)
-    if (demoMode) setDemoCommentCount(post.id, n)
+    if (useDemoFallback) setDemoCommentCount(post.id, n)
     else setCommentCount(post.id, n)
-  }, [commentsLoaded, comments, deletedCommentIds, post?.id, demoMode])
+  }, [commentsLoaded, comments, deletedCommentIds, post?.id, useDemoFallback])
 
   if (!post) {
     return (
@@ -236,7 +238,7 @@ export default function PostDetail({ nav, post }) {
   }
 
   const handleEmpathy = async () => {
-    if (demoMode) {
+    if (useDemoFallback) {
       const next = !getDemoReaction(post.id).liked
       setDemoReaction(post.id, { liked: next, empathyDelta: next ? 1 : 0 })
       const saved = getDemoReaction(post.id, post.empathy_count ?? post.empathy ?? 0, post.comfort_count ?? post.comfort ?? 0)
@@ -270,7 +272,7 @@ export default function PostDetail({ nav, post }) {
   }
 
   const handleComfort = async () => {
-    if (demoMode) {
+    if (useDemoFallback) {
       const next = !getDemoReaction(post.id).comforted
       setDemoReaction(post.id, { comforted: next, comfortDelta: next ? 1 : 0 })
       const saved = getDemoReaction(post.id, post.empathy_count ?? post.empathy ?? 0, post.comfort_count ?? post.comfort ?? 0)
@@ -305,7 +307,7 @@ export default function PostDetail({ nav, post }) {
 
   const toggleLike = (cid, rid) => {
     const targetId = rid ?? cid
-    if (!demoMode) likeComment(targetId).catch(() => {})
+    if (!useDemoFallback) likeComment(targetId).catch(() => {})
     setComments(cs => cs.map(c => {
       if (c.id !== cid) return c
       if (rid == null) return { ...c, liked: !c.liked, likes: c.likes + (c.liked ? -1 : 1) }
@@ -313,13 +315,13 @@ export default function PostDetail({ nav, post }) {
     }))
   }
 
-  const isMyComment = (c) => demoMode || c.nick === '나' || myCommentIds.has(String(c.id))
+  const isMyComment = (c) => useDemoFallback || c.nick === '나' || myCommentIds.has(String(c.id))
   const isDeleted = (c) => c.deleted || deletedCommentIds.has(String(c.id))
 
   const deleteComment = async (commentId, replyId) => {
     setCommentMenuOpen(null)
     const targetId = replyId ?? commentId
-    if (demoMode) {
+    if (useDemoFallback) {
       const next = getDemoComments(post.id).map(comment => {
         if (String(comment.id) !== String(commentId)) return comment
         if (replyId != null) return {
@@ -360,7 +362,7 @@ export default function PostDetail({ nav, post }) {
     const text = draft.trim()
     setDraft('')
 
-    if (demoMode) {
+    if (useDemoFallback) {
       const stored = getDemoComments(post.id)
       const id = `demo-c-${Date.now()}`
       const identity = diverseAnonymousIdentity(`demo-comments:${post.id}`, stored.length)
@@ -411,7 +413,7 @@ export default function PostDetail({ nav, post }) {
     const text = replyDraft.trim()
     setReplyDraft(''); setReplyTo(null)
 
-    if (demoMode) {
+    if (useDemoFallback) {
       const stored = getDemoComments(post.id)
       const identityIndex = stored.reduce((total, comment) => total + 1 + (comment.replies || []).length, 0)
       const id = `demo-r-${Date.now()}`
@@ -518,7 +520,7 @@ export default function PostDetail({ nav, post }) {
 
         <div className="pd-scroll-content">
         <div className="post-head">
-          <div className="avatar"><img className="pfp" src={avatarSrc(post.id)} alt="" /></div>
+          <div className="avatar"><img className="pfp" src={safeCommentAvatarSrc(d.anonymous_avatar, post.id) || avatarSrc(post.id)} alt="" /></div>
           <div style={{ flex: 1, minWidth: 0 }}>
             <p className="post-name">{d.anonymous_nickname || d.nick}</p>
             <p className="post-tag">{d.tag || (d.ai_tags ? `AI 태그: ${d.ai_tags}` : '')}</p>

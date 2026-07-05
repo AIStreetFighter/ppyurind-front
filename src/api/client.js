@@ -112,7 +112,8 @@ async function refreshAccessToken() {
 
 export async function apiRequest(path, options = {}, _retried = false) {
   // 데모 모드: 네트워크 없이 목데이터로 응답 (미정의 경로는 조용히 null → 화면 자체 폴백)
-  if (isDemo() && options.useRealApi !== true) {
+  const isCommunityRequest = path === '/community' || path.startsWith('/community/')
+  if (isDemo() && !isCommunityRequest && options.useRealApi !== true) {
     const method = (options.method || 'GET').toUpperCase()
     let body = null
     try { body = options.body ? JSON.parse(options.body) : null } catch {}
@@ -122,33 +123,33 @@ export async function apiRequest(path, options = {}, _retried = false) {
   }
 
   const token = getAccessToken()
-  const { useRealApi: _useRealApi, ...fetchOptions } = options
+  const { useRealApi: _useRealApi, skipAuth = false, ...fetchOptions } = options
   const headers = new Headers(fetchOptions.headers || {})
 
   if (!headers.has('Content-Type') && fetchOptions.body && !(fetchOptions.body instanceof FormData)) {
     headers.set('Content-Type', 'application/json')
   }
-  if (token && !headers.has('Authorization')) {
+  if (!skipAuth && token && !headers.has('Authorization')) {
     headers.set('Authorization', `Bearer ${token}`)
   }
 
   const response = await fetch(`${API_BASE_URL}${path}`, { ...fetchOptions, headers })
 
   // 401 → refresh 1회 시도 후 원요청 재시도. refresh 대상 자체는 제외.
-  if (response.status === 401 && !_retried && path !== '/auth/refresh') {
+  if (response.status === 401 && !_retried && !skipAuth && path !== '/auth/refresh') {
     const newToken = await refreshAccessToken()
     if (newToken) {
       return apiRequest(path, options, true)
     }
     // refresh 실패(또는 refresh 토큰 없음) → 세션 종료, 로그인 유도
-    if (token || getRefreshToken()) forceLogout()
+    if (token || getRefreshToken() || isCommunityRequest) forceLogout()
   }
 
   const payload = await parseResponse(response)
 
   if (!response.ok) {
     // 재시도 후에도 401이면 세션 종료
-    if (response.status === 401 && _retried) forceLogout()
+    if (response.status === 401 && _retried && !skipAuth) forceLogout()
     throw new ApiError(errorMessage(payload, response.status), { status: response.status, payload })
   }
 

@@ -2,11 +2,12 @@ import { useEffect, useState } from 'react'
 import BottomNav from '../components/BottomNav'
 import ThemeToggle from '../components/ThemeToggle'
 import NotifBell from '../components/NotifBell'
-import { nickFromId, avatarSrc } from '../data/nicknames'
+import { nickFromId, avatarSrc, safeCommentAvatarSrc } from '../data/nicknames'
 import { CAT_SHARE } from '../data/images'
 import { likedMap, comfortedMap, setReaction, getCommentCount, demoLikedMap, demoComfortedMap, getDemoReaction, setDemoReaction, getDemoCommentCount, ensureDemoComments } from '../utils/reactions'
 import { isDemo } from '../utils/demo'
 import { listCommunityPosts, empathyPost, comfortPost, reportPost, muteAuthor, deleteCommunityPost, getSimilarPosts } from '../api/ppyurindApi'
+import { getAccessToken } from '../api/client'
 
 const MY_POSTS_STORAGE_KEY = 'ppyurind:myCommunityPosts'
 const isLocalPost = (id) => typeof id === 'string' && id.startsWith('u')
@@ -75,6 +76,7 @@ function mapApiPost(p) {
   return {
     id: p.id,
     nick: p.anonymous_nickname || nickFromId(p.id),
+    avatar: safeCommentAvatarSrc(p.anonymous_avatar, p.id),
     title: p.title || p.content?.slice(0, 22) || '',
     tag: p.ai_tags ? `AI 태그: ${p.ai_tags}` : '',
     body: p.content || '',
@@ -116,18 +118,19 @@ function uniquePosts(posts) {
 }
 export default function Community({ nav, isDark, toggleTheme, concerns = [] }) {
   const demoMode = isDemo()
+  const useDemoFallback = demoMode && !getAccessToken()
   const [filter, setFilter] = useState('전체')
   const [query, setQuery] = useState('')
   const [showSearch, setShowSearch] = useState(false)
   // 공감/위로 상태는 localStorage에서 로드 → 뒤로가기/리마운트해도 유지
-  const [liked, setLiked] = useState(() => demoMode ? demoLikedMap() : likedMap())
-  const [comforted, setComforted] = useState(() => demoMode ? demoComfortedMap() : comfortedMap())
+  const [liked, setLiked] = useState(() => useDemoFallback ? demoLikedMap() : likedMap())
+  const [comforted, setComforted] = useState(() => useDemoFallback ? demoComfortedMap() : comfortedMap())
   const [menuOpen, setMenuOpen] = useState(null)
   const [toast, setToast] = useState('')
   const [reportFor, setReportFor] = useState(null)
   const [confirmDeleteId, setConfirmDeleteId] = useState(null)
   const [hiddenAuthors, setHiddenAuthors] = useState([])
-  const [apiPosts, setApiPosts] = useState(null) // null = 로딩 중, [] = 빈 결과
+  const [apiPosts, setApiPosts] = useState(undefined) // undefined = 로딩 중, null = API 실패, [] = 빈 결과
   const [userPosts, setUserPosts] = useState(() => {
     try {
       return JSON.parse(localStorage.getItem(MY_POSTS_STORAGE_KEY) || '[]')
@@ -144,7 +147,7 @@ export default function Community({ nav, isDark, toggleTheme, concerns = [] }) {
       const items = Array.isArray(data) ? data : (data.items || [])
       const mapped = items.map(mapApiPost)
       setApiPosts(mapped)
-      if (demoMode) return
+      if (useDemoFallback) return
       setLiked(current => {
         const next = { ...current }
         mapped.forEach(p => {
@@ -166,7 +169,7 @@ export default function Community({ nav, isDark, toggleTheme, concerns = [] }) {
         return next
       })
     }).catch(() => setApiPosts(null))
-  }, [demoMode])
+  }, [useDemoFallback])
 
   // "나와 비슷한 고민": 내 최근 글(없으면 최신 실제 글)을 기준으로 벡터 유사도 추천.
   useEffect(() => {
@@ -182,7 +185,7 @@ export default function Community({ nav, isDark, toggleTheme, concerns = [] }) {
   // 서버 게시글은 API 응답의 count/state를 사용하고, 로컬 게시글만 저장된 반응을 토글한다.
   const handleEmpathy = async (p, e) => {
     e.stopPropagation()
-    if (demoMode) {
+    if (useDemoFallback) {
       const nextLiked = !getDemoReaction(p.id).liked
       setDemoReaction(p.id, { liked: nextLiked, empathyDelta: nextLiked ? 1 : 0 })
       setLiked(s => ({ ...s, [p.id]: nextLiked }))
@@ -211,7 +214,7 @@ export default function Community({ nav, isDark, toggleTheme, concerns = [] }) {
 
   const handleComfort = async (p, e) => {
     e.stopPropagation()
-    if (demoMode) {
+    if (useDemoFallback) {
       const nextComforted = !getDemoReaction(p.id).comforted
       setDemoReaction(p.id, { comforted: nextComforted, comfortDelta: nextComforted ? 1 : 0 })
       setComforted(s => ({ ...s, [p.id]: nextComforted }))
@@ -239,11 +242,11 @@ export default function Community({ nav, isDark, toggleTheme, concerns = [] }) {
   }
 
   // 서버 count에는 반응 상태를 더하지 않고, 서버가 없는 로컬 게시글만 active 상태를 반영한다.
-  const empathyOf = (p) => demoMode ? getDemoReaction(p.id, p.empathy ?? 0, p.comfort ?? 0).empathyCount : (p.empathy || 0) + (isLocalPost(p.id) && liked[p.id] ? 1 : 0)
-  const comfortOf = (p) => demoMode ? getDemoReaction(p.id, p.empathy ?? 0, p.comfort ?? 0).comfortCount : (p.comfort || 0) + (isLocalPost(p.id) && comforted[p.id] ? 1 : 0)
+  const empathyOf = (p) => useDemoFallback ? getDemoReaction(p.id, p.empathy ?? 0, p.comfort ?? 0).empathyCount : (p.empathy || 0) + (isLocalPost(p.id) && liked[p.id] ? 1 : 0)
+  const comfortOf = (p) => useDemoFallback ? getDemoReaction(p.id, p.empathy ?? 0, p.comfort ?? 0).comfortCount : (p.comfort || 0) + (isLocalPost(p.id) && comforted[p.id] ? 1 : 0)
   // 서버 comment_count를 우선하고, 로컬 게시글 또는 서버값이 없을 때만 캐시를 사용한다.
   const commentsOf = (p) => {
-    if (demoMode) {
+    if (useDemoFallback) {
       ensureDemoComments(p)
       return getDemoCommentCount(p.id)
     }
@@ -284,10 +287,12 @@ export default function Community({ nav, isDark, toggleTheme, concerns = [] }) {
 
   const myPostIds = new Set(userPosts.map(p => String(p.id)))
 
-  const seedPosts = apiPosts !== null ? apiPosts : ALL_POSTS
+  const seedPosts = apiPosts === null ? ALL_POSTS : (apiPosts || [])
   // API에 이미 올라간 글은 API 버전(최신 카운트)을 사용, 로컬에만 있는 글만 앞에 추가
   const apiPostIds = new Set(seedPosts.map(p => String(p.id)))
-  const localOnlyPosts = userPosts.filter(p => !apiPostIds.has(String(p.id)))
+  const localOnlyPosts = demoMode && !useDemoFallback
+    ? []
+    : userPosts.filter(p => !apiPostIds.has(String(p.id)))
 
   // 태그 필터: 공백 제거 후 포함 여부 검사. '시댁·처가' 같은 복합 태그는 · 기준 분리해 하나라도 매칭되면 통과
   const normStr = (s) => (s || '').replace(/\s/g, '').toLowerCase()
@@ -414,7 +419,7 @@ export default function Community({ nav, isDark, toggleTheme, concerns = [] }) {
             base.slice(0, 2).map(p => (
               <div key={p.id} className="card" style={{ padding: 15, cursor: 'pointer' }} onClick={() => nav('post', { post: p })}>
                 <div className="row">
-                  <div className="avatar"><img className="pfp" src={avatarSrc(p.id)} alt="" /></div>
+                  <div className="avatar"><img className="pfp" src={p.avatar || avatarSrc(p.id)} alt="" /></div>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <p className="row__title">"{p.title}"</p>
                     <p className="row__sub">비슷한 고민 이야기</p>
