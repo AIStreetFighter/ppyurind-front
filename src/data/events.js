@@ -24,6 +24,64 @@ export const ymd = (d) => {
   return `${y}-${m}-${day}`
 }
 
+const MOCK_EVENT_DEFINITIONS = [
+  { monthOffset: 0, day: 3, type: 'talk', title: '오래 대화한 날' },
+  { monthOffset: 0, day: 7, type: 'date', title: '한강 데이트' },
+  { monthOffset: 0, day: 11, type: 'fight', title: '저녁에 다툰 날' },
+  { monthOffset: 0, day: 15, type: 'anniv', title: '결혼기념일' },
+  { monthOffset: 0, day: 20, type: 'birthday', title: '첫째 생일' },
+  { monthOffset: 0, day: 26, type: 'date', title: '영화 데이트' },
+  { monthOffset: 1, day: 4, type: 'anniv', title: '처음 만난 날' },
+]
+
+export function createMockEvents(referenceDate = new Date()) {
+  const year = referenceDate.getFullYear()
+  const month = referenceDate.getMonth()
+  return MOCK_EVENT_DEFINITIONS.map(({ monthOffset, day, type, title }) => {
+    const date = ymd(new Date(year, month + monthOffset, day))
+    return { id: `mock-${date}-${type}`, date, type, event_date: date, event_type: type, title, isMock: true, source: 'mock' }
+  })
+}
+
+const hiddenMockStorageKey = accountId => `ppyurind:hiddenMockEvents:${encodeURIComponent(String(accountId || 'guest'))}`
+
+export function calendarAccountId(user) {
+  return user?.id || user?.userId || user?.user_id || 'guest'
+}
+
+export function getHiddenMockEventIds(accountId) {
+  try { return new Set(JSON.parse(localStorage.getItem(hiddenMockStorageKey(accountId)) || '[]')) }
+  catch { return new Set() }
+}
+
+export function hideMockEvent(eventId, accountId) {
+  const hidden = getHiddenMockEventIds(accountId)
+  hidden.add(eventId)
+  try { localStorage.setItem(hiddenMockStorageKey(accountId), JSON.stringify([...hidden])) } catch {}
+}
+
+export function normalizeCalendarEvent(event) {
+  return { ...event, date: event?.date || event?.event_date || '', type: event?.type || event?.event_type || 'anniv' }
+}
+
+export function mergeCalendarEvents(apiEvents = [], accountId, referenceDate = new Date()) {
+  const hidden = getHiddenMockEventIds(accountId)
+  const combined = [
+    ...createMockEvents(referenceDate).filter(event => !hidden.has(event.id)),
+    ...(Array.isArray(apiEvents) ? apiEvents : [])
+      .map(normalizeCalendarEvent)
+      .filter(event => !(event.isMock || event.source === 'mock') || !hidden.has(event.id)),
+  ]
+  const unique = new Map()
+  combined.forEach(event => {
+    const normalized = normalizeCalendarEvent(event)
+    if (!normalized.date) return
+    const key = normalized.id != null ? String(normalized.id) : `db-${normalized.date}-${normalized.type}-${normalized.title || ''}`
+    if (!unique.has(key)) unique.set(key, normalized)
+  })
+  return [...unique.values()]
+}
+
 // 오늘 이후로 가장 가까운 기념일까지 D-day
 export function nextAnniversary(today = new Date()) {
   const future = EVENTS

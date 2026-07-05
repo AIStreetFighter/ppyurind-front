@@ -1,6 +1,6 @@
 // 시연용 데모 데이터 — client.js가 데모 모드일 때 (method, path)로 이 리졸버를 호출한다.
 // 대부분 화면은 자체 SEED/더미를 갖고 있어, 여기선 폴백이 없는 곳(사용자·캘린더·유사글·채팅 등)만 채운다.
-import { ymd } from './events'
+import { createMockEvents } from './events'
 
 export const DEMO_UNHANDLED = Symbol('demo-unhandled')
 
@@ -21,22 +21,6 @@ function demoUser() {
 }
 
 // 항상 '이번 달'에 일정이 보이도록 현재 월 기준으로 생성
-function demoEvents() {
-  const d = new Date()
-  const y = d.getFullYear()
-  const m = d.getMonth()
-  const mk = (year, month, day) => ymd(new Date(year, month, day))
-  return [
-    { id: 'd1', event_date: mk(y, m, 3),  event_type: 'talk',     title: '오래 대화한 날' },
-    { id: 'd2', event_date: mk(y, m, 7),  event_type: 'date',     title: '한강 데이트' },
-    { id: 'd3', event_date: mk(y, m, 11), event_type: 'fight',    title: '저녁에 다툰 날' },
-    { id: 'd4', event_date: mk(y, m, 15), event_type: 'anniv',    title: '결혼기념일' },
-    { id: 'd5', event_date: mk(y, m, 20), event_type: 'birthday', title: '첫째 생일' },
-    { id: 'd6', event_date: mk(y, m, 26), event_type: 'date',     title: '영화 데이트' },
-    { id: 'd7', event_date: mk(y, m + 1, 4), event_type: 'anniv', title: '처음 만난 날' },
-  ]
-}
-
 const demoSimilar = [
   { postId: 1, content: '기념일을 매번 제가 챙기는 것 같아 서운해요', similarityScore: 86 },
   { postId: 4, content: '육아는 왜 늘 제 몫일까요', similarityScore: 82 },
@@ -66,7 +50,7 @@ export function resolveDemo(method, path, body) {
   const p = path.split('?')[0]
 
   if (method === 'GET' && p === '/users/me') return demoUser()
-  if (method === 'GET' && p === '/calendar') return demoEvents()
+  if (method === 'GET' && p === '/calendar') return createMockEvents()
   // 커뮤니티 목록: DEMO_UNHANDLED → catch → setApiPosts(null) → Community.jsx ALL_POSTS(25개) 사용
   if (method === 'GET' && p === '/community/posts') return DEMO_UNHANDLED
   if (method === 'GET' && /^\/community\/posts\/[^/]+\/similar$/.test(p)) return demoSimilar

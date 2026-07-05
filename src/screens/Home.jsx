@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import BottomNav from '../components/BottomNav'
 import ThemeToggle from '../components/ThemeToggle'
-import { EVENT_TYPES } from '../data/events'
+import { EVENT_TYPES, calendarAccountId, mergeCalendarEvents } from '../data/events'
 import NotifBell from '../components/NotifBell'
 import { getMe, listEvents } from '../api/ppyurindApi'
 import { CAT_HOME } from '../data/images'
@@ -41,27 +41,29 @@ export default function Home({ nav, isDark, toggleTheme, nickname: propNickname,
   const [adClosed, setAdClosed] = useState(false)
 
   useEffect(() => {
-    getMe().then(u => {
-      const name = u.nickname || propNickname || ''
-      setNickname(name)
-      if (onNicknameSave) onNicknameSave(name)
-      // 온보딩 미완료 시 온보딩으로 이동
-      if (u.onboarding_completed === false) { nav('onboarding'); return }
-    }).catch(() => {})
-    listEvents().then(data => {
+    Promise.allSettled([getMe(), listEvents()]).then(([userResult, eventsResult]) => {
+      const user = userResult.status === 'fulfilled' ? userResult.value : null
+      if (user) {
+        const name = user.nickname || propNickname || ''
+        setNickname(name)
+        if (onNicknameSave) onNicknameSave(name)
+        // 온보딩 미완료 시 온보딩으로 이동
+        if (user.onboarding_completed === false) { nav('onboarding'); return }
+      }
+      const data = eventsResult.status === 'fulfilled' ? eventsResult.value : []
+      const apiEvents = Array.isArray(data) ? data : (data?.items || [])
       const now = new Date()
       const ym = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
-      const evs = Array.isArray(data) ? data : (data.items || [])
+      const evs = mergeCalendarEvents(apiEvents, calendarAccountId(user), now)
       setMonthEvents(
         evs
           .filter(e => {
             const d = e.date || e.event_date || ''
-            const t = e.type || e.event_type || ''
-            return d.startsWith(ym) && (t === 'anniv' || t === 'birthday' || t === 'date')
+            return d.startsWith(ym)
           })
           .sort((a, b) => (a.date || a.event_date || '').localeCompare(b.date || b.event_date || ''))
       )
-    }).catch(() => {})
+    })
   }, [])
 
   const [gift] = useState(() => GIFT_ADS[Math.floor(Math.random() * GIFT_ADS.length)])
