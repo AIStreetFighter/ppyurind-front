@@ -69,12 +69,31 @@ body {
     border-right: none;
   }
 
+  .pd {
+    height: auto;
+    min-height: 100vh;
+    min-height: 100dvh;
+    overflow: visible;
+  }
+
+  .pd-body {
+    flex: none;
+    min-height: 100vh;
+    min-height: 100dvh;
+    overflow-y: visible;
+    overscroll-behavior: auto;
+  }
+
   .phone-body,
   .pd-scroll-content {
     width: min(100%, 1040px);
     margin: 0 auto;
     padding-left: 32px;
     padding-right: 32px;
+  }
+
+  .pd-scroll-content {
+    padding-bottom: calc(104px + env(safe-area-inset-bottom));
   }
 
   .topbar,
@@ -86,7 +105,8 @@ body {
   .pd-input {
     left: 50%;
     right: auto;
-    width: min(100%, 1040px);
+    width: 100%;
+    max-width: 1040px;
     transform: translateX(-50%);
     border-left: 1px solid var(--nav-line);
     border-right: 1px solid var(--nav-line);
@@ -112,7 +132,7 @@ body {
   }
 
   .pd-input {
-    width: min(100%, 1120px);
+    max-width: 1120px;
   }
 
   .bottom-nav {
