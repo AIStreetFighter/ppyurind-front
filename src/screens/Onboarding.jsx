@@ -15,14 +15,16 @@ export default function Onboarding({ nav, isDark, toggleTheme, nickname: initial
   const [step, setStep] = useState(1)
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState('')
-  const [relation, setRelation] = useState('신혼')
-  const [year, setYear] = useState('1~2년')
-  const [concerns, setConcerns] = useState(['대화 단절', '서운함'])
+  // 데모(둘러보기)는 시연자가 직접 닉네임·설문을 입력하도록 전부 빈 상태로 시작. 실제 유저는 기존 기본값 유지.
+  const demo = isDemo()
+  const [relation, setRelation] = useState(demo ? '' : '신혼')
+  const [year, setYear] = useState(demo ? '' : '1~2년')
+  const [concerns, setConcerns] = useState(demo ? [] : ['대화 단절', '서운함'])
   const [etcText, setEtcText] = useState('')
-  const [tone, setTone] = useState('부드럽게')
+  const [tone, setTone] = useState(demo ? '' : '부드럽게')
 
-  // 실제 유저는 '지우'(기본값=미설정)면 빈 입력으로 이름을 받지만, 데모는 '지우' 페르소나를 그대로 노출
-  const [nickname, setNickname] = useState(initialNickname && (isDemo() || initialNickname !== '지우') ? initialNickname : '')
+  // '지우'(기본값=미설정)면 빈 입력으로 이름을 직접 받는다. 데모도 시연자가 직접 입력하도록 빈칸.
+  const [nickname, setNickname] = useState(initialNickname && initialNickname !== '지우' ? initialNickname : '')
   const [useLock, setUseLock] = useState(false)
   const [pinSet, setPinSet] = useState(false)
   const [showPin, setShowPin] = useState(false)
@@ -177,11 +179,11 @@ export default function Onboarding({ nav, isDark, toggleTheme, nickname: initial
               try {
                 await saveOnboarding({
                   nickname: nickname.trim(),
-                  relationshipStatus: [relation],
+                  relationshipStatus: relation ? [relation] : null,
                   relationshipYears: YEAR_TO_NUM[year] ?? null,
                   mainConcernTopics: concerns.filter(c => c !== '기타'),
                   concernEtc: concerns.includes('기타') ? etcText : null,
-                  aiTone: tone,
+                  aiTone: tone || null,
                 })
                 // 앱 잠금 PIN은 PinPad onDone 시점에 이미 저장됨(enableLock + apiSetPin)
                 onNicknameSave?.(nickname.trim())
