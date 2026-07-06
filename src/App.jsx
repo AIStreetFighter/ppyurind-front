@@ -89,6 +89,12 @@ function AppContent() {
     document.querySelectorAll('.phone-body, .pd-body, .sheet').forEach((el) => { el.scrollTop = 0; });
   }, [location.pathname])
 
+  // 다크/라이트 모드에 맞춰 모바일 상단바(theme-color)도 변경 (라이트 모드에서 다크 상단바 어색함 방지)
+  useEffect(() => {
+    const meta = document.querySelector('meta[name="theme-color"]');
+    if (meta) meta.setAttribute('content', isDark ? '#1B2240' : '#FFFFFF');
+  }, [isDark])
+
   // post 없이 /community/post 직접 접근 또는 새로고침 시 커뮤니티로 복귀
   useEffect(() => {
     if (screen === 'post' && !activePost) navigate(SCREEN_PATHS['community'])
