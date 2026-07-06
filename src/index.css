@@ -1179,9 +1179,10 @@ body {
 .pd-c-heart { flex-shrink: 0; font-size: 15px; color: var(--ink-muted); cursor: pointer; padding-top: 2px; }
 .pd-c-heart.on { color: var(--like); }
 .pd-reply { margin: 14px 0 0 22px; }
-.pd-reply-input { display: flex; gap: 8px; margin: 12px 0 0 47px; }
-.pd-input { position: fixed; left: 0; right: 0; bottom: 0; z-index: 40; display: flex; gap: 8px; padding: 12px 16px calc(12px + env(safe-area-inset-bottom)); background: var(--nav-bg); border-top: 1px solid var(--nav-line); backdrop-filter: blur(8px); }
-.pd-send { flex-shrink: 0; padding: 0 18px; border: none; border-radius: 11px; background: var(--brand); color: #fff; font: 600 14px 'Pretendard'; cursor: pointer; }
+.pd-reply-input { display: flex; min-width: 0; gap: 8px; margin: 12px 0 0 47px; }
+.pd-input { position: fixed; left: 0; right: 0; bottom: 0; z-index: 40; display: flex; width: 100%; max-width: 100%; box-sizing: border-box; gap: 8px; padding: 12px 16px calc(12px + env(safe-area-inset-bottom)); background: var(--nav-bg); border-top: 1px solid var(--nav-line); backdrop-filter: blur(8px); }
+.pd-input .field, .pd-reply-input .field { flex: 1 1 auto; min-width: 0; width: 0; }
+.pd-send { flex: 0 0 auto; white-space: nowrap; padding: 0 18px; border: none; border-radius: 11px; background: var(--brand); color: #fff; font: 600 14px 'Pretendard'; cursor: pointer; }
 .pd-send:disabled { opacity: 0.45; cursor: default; }
 
 /* 데스크톱 상세: 모바일 기본 규칙 뒤에서 스크롤·고정 입력창 기준을 재정의한다. */
