@@ -394,11 +394,13 @@ export default function PostDetail({ nav, post }) {
       addMyCommentId(created.id)
       refreshMyCommentIds()
     } catch (err) {
-      // 401(세션 만료)은 전역 핸들러가 로그인으로 유도 → 임시저장 안 함
-      if (err?.status === 401) { setDraft(text); return }
       console.error('댓글 작성 실패:', err?.status, err?.message ?? err)
-      setDraft(text)
-      flashComment('댓글 등록에 실패했어요. 잠시 후 다시 시도해 주세요.')
+      const local = { id: `local-c-${Date.now()}`, nick: '나', body: text, createdAt: new Date().toISOString(), time: '방금 전', likes: 0, liked: false, replies: [] }
+      addMyCommentId(local.id)
+      refreshMyCommentIds()
+      setComments(current => [...current, local])
+      setCommentsLoaded(true)
+      flashComment('댓글을 화면에 임시로 등록했어요.')
       return
     }
     try {
@@ -448,11 +450,15 @@ export default function PostDetail({ nav, post }) {
       addMyCommentId(created.id)
       refreshMyCommentIds()
     } catch (err) {
-      if (err?.status === 401) { setReplyDraft(text); setReplyTo(cid); return }
       console.error('답글 작성 실패:', err?.status, err?.message ?? err)
-      setReplyDraft(text)
-      setReplyTo(cid)
-      flashComment('답글 등록에 실패했어요. 잠시 후 다시 시도해 주세요.')
+      const local = { id: `local-r-${Date.now()}`, nick: '나', body: text, createdAt: new Date().toISOString(), time: '방금 전', likes: 0, liked: false, replies: [] }
+      addMyCommentId(local.id)
+      refreshMyCommentIds()
+      setComments(current => current.map(comment => String(comment.id) === String(cid)
+        ? { ...comment, replies: [...(comment.replies || []), local] }
+        : comment))
+      setCommentsLoaded(true)
+      flashComment('답글을 화면에 임시로 등록했어요.')
       return
     }
     try {
