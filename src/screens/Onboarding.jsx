@@ -55,6 +55,110 @@ export default function Onboarding({ nav, isDark, toggleTheme, nickname: initial
 
   const setRelationAndReset = (v) => { setRelation(v); setYear(''); setConcerns([]) }
 
+  // 설문 블록 (관계상태/연차/고민/AI톤)
+  const surveyBlock = (
+    <>
+      {nickname.trim() ? (
+        <>
+          <h1 className="page-title" style={{ marginTop: 0 }}>안녕하세요<br />{nickname.trim()}님 👋</h1>
+          <p className="page-sub">원활한 분석과 서비스 제공을 위해<br />아래 항목에 응답해주세요.</p>
+        </>
+      ) : (
+        <>
+          <h1 className="page-title" style={{ marginTop: 0 }}>우리 사이,<br />먼저 알려주세요</h1>
+          <p className="page-sub">맞춤 감정 분석을 위해 몇 가지만 여쭤볼게요.</p>
+        </>
+      )}
+      <p className="onboard-note"><i className="fa-solid fa-circle-info"></i> 추후 마이페이지 맞춤설정에서 언제든 수정할 수 있어요.</p>
+
+      <div className="section-label">관계 상태</div>
+      <div className="chip-row">
+        {['연애', '신혼', '기혼', '자녀 있음'].map(v => (
+          <span key={v} className={`chip${relation === v ? ' selected' : ''}`} onClick={() => setRelationAndReset(v)}>{v}</span>
+        ))}
+      </div>
+
+      <div className="section-label">{yearLabel}</div>
+      <div className="chip-row">
+        {yearOptions.map(v => (
+          <span key={v} className={`chip${v === '선택안함' ? ' chip--muted' : ''}${year === v ? ' selected' : ''}`} onClick={() => setYear(v)}>{v}</span>
+        ))}
+      </div>
+      {year === '선택안함' && <p className="onboard-hint">괜찮아요. 나중에 마이페이지에서 입력해도 분석에 반영돼요.</p>}
+
+      <div className="section-label">지금 가장 큰 고민 <span className="muted">· 여러 개 선택</span></div>
+      <div className="chip-row">
+        {concernOptions.map(v => (
+          <span key={v} className={`chip${v === '기타' ? ' chip--muted' : ''}${concerns.includes(v) ? ' selected' : ''}`} onClick={() => toggleConcern(v)}>{v}</span>
+        ))}
+      </div>
+      {concerns.includes('기타') && (
+        <input
+          className="field"
+          style={{ width: '100%', marginTop: 11 }}
+          placeholder="어떤 고민인지 직접 적어주세요"
+          value={etcText}
+          onChange={e => setEtcText(e.target.value)}
+        />
+      )}
+
+      <div className="section-label">AI 응답 톤</div>
+      <div className="chip-row">
+        {['부드럽게', '현실적으로', '공감 중심', '해결책 중심'].map(v => (
+          <span key={v} className={`chip${tone === v ? ' selected' : ''}`} onClick={() => setTone(v)}>{v}</span>
+        ))}
+      </div>
+    </>
+  )
+
+  // 프로필 블록 (닉네임 + 앱 잠금 비밀번호)
+  const profileBlock = (
+    <>
+      <h1 className="page-title" style={{ marginTop: 0 }}>어떻게<br />불러드릴까요?</h1>
+      <p className="page-sub">커뮤니티에서 보일 익명 닉네임이에요.</p>
+
+      <div className="section-label">닉네임</div>
+      <input
+        className="field"
+        style={{ width: '100%' }}
+        placeholder="예) 들풀, 밤하늘, 고요한오후"
+        value={nickname}
+        onChange={e => setNickname(e.target.value)}
+        maxLength={12}
+      />
+      <p className="onboard-hint">
+        {nickname.trim()
+          ? <>가입 때 정한 닉네임이에요. 여기서 바꿀 수도 있어요. 같은 닉네임이 있으면 뒤에 <b style={{ color: 'var(--ink-soft)' }}>#0421</b> 같은 번호가 흐리게 붙어요.</>
+          : '한글·영문 2~12자. 중복돼도 괜찮아요.'}
+      </p>
+
+      <div className="section-label"><i className="fa-solid fa-lock"></i>앱 잠금 <span className="muted">· 선택</span></div>
+      <div className="toggle-row">
+        <div>
+          <div style={{ fontSize: 14.5, color: 'var(--ink)', fontWeight: 500 }}>비밀번호 4자리로 잠그기</div>
+          <div style={{ fontSize: 12.5, color: 'var(--ink-muted)', marginTop: 3 }}>민감한 기록을 안전하게 보호해요</div>
+        </div>
+        <div className={`switch${useLock ? '' : ' off'}`} onClick={toggleLock} />
+      </div>
+      {useLock && pinSet && (
+        <p className="onboard-hint" style={{ color: 'var(--brand-soft-text)' }}>
+          <i className="fa-solid fa-circle-check" style={{ marginRight: 5 }}></i>비밀번호가 설정됐어요. 설정에서 변경할 수 있어요.
+        </p>
+      )}
+      {useLock && !pinSet && (
+        <p className="onboard-hint" style={{ cursor: 'pointer', color: 'var(--brand)' }} onClick={() => setShowPin(true)}>
+          비밀번호를 설정해주세요 ›
+        </p>
+      )}
+    </>
+  )
+
+  // 데모는 프로필(닉네임·비번) 먼저 → 설문 순서. 실제 유저는 기존(설문 먼저 → 프로필).
+  const step1Block = demo ? profileBlock : surveyBlock
+  const step2Block = demo ? surveyBlock : profileBlock
+  // 1단계에서 프로필(닉네임)이 오는 데모는 닉네임 입력을 마쳐야 다음으로 진행 가능
+  const canProceedStep1 = demo ? !!nickname.trim() : true
+
   return (
     <div className="phone-body phone-body--flat">
       <div className="topbar">
@@ -75,99 +179,18 @@ export default function Onboarding({ nav, isDark, toggleTheme, nickname: initial
 
       {step === 1 && (
         <>
-          {nickname.trim() ? (
-            <>
-              <h1 className="page-title" style={{ marginTop: 0 }}>안녕하세요<br />{nickname.trim()}님 👋</h1>
-              <p className="page-sub">원활한 분석과 서비스 제공을 위해<br />아래 항목에 응답해주세요.</p>
-            </>
-          ) : (
-            <>
-              <h1 className="page-title" style={{ marginTop: 0 }}>우리 사이,<br />먼저 알려주세요</h1>
-              <p className="page-sub">맞춤 감정 분석을 위해 몇 가지만 여쭤볼게요.</p>
-            </>
-          )}
-          <p className="onboard-note"><i className="fa-solid fa-circle-info"></i> 추후 마이페이지 맞춤설정에서 언제든 수정할 수 있어요.</p>
-
-          <div className="section-label">관계 상태</div>
-          <div className="chip-row">
-            {['연애', '신혼', '기혼', '자녀 있음'].map(v => (
-              <span key={v} className={`chip${relation === v ? ' selected' : ''}`} onClick={() => setRelationAndReset(v)}>{v}</span>
-            ))}
-          </div>
-
-          <div className="section-label">{yearLabel}</div>
-          <div className="chip-row">
-            {yearOptions.map(v => (
-              <span key={v} className={`chip${v === '선택안함' ? ' chip--muted' : ''}${year === v ? ' selected' : ''}`} onClick={() => setYear(v)}>{v}</span>
-            ))}
-          </div>
-          {year === '선택안함' && <p className="onboard-hint">괜찮아요. 나중에 마이페이지에서 입력해도 분석에 반영돼요.</p>}
-
-          <div className="section-label">지금 가장 큰 고민 <span className="muted">· 여러 개 선택</span></div>
-          <div className="chip-row">
-            {concernOptions.map(v => (
-              <span key={v} className={`chip${v === '기타' ? ' chip--muted' : ''}${concerns.includes(v) ? ' selected' : ''}`} onClick={() => toggleConcern(v)}>{v}</span>
-            ))}
-          </div>
-          {concerns.includes('기타') && (
-            <input
-              className="field"
-              style={{ width: '100%', marginTop: 11 }}
-              placeholder="어떤 고민인지 직접 적어주세요"
-              value={etcText}
-              onChange={e => setEtcText(e.target.value)}
-            />
-          )}
-
-          <div className="section-label">AI 응답 톤</div>
-          <div className="chip-row">
-            {['부드럽게', '현실적으로', '공감 중심', '해결책 중심'].map(v => (
-              <span key={v} className={`chip${tone === v ? ' selected' : ''}`} onClick={() => setTone(v)}>{v}</span>
-            ))}
-          </div>
-
-          <button className="cta" style={{ marginTop: 26 }} onClick={() => setStep(2)}>다음</button>
+          {step1Block}
+          <button
+            className="cta"
+            style={{ marginTop: 26, opacity: (canProceedStep1 ? 1 : 0.5) }}
+            onClick={() => { if (!canProceedStep1) return; setStep(2) }}
+          >다음</button>
         </>
       )}
 
       {step === 2 && (
         <>
-          <h1 className="page-title" style={{ marginTop: 0 }}>어떻게<br />불러드릴까요?</h1>
-          <p className="page-sub">커뮤니티에서 보일 익명 닉네임이에요.</p>
-
-          <div className="section-label">닉네임</div>
-          <input
-            className="field"
-            style={{ width: '100%' }}
-            placeholder="예) 들풀, 밤하늘, 고요한오후"
-            value={nickname}
-            onChange={e => setNickname(e.target.value)}
-            maxLength={12}
-          />
-          <p className="onboard-hint">
-            {nickname.trim()
-              ? <>가입 때 정한 닉네임이에요. 여기서 바꿀 수도 있어요. 같은 닉네임이 있으면 뒤에 <b style={{ color: 'var(--ink-soft)' }}>#0421</b> 같은 번호가 흐리게 붙어요.</>
-              : '한글·영문 2~12자. 중복돼도 괜찮아요.'}
-          </p>
-
-          <div className="section-label"><i className="fa-solid fa-lock"></i>앱 잠금 <span className="muted">· 선택</span></div>
-          <div className="toggle-row">
-            <div>
-              <div style={{ fontSize: 14.5, color: 'var(--ink)', fontWeight: 500 }}>비밀번호 4자리로 잠그기</div>
-              <div style={{ fontSize: 12.5, color: 'var(--ink-muted)', marginTop: 3 }}>민감한 기록을 안전하게 보호해요</div>
-            </div>
-            <div className={`switch${useLock ? '' : ' off'}`} onClick={toggleLock} />
-          </div>
-          {useLock && pinSet && (
-            <p className="onboard-hint" style={{ color: 'var(--brand-soft-text)' }}>
-              <i className="fa-solid fa-circle-check" style={{ marginRight: 5 }}></i>비밀번호가 설정됐어요. 설정에서 변경할 수 있어요.
-            </p>
-          )}
-          {useLock && !pinSet && (
-            <p className="onboard-hint" style={{ cursor: 'pointer', color: 'var(--brand)' }} onClick={() => setShowPin(true)}>
-              비밀번호를 설정해주세요 ›
-            </p>
-          )}
+          {step2Block}
 
           <button
             className="cta"
