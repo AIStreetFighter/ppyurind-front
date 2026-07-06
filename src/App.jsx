@@ -25,6 +25,7 @@ import LockScreen from "./screens/LockScreen";
 import FloatingChat from "./components/FloatingChat";
 import { shouldLock } from "./utils/appLock";
 import { getAccessToken } from "./api/client";
+import { isDemo } from "./utils/demo";
 
 // 전역 플로팅 챗봇 노출 화면. 홈은 말풍선 없이(noBubble), 커뮤니티는 글쓰기 FAB와 겹쳐 제외
 const CHATBOT_SCREENS = new Set(["home", "record", "analysis", "calendar", "report", "mypage", "myPosts"]);
@@ -62,11 +63,13 @@ function AppContent() {
   const location = useLocation();
   const screen = PATH_SCREENS[location.pathname] ?? "notFound";
   const [isDark, setIsDark] = useState(true);
-  // 닉네임: 새로고침해도 유지되도록 localStorage에 저장된 마지막 값으로 초기화
-  const [nickname, setNickname] = useState(() => localStorage.getItem("ppyurind:nickname") || "지우");
+  // 닉네임: 새로고침해도 유지되도록 localStorage에 저장된 마지막 값으로 초기화.
+  // 데모는 실제 유저 닉네임(ppyurind:nickname)을 물려받지 않도록 별도 키(demoNickname)를 사용 → 기본 '지우'.
+  const nickKey = () => (isDemo() ? "ppyurind:demoNickname" : "ppyurind:nickname");
+  const [nickname, setNickname] = useState(() => localStorage.getItem(nickKey()) || "지우");
   const saveNickname = (name) => {
     if (!name) return;              // 빈 값으로 덮어써서 초기화되는 것 방지
-    localStorage.setItem("ppyurind:nickname", name);
+    localStorage.setItem(nickKey(), name);
     setNickname(name);
   };
   const [concerns, setConcerns] = useState(["대화 단절", "서운함"]);
@@ -102,6 +105,8 @@ function AppContent() {
   }, [])
 
   const nav = (to, payload) => {
+    // 데모 진입(둘러보기→온보딩): 이전 실제 로그인 닉네임이 남아있지 않도록 데모 닉네임('지우')으로 리셋
+    if (to === "onboarding" && isDemo()) setNickname(localStorage.getItem("ppyurind:demoNickname") || "지우");
     if (to === "checkup") setCheckupSignal(payload?.signal || "");
     if (to === "legal") setLegal({ doc: payload?.doc || "privacy", from: payload?.from || "kakaoLogin" });
     if (to === "post" && payload?.post) {
@@ -147,7 +152,7 @@ function AppContent() {
       {locked
         ? <LockScreen onUnlock={() => setLocked(false)} />
         : screens[screen]}
-      {!locked && CHATBOT_SCREENS.has(screen) && <FloatingChat nav={nav} isDark={isDark} noBubble={screen === 'home'} />}
+      {!locked && CHATBOT_SCREENS.has(screen) && <FloatingChat nav={nav} isDark={isDark} />}
     </div>
   );
 }

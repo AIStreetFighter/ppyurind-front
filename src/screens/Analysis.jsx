@@ -245,7 +245,7 @@ export default function Analysis({ nav, isDark, toggleTheme, nickname }) {
         <div className="rp-card__head">
           <span className="rp-card__title"><i className="fa-solid fa-shuffle"></i> 사실·해석·감정 나눠보기</span>
         </div>
-        <p className="rp-subnote" style={{ marginTop: 0 }}>사이만의 정리 방식 — 같은 일을 세 갈래로 떼어 봅니다</p>
+        <p className="rp-subnote" style={{ marginTop: 0 }}>사실과 해석을 나누면 감정이 한결 또렷해져요 — 인지행동치료(CBT) 사고 기록법</p>
         <div className="rp-quote">"{SPLIT.quote}"</div>
         <div className="split-row"><span className="tag tag--fact">확인된 사실</span><span>{SPLIT.fact}</span></div>
         <div className="split-row"><span className="tag tag--interpret">내가 한 해석</span><span>{SPLIT.interpret}</span></div>

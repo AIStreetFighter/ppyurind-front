@@ -3,6 +3,7 @@ import ThemeToggle from '../components/ThemeToggle'
 import PinPad from '../components/PinPad'
 import { saveOnboarding, setPin as apiSetPin } from '../api/ppyurindApi'
 import { enableLock } from '../utils/appLock'
+import { isDemo } from '../utils/demo'
 
 // 라벨 → relationship_years(정수, 구간 하한값). 과거 라벨도 하위호환 유지.
 const YEAR_TO_NUM = {
@@ -20,7 +21,8 @@ export default function Onboarding({ nav, isDark, toggleTheme, nickname: initial
   const [etcText, setEtcText] = useState('')
   const [tone, setTone] = useState('부드럽게')
 
-  const [nickname, setNickname] = useState(initialNickname && initialNickname !== '지우' ? initialNickname : '')
+  // 실제 유저는 '지우'(기본값=미설정)면 빈 입력으로 이름을 받지만, 데모는 '지우' 페르소나를 그대로 노출
+  const [nickname, setNickname] = useState(initialNickname && (isDemo() || initialNickname !== '지우') ? initialNickname : '')
   const [useLock, setUseLock] = useState(false)
   const [pinSet, setPinSet] = useState(false)
   const [showPin, setShowPin] = useState(false)

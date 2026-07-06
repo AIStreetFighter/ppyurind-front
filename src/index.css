@@ -306,7 +306,7 @@ body {
 }
 .avatar img { width: 96%; height: 96%; object-fit: contain; object-position: bottom; display: block; }
 /* 익명 프로필 사진: 원을 꽉 채우도록 cover + 살짝 확대 */
-.avatar img.pfp { width: 100%; height: 100%; object-fit: cover; object-position: center top; transform: scale(1.22); }
+.avatar img.pfp { width: 100%; height: 100%; object-fit: cover; object-position: center top; transform: scale(1.44); transform-origin: center top; }
 
 /* Post */
 .post-head { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
@@ -1014,10 +1014,20 @@ body {
   box-shadow: 0 6px 18px rgba(0,0,0,0.28);
   animation: chatbotBubbleIn 0.4s ease;
 }
+/* 꼬리: 바깥(테두리색)·안쪽(표면색) 삼각형 2겹으로 이음새 없이 아래를 가리킴 */
+.chatbot-fab__bubble::before,
 .chatbot-fab__bubble::after {
-  content: ""; position: absolute; right: 22px; bottom: -5px;
-  width: 10px; height: 10px; background: var(--surface); transform: rotate(45deg);
-  border-right: 1.5px solid var(--brand); border-bottom: 1.5px solid var(--brand);
+  content: ""; position: absolute; width: 0; height: 0;
+  border-left: 7px solid transparent; border-right: 7px solid transparent;
+}
+.chatbot-fab__bubble::before {
+  right: 20px; bottom: -8px;
+  border-top: 8px solid var(--brand);
+}
+.chatbot-fab__bubble::after {
+  right: 21.5px; bottom: -6px;
+  border-left: 5.5px solid transparent; border-right: 5.5px solid transparent;
+  border-top: 6.5px solid var(--surface);
 }
 @keyframes chatbotFloat {
   0%, 100% { transform: translateY(0); }
