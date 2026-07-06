@@ -38,6 +38,7 @@ export default function Record({ nav, isDark, toggleTheme }) {
   const [recording, setRecording] = useState(false)
   const [liveText, setLiveText] = useState('')   // 실시간 인식 자막
   const [mediaError, setMediaError] = useState('') // 음성/캡처 탭 인라인 오류
+  const [ocrLoading, setOcrLoading] = useState(false)
   const [sharePopup, setSharePopup] = useState(false)
   const [analyzing, setAnalyzing] = useState(false)
   const [error, setError] = useState('')
@@ -118,11 +119,16 @@ export default function Record({ nav, isDark, toggleTheme }) {
     const file = e.target.files?.[0]
     if (!file) return
     setMediaError('')
+    setText('')
+    setOcrLoading(true)
     try {
       const result = await uploadOcrImage(file)
       setText(result.masked_text || result.text || '')
     } catch {
       setMediaError('이미지 분석 서비스 준비 중이에요. 텍스트 탭에서 직접 입력해주세요.')
+    } finally {
+      setOcrLoading(false)
+      e.target.value = ''
     }
   }
 
@@ -291,18 +297,31 @@ export default function Record({ nav, isDark, toggleTheme }) {
       {/* 대화 캡처 탭 */}
       {tab === '대화 캡처' && (
         <>
-          <label className="field upload" style={{ marginTop: 14, minHeight: 148 }}>
-            <input type="file" accept="image/*" hidden onChange={handleImageUpload} />
-            <i className="fa-regular fa-image" style={{ fontSize: 30, color: 'var(--brand)' }}></i>
-            <p style={{ margin: '10px 0 2px', fontSize: 14.5, color: 'var(--ink)', fontWeight: 500 }}>카톡 대화 캡처를 올려주세요</p>
-            <p style={{ margin: 0, fontSize: 12.5, color: 'var(--ink-muted)' }}>AI가 대화 흐름을 읽고 감정을 분석해요 · 사진첩에서 선택</p>
+          <label className="field upload" style={{ marginTop: 14, minHeight: 148, opacity: ocrLoading ? 0.7 : 1 }}>
+            <input type="file" accept="image/*" hidden onChange={handleImageUpload} disabled={ocrLoading} />
+            {ocrLoading ? (
+              <>
+                <i className="fa-solid fa-spinner fa-spin" style={{ fontSize: 30, color: 'var(--brand)' }}></i>
+                <p style={{ margin: '10px 0 2px', fontSize: 14.5, color: 'var(--ink)', fontWeight: 500 }}>사진에서 대화를 읽는 중…</p>
+                <p style={{ margin: 0, fontSize: 12.5, color: 'var(--ink-muted)' }}>잠시만 기다려주세요</p>
+              </>
+            ) : (
+              <>
+                <i className="fa-regular fa-image" style={{ fontSize: 30, color: 'var(--brand)' }}></i>
+                <p style={{ margin: '10px 0 2px', fontSize: 14.5, color: 'var(--ink)', fontWeight: 500 }}>카톡 대화 캡처를 올려주세요</p>
+                <p style={{ margin: 0, fontSize: 12.5, color: 'var(--ink-muted)' }}>AI가 대화 흐름을 읽고 감정을 분석해요 · 사진첩에서 선택</p>
+              </>
+            )}
           </label>
-          {text && (
+          {!ocrLoading && text && (
             <div className="field" style={{ marginTop: 10, fontSize: 13.5, color: 'var(--ink-soft)', lineHeight: 1.6, pointerEvents: 'none' }}>
+              <p style={{ margin: '0 0 6px', fontSize: 12, fontWeight: 600, color: 'var(--brand)' }}>
+                <i className="fa-solid fa-circle-check"></i> 사진에서 대화 내용을 읽었어요 · 아래에서 확인 후 분석해주세요
+              </p>
               {text}
             </div>
           )}
-          {mediaError && <p style={{ margin: '8px 0 0', fontSize: 12.5, color: 'var(--like)' }}>{mediaError}</p>}
+          {!ocrLoading && mediaError && <p style={{ margin: '8px 0 0', fontSize: 12.5, color: 'var(--like)' }}>{mediaError}</p>}
         </>
       )}
 
