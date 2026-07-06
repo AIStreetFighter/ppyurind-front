@@ -49,6 +49,7 @@ export async function register({ nickname, email, password }) {
   const data = await api.post('/auth/register', { nickname, email, password })
   // 회원가입 후 자동 로그인
   const loginData = await api.post('/auth/login', { email, password })
+  if (!loginData) throw new Error('로그인 응답을 받지 못했어요. 잠시 후 다시 시도해주세요.')
   setTokens({
     access: loginData.accessToken || loginData.access_token,
     refresh: loginData.refreshToken || loginData.refresh_token,
@@ -60,6 +61,7 @@ export async function register({ nickname, email, password }) {
 // 이메일 로그인 — 응답: { accessToken, refreshToken, tokenType, user }
 export async function login({ email, password }) {
   const data = await api.post('/auth/login', { email, password })
+  if (!data) throw new Error('로그인 응답을 받지 못했어요. 잠시 후 다시 시도해주세요.')
   setTokens({
     access: data.accessToken || data.access_token,
     refresh: data.refreshToken || data.refresh_token,
