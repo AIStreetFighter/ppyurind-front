@@ -165,25 +165,27 @@ export default function Record({ nav, isDark, toggleTheme }) {
     let shareSuccess = false
     if (share) {
       const recordId = result?.id ?? result?.record_id
-      if (recordId) {
+      try {
+        const emotion = result?.primary_emotion || result?.primaryEmotion || ''
+        const autoTitle = emotion ? `${emotion}을(를) 느낀 이야기` : '속마음 기록'
+        const post = await createCommunityPost({
+          content: trimmed,
+          title: autoTitle,
+          isAnonymous: true,
+          sourceRecordId: recordId ?? null,
+        })
+        shareSuccess = true
         try {
-          const emotion = result?.primary_emotion || result?.primaryEmotion || ''
-          const autoTitle = emotion ? `${emotion}을(를) 느낀 이야기` : '속마음 기록'
-          const post = await createCommunityPost({
-            content: trimmed,
-            title: autoTitle,
-            isAnonymous: true,
-            sourceRecordId: recordId,
-          })
           saveMyCommunityPost(mapCommunityPostToLocal(post, {
             title: autoTitle,
             body: trimmed,
             tag: emotion ? `AI 태그: ${emotion}` : '',
           }))
-          shareSuccess = true
         } catch {
-          // 공유 실패 — 분석 결과 화면에서 shareSuccess=false로 표시
+          // API 공유 성공 후 localStorage 보조 저장 실패는 공유 결과에 영향 없음
         }
+      } catch {
+        // 공유 실패 — 분석 결과 화면에서 shareSuccess=false로 표시
       }
     }
 
