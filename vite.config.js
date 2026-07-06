@@ -13,7 +13,7 @@ export default defineConfig({
         name: '쀼라인드 - Bblind',
         start_url: '/',
         display: 'standalone',
-        theme_color: '#7B6FE0',
+        theme_color: '#1B2240',
         background_color: '#1B2240',
         icons: [
           { src: 'pwa-192.png', type: 'image/png', sizes: '192x192' },
