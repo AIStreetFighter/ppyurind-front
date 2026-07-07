@@ -224,7 +224,6 @@ export default function MyPage({ nav, isDark, toggleTheme, nickname }) {
               <div className="acc-head" onClick={() => toggleDex(d.key)}>
                 <i className={`fa-solid ${d.icon} acc-ic`}></i>
                 <span className="mlabel" style={{ flex: 1 }}>{d.label}</span>
-                {d.body.length > 0 && <span className="badge badge--match" style={{ marginRight: 8 }}>{d.body.length}</span>}
                 <i className={`fa-solid fa-chevron-${open === d.key ? 'up' : 'down'} chev`}></i>
               </div>
               {open === d.key && (
