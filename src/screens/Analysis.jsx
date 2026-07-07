@@ -95,7 +95,7 @@ export default function Analysis({ nav, isDark, toggleTheme, nickname }) {
   const r = shouldUseDummy ? dummy : {
     ...dummy,
     summary: apiData.monthly_self_insight || apiData.recurring_conflict_pattern || dummy.summary,
-    gaslight: apiData.gaslight || dummy.gaslight,
+    gaslight: dummy.gaslight,
     emotion: apiData.emotion || dummy.emotion,
     phrases: apiData.phrases?.length ? apiData.phrases : dummy.phrases,
     insight: apiData.insight || dummy.insight,
@@ -197,6 +197,15 @@ export default function Analysis({ nav, isDark, toggleTheme, nickname }) {
           내 기억·판단을 자주 의심하고, 갈등 후 "내가 예민한 걸까"로 마무리되는 경향이 보여요.
           자체 자가점검 문항 기반 · 검증된 임상척도 아님.
         </p>
+        {nav && (
+          <button
+            className="acc-add"
+            style={{ marginTop: 10, width: '100%', justifyContent: 'center' }}
+            onClick={() => nav('checkup', { signal: '가스라이팅' })}
+          >
+            <i className="fa-solid fa-arrow-right"></i> 가스라이팅 자가진단 하러 가기
+          </button>
+        )}
       </div>
 
       {/* ③ 감정 분석 */}
