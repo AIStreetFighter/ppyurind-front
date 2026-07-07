@@ -10,7 +10,7 @@ const REPORTS = {
   주간: {
     range: '최근 7일 · 기록 6회 기반',
     summary: '이번 주 기록에서 상대의 말 뒤에 나를 의심하고 자책하는 패턴이 보였어요. 힘든 마음은 충분히 그럴 만하고, 한 걸음 떨어져 사실과 해석을 나눠보면 도움이 될 거예요.',
-    gaslight: { score: 11, level: '주의' },
+    gaslight: { score: 3, level: '안정' },
     emotion: { neg: 54, neu: 30, pos: 16, tags: ['자책', '불안', '서운함'] },
     phrases: [
       { text: '내가 예민한 건가', count: 4, tone: 'red' },
@@ -29,7 +29,7 @@ const REPORTS = {
   월간: {
     range: '최근 4주 · 기록 18회 기반',
     summary: '최근 기록에서 상대의 말 뒤에 나를 의심하고 자책하는 패턴이 반복되고 있어요. 힘든 마음은 충분히 그럴 만하고, 한 걸음 떨어져 사실과 해석을 나눠보면 도움이 될 거예요.',
-    gaslight: { score: 14, level: '주의' },
+    gaslight: { score: 3, level: '안정' },
     emotion: { neg: 58, neu: 27, pos: 15, tags: ['자책', '불안', '서운함', '위축감'] },
     phrases: [
       { text: '내가 예민한 건가', count: 9, tone: 'red' },
