@@ -145,7 +145,7 @@ export default function Home({ nav, isDark, toggleTheme, nickname: propNickname,
         <div className="section-label">
           <i className="fa-solid fa-heart-pulse"></i>관계 건강 지수
         </div>
-        <div className="card health-card" onClick={() => nav('analysis')}>
+        <div className="card health-card" onClick={() => nav('analysis', { period: '주간' })}>
           <div className="health-ring health-ring--caution">
             <span>주의</span>
           </div>

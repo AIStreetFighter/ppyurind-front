@@ -10,7 +10,6 @@ export default function MindCheckup({ nav, signal = '' }) {
   const [stage, setStage] = useState('list') // 'list' | 'quiz' | 'result'
   const [activeId, setActiveId] = useState(null)
   const [answers, setAnswers] = useState([])
-  const [showAll, setShowAll] = useState(false) // '전체 검사' 펼침 여부 (기본 접힘)
 
   const recommended = recommendCheckups(signal)
   const otherCheckups = Object.values(CHECKUPS).filter(c => !recommended.includes(c.id))
@@ -95,25 +94,21 @@ export default function MindCheckup({ nav, signal = '' }) {
               })}
             </div>
 
-            <div className="section-label" onClick={() => setShowAll(s => !s)}
-              style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div className="section-label">
               <span>전체 검사 <span style={{ fontWeight: 400, color: 'var(--ink-muted)', fontSize: 12.5 }}>{otherCheckups.length}종</span></span>
-              <i className={`fa-solid fa-chevron-${showAll ? 'up' : 'down'}`} style={{ fontSize: 13, color: 'var(--ink-muted)' }}></i>
             </div>
-            {showAll && (
-              <div className="stack">
-                {otherCheckups.map(c => (
-                  <div key={c.id} className="card chk-item" onClick={() => startCheckup(c.id)}>
-                    <div className="chk-ic chk-ic--soft"><i className={`fa-solid ${c.icon}`}></i></div>
-                    <div style={{ flex: 1 }}>
-                      <p className="row__title">{c.name}</p>
-                      <p className="row__sub">{c.desc}</p>
-                    </div>
-                    <i className="fa-solid fa-chevron-right chev" style={{ color: 'var(--ink-muted)' }}></i>
+            <div className="stack">
+              {otherCheckups.map(c => (
+                <div key={c.id} className="card chk-item" onClick={() => startCheckup(c.id)}>
+                  <div className="chk-ic chk-ic--soft"><i className={`fa-solid ${c.icon}`}></i></div>
+                  <div style={{ flex: 1 }}>
+                    <p className="row__title">{c.name}</p>
+                    <p className="row__sub">{c.desc}</p>
                   </div>
-                ))}
-              </div>
-            )}
+                  <i className="fa-solid fa-chevron-right chev" style={{ color: 'var(--ink-muted)' }}></i>
+                </div>
+              ))}
+            </div>
 
             {/* 무료 법률 상담 */}
             <div className="section-label"><i className="fa-solid fa-scale-balanced"></i>무료 법률 상담</div>

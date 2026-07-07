@@ -73,8 +73,8 @@ const MOOD_COLOR = {
   pos: 'var(--brand)',
 }
 
-export default function Analysis({ nav, isDark, toggleTheme, nickname }) {
-  const [period, setPeriod] = useState('월간')
+export default function Analysis({ nav, isDark, toggleTheme, nickname, initialPeriod }) {
+  const [period, setPeriod] = useState(initialPeriod || '월간')
   const [menuOpen, setMenuOpen] = useState(false)
   const [apiData, setApiData] = useState(null)
 

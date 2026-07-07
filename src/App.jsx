@@ -74,6 +74,7 @@ function AppContent() {
   };
   const [concerns, setConcerns] = useState(["대화 단절", "서운함"]);
   const [checkupSignal, setCheckupSignal] = useState("");
+  const [analysisPeriod, setAnalysisPeriod] = useState("");
   const [legal, setLegal] = useState({ doc: "privacy", from: "kakaoLogin" });
   const [activePost, setActivePost] = useState(() => {
     try { return JSON.parse(sessionStorage.getItem('ppyurind:activePost') || 'null') } catch { return null }
@@ -114,6 +115,7 @@ function AppContent() {
     // 데모 진입(둘러보기→온보딩): 이전 실제 로그인 닉네임이 남아있지 않도록 데모 닉네임('지우')으로 리셋
     if (to === "onboarding" && isDemo()) setNickname(localStorage.getItem("ppyurind:demoNickname") || "지우");
     if (to === "checkup") setCheckupSignal(payload?.signal || "");
+    if (to === "analysis") setAnalysisPeriod(payload?.period || "");
     if (to === "legal") setLegal({ doc: payload?.doc || "privacy", from: payload?.from || "kakaoLogin" });
     if (to === "post" && payload?.post) {
       setActivePost(payload.post);
@@ -134,7 +136,7 @@ function AppContent() {
     onboarding: <Onboarding {...props} />,
     home: <Home {...props} />,
     record: <Record {...props} />,
-    analysis: <Analysis {...props} />,
+    analysis: <Analysis {...props} initialPeriod={analysisPeriod} />,
     analysisResult: <AnalysisResult {...props} result={analysisResult} rawContent={translateInitialText} shared={analysisShared} />,
     translate: <Translate {...props} initialText={translateInitialText} />,
     calendar: <Calendar {...props} />,
