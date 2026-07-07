@@ -87,14 +87,16 @@ export default function SafetyCard({ collapsible = false, nav, signal = '', emer
       {open && (
         <>
           {/* 전화 행 */}
-          <div style={{ ...rowStyle, cursor: 'default', borderTop: `1px solid ${pinkBorder}` }}>
+          <a href="tel:1366" style={{ ...rowStyle, borderTop: `1px solid ${pinkBorder}` }}>
             <i className="fa-solid fa-phone" style={{ color: pink, fontSize: 15, width: 20, textAlign: 'center' }}></i>
             <span style={{ flex: 1, fontSize: 15, fontWeight: 600, color: 'var(--ink)' }}>여성긴급전화 1366</span>
-          </div>
-          <div style={{ ...rowStyle, cursor: 'default', borderBottom: 'none' }}>
+            <i className="fa-solid fa-chevron-right" style={{ color: 'var(--ink-muted)', fontSize: 13 }}></i>
+          </a>
+          <a href="tel:109" style={{ ...rowStyle, borderBottom: 'none' }}>
             <i className="fa-solid fa-phone" style={{ color: pink, fontSize: 15, width: 20, textAlign: 'center' }}></i>
             <span style={{ flex: 1, fontSize: 15, fontWeight: 600, color: 'var(--ink)' }}>자살예방상담 109</span>
-          </div>
+            <i className="fa-solid fa-chevron-right" style={{ color: 'var(--ink-muted)', fontSize: 13 }}></i>
+          </a>
 
           {/* 쉼터 / 상담기관 */}
           <div style={{ display: 'flex', borderTop: `1px solid ${pinkBorder}` }}>
