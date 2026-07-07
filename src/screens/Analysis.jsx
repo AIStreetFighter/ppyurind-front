@@ -58,6 +58,7 @@ const RECOVERY = [
   { icon: 'fa-solid fa-wind',       label: '1분 호흡 정리',    color: 'var(--brand)' },
   { icon: 'fa-solid fa-water',      label: '생각 거리두기 5분', color: 'var(--like)'  },
   { icon: 'fa-solid fa-shield-halved', label: '나의 경계 점검하기', color: 'var(--warm-text)' },
+  { icon: 'fa-solid fa-heart',      label: '나에게 따뜻한 말 한마디', color: 'var(--like)' },
 ]
 
 const PHRASE_COLOR = {
