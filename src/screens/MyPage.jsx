@@ -11,7 +11,7 @@ const DEX_STORAGE_KEY = 'ppyurind:dexItems'
 
 const DEX = [
   {
-    key: 'secret', icon: 'fa-wand-magic-sparkles', label: '나만의 비밀 도감', count: 12,
+    key: 'secret', icon: 'fa-wand-magic-sparkles', label: '나만의 비밀 도감',
     body: ['"지우님은 해결보다 공감을 먼저 원해요."', '"칭찬은 사람들 앞에서 들을 때 가장 기뻐요."', '"피곤할 땐 말보다 혼자만의 시간이 필요해요."'],
   },
   {
@@ -152,7 +152,6 @@ export default function MyPage({ nav, isDark, toggleTheme, nickname }) {
       if (item.key !== addTarget) return item
       return {
         ...item,
-        count: item.count == null ? undefined : item.count + 1,
         body: [...item.body, { content: value, id: newId }],
       }
     }))
@@ -188,7 +187,6 @@ export default function MyPage({ nav, isDark, toggleTheme, nickname }) {
       if (item.key !== key) return item
       return {
         ...item,
-        count: item.count == null ? undefined : Math.max(0, item.count - 1),
         body: item.body.filter((_, j) => j !== index),
       }
     }))
@@ -226,7 +224,7 @@ export default function MyPage({ nav, isDark, toggleTheme, nickname }) {
               <div className="acc-head" onClick={() => toggleDex(d.key)}>
                 <i className={`fa-solid ${d.icon} acc-ic`}></i>
                 <span className="mlabel" style={{ flex: 1 }}>{d.label}</span>
-                {d.count != null && <span className="badge badge--match" style={{ marginRight: 8 }}>{d.count}</span>}
+                {d.body.length > 0 && <span className="badge badge--match" style={{ marginRight: 8 }}>{d.body.length}</span>}
                 <i className={`fa-solid fa-chevron-${open === d.key ? 'up' : 'down'} chev`}></i>
               </div>
               {open === d.key && (
