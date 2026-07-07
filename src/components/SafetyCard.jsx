@@ -100,15 +100,15 @@ export default function SafetyCard({ collapsible = false, nav, signal = '', emer
 
           {/* 쉼터 / 상담기관 */}
           <div style={{ display: 'flex', borderTop: `1px solid ${pinkBorder}` }}>
-            <button style={{
+            <a href="https://www.familynet.or.kr/web/lay1/program/S1T1C307/info/view.do" target="_blank" rel="noreferrer" style={{
               flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7,
-              padding: '15px 10px', background: 'transparent', border: 'none',
+              padding: '15px 10px', background: 'transparent',
               borderRight: `1px solid ${pinkBorder}`, cursor: 'pointer',
-              fontSize: 14, fontWeight: 600, color: pink, fontFamily: 'inherit',
+              fontSize: 14, fontWeight: 600, color: pink, textDecoration: 'none',
             }}>
               <i className="fa-regular fa-comment-dots"></i>쉼터 연결
-            </button>
-            <a href="https://www.counselling.or.kr" target="_blank" rel="noreferrer" style={{
+            </a>
+            <a href="https://www.familynet.or.kr/web/lay1/S1T296C337/contents.do" target="_blank" rel="noreferrer" style={{
               flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7,
               padding: '15px 10px', background: 'transparent',
               cursor: 'pointer', fontSize: 14, fontWeight: 600, color: pink,

@@ -10,7 +10,7 @@ const REPORTS = {
   주간: {
     range: '최근 7일 · 기록 6회 기반',
     summary: '이번 주 기록에서 상대의 말 뒤에 나를 의심하고 자책하는 패턴이 보였어요. 힘든 마음은 충분히 그럴 만하고, 한 걸음 떨어져 사실과 해석을 나눠보면 도움이 될 거예요.',
-    gaslight: { score: 3, level: '안정' },
+    gaslight: { score: 2, level: '주의' },
     emotion: { neg: 54, neu: 30, pos: 16, tags: ['자책', '불안', '서운함'] },
     phrases: [
       { text: '내가 예민한 건가', count: 4, tone: 'red' },
@@ -29,7 +29,7 @@ const REPORTS = {
   월간: {
     range: '최근 4주 · 기록 18회 기반',
     summary: '최근 기록에서 상대의 말 뒤에 나를 의심하고 자책하는 패턴이 반복되고 있어요. 힘든 마음은 충분히 그럴 만하고, 한 걸음 떨어져 사실과 해석을 나눠보면 도움이 될 거예요.',
-    gaslight: { score: 3, level: '안정' },
+    gaslight: { score: 2, level: '주의' },
     emotion: { neg: 58, neu: 27, pos: 15, tags: ['자책', '불안', '서운함', '위축감'] },
     phrases: [
       { text: '내가 예민한 건가', count: 9, tone: 'red' },
@@ -101,7 +101,7 @@ export default function Analysis({ nav, isDark, toggleTheme, nickname }) {
     insight: apiData.insight || dummy.insight,
   }
   const maxCount = Math.max(...r.phrases.map(p => p.count))
-  const gaugePct = Math.min(100, (r.gaslight.score / 20) * 100)
+  const gaugePct = Math.min(100, (r.gaslight.score / 6) * 100)
 
   return (
     <div className="phone-body report-print">
@@ -191,7 +191,7 @@ export default function Analysis({ nav, isDark, toggleTheme, nickname }) {
           <div className="gauge__marker" style={{ left: `${gaugePct}%` }} />
         </div>
         <div className="gauge__scale">
-          <span>0-5 안정</span><span>6-12 주의</span><span>13-20 위험</span>
+          <span>0-1 안정</span><span>2-3 주의</span><span>4-6 위험</span>
         </div>
         <p className="rp-note">
           내 기억·판단을 자주 의심하고, 갈등 후 "내가 예민한 걸까"로 마무리되는 경향이 보여요.
